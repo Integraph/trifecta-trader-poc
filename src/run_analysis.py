@@ -22,6 +22,7 @@ load_dotenv()
 
 from tradingagents.graph.trading_graph import TradingAgentsGraph
 from tradingagents.default_config import DEFAULT_CONFIG
+from src.signal_processing import extract_decision
 
 
 def get_config(provider: str = "anthropic", deep_model: str = None, quick_model: str = None) -> dict:
@@ -99,7 +100,14 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
 
     # Initialize and run
     ta = TradingAgentsGraph(debug=debug, config=config)
-    final_state, decision = ta.propagate(ticker, trade_date)
+    final_state, upstream_decision = ta.propagate(ticker, trade_date)
+
+    # Override the upstream signal processing with our improved version
+    final_trade_text = final_state.get("final_trade_decision", "")
+    decision = extract_decision(final_trade_text)
+
+    if decision != upstream_decision:
+        print(f"[signal_processing] Corrected decision: upstream='{upstream_decision}' -> ours='{decision}'")
 
     # Save results
     results_dir = Path(config["results_dir"]) / ticker
@@ -112,6 +120,7 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
         "deep_model": config["deep_think_llm"],
         "quick_model": config["quick_think_llm"],
         "decision": decision,
+        "upstream_decision": upstream_decision,
         "run_timestamp": datetime.now().isoformat(),
     }
 
