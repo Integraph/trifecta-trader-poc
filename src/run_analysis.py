@@ -4,6 +4,7 @@ Trifecta Trader POC - Main Analysis Runner
 Usage:
     python -m src.run_analysis --ticker AAPL --date 2026-02-27
     python -m src.run_analysis --ticker AAPL --date 2026-02-27 --provider ollama
+    python -m src.run_analysis --ticker AAPL --date 2026-02-27 --hybrid hybrid_qwen
 """
 
 import argparse
@@ -72,7 +73,7 @@ def get_config(provider: str = "anthropic", deep_model: str = None, quick_model:
 
 def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
                  deep_model: str = None, quick_model: str = None,
-                 debug: bool = True) -> dict:
+                 debug: bool = True, hybrid: str = None) -> dict:
     """Run the full trading agents analysis pipeline.
 
     Args:
@@ -82,6 +83,7 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
         deep_model: Override for deep thinking model
         quick_model: Override for quick thinking model
         debug: Enable debug output
+        hybrid: Hybrid LLM config name (e.g., 'hybrid_qwen')
 
     Returns:
         Dictionary with analysis results and decision
@@ -93,13 +95,27 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
     print(f"{'='*60}")
     print(f"Ticker:    {ticker}")
     print(f"Date:      {trade_date}")
-    print(f"Provider:  {provider}")
+    if hybrid:
+        print(f"Mode:      HYBRID ({hybrid})")
+    else:
+        print(f"Provider:  {provider}")
     print(f"Deep LLM:  {config['deep_think_llm']}")
     print(f"Quick LLM: {config['quick_think_llm']}")
     print(f"{'='*60}\n")
 
-    # Initialize and run
-    ta = TradingAgentsGraph(debug=debug, config=config)
+    if hybrid:
+        from src.hybrid_llm import CONFIGS
+        from src.hybrid_graph import HybridTradingGraph
+        hybrid_config = CONFIGS[hybrid]
+        ta = HybridTradingGraph(
+            hybrid_config=hybrid_config,
+            debug=debug,
+            config=config,
+        )
+        print(f"Hybrid routing: {hybrid_config.to_dict()}")
+    else:
+        ta = TradingAgentsGraph(debug=debug, config=config)
+
     final_state, upstream_decision = ta.propagate(ticker, trade_date)
 
     # Override the upstream signal processing with our improved version
@@ -117,6 +133,7 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
         "ticker": ticker,
         "trade_date": trade_date,
         "provider": provider,
+        "hybrid_config": hybrid,
         "deep_model": config["deep_think_llm"],
         "quick_model": config["quick_think_llm"],
         "decision": decision,
@@ -146,6 +163,10 @@ def main():
     parser.add_argument("--deep-model", type=str, default=None, help="Override deep thinking model")
     parser.add_argument("--quick-model", type=str, default=None, help="Override quick thinking model")
     parser.add_argument("--no-debug", action="store_true", help="Disable debug output")
+    parser.add_argument("--hybrid", type=str, default=None,
+                        choices=["all_cloud", "hybrid_qwen", "hybrid_mistral",
+                                 "hybrid_aggressive_qwen", "hybrid_aggressive_mistral"],
+                        help="Use hybrid LLM routing config")
 
     args = parser.parse_args()
 
@@ -156,6 +177,7 @@ def main():
         deep_model=args.deep_model,
         quick_model=args.quick_model,
         debug=not args.no_debug,
+        hybrid=args.hybrid,
     )
 
 
