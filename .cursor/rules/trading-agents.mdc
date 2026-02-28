@@ -1,0 +1,35 @@
+# Trifecta Trader POC - Cursor Agent Rules
+
+## Project Context
+This is a multi-agent AI trading system POC. The core framework (TradingAgents)
+lives in vendor/TradingAgents/ and should NOT be modified directly. All custom
+code goes in src/.
+
+## Architecture
+- vendor/TradingAgents/ - Upstream framework (Git submodule, do not edit)
+- src/agents/ - Custom agent definitions (Triad: Pulse/Brain/Doubt)
+- src/data/ - Data pipeline customizations
+- src/risk/ - Risk management, kill switch, position sizing
+- src/execution/ - Alpaca paper trading integration
+- src/audit/ - HMAC-SHA256 audit chain
+- src/dashboard/ - Streamlit dashboard
+- tests/ - Pytest test suite
+
+## Key Rules
+1. NEVER modify files in vendor/TradingAgents/ directly
+2. Always add vendor/TradingAgents to sys.path when importing from it
+3. Use python-dotenv to load .env for API keys
+4. All new code should have corresponding tests in tests/
+5. Use type hints on all function signatures
+6. Use Ruff for formatting (line length 100)
+7. Financial calculations must be deterministic (no LLM) - use Python math
+8. Every agent decision must be logged with timestamp and model version
+
+## Testing
+Run tests with: pytest tests/ -v
+Run a single analysis with: python -m src.run_analysis --ticker AAPL --date 2026-02-27
+
+## LLM Providers
+- anthropic: Claude Sonnet 4.5 (primary, best quality)
+- ollama: Local models (free, for offloading simple tasks)
+- google: Gemini (for fundamentals analysis)

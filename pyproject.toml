@@ -1,0 +1,45 @@
+[project]
+name = "trifecta-trader-poc"
+version = "0.1.0"
+description = "Trifecta Trader POC - Multi-agent AI trading system"
+requires-python = ">=3.11"
+dependencies = [
+    # Core framework (also installed via TradingAgents requirements.txt)
+    "langgraph",
+    "langchain-core",
+    "langchain-openai",
+    "langchain-experimental",
+    "langchain-anthropic",
+    "langchain-google-genai",
+    # Data
+    "pandas",
+    "yfinance",
+    "stockstats",
+    # Infrastructure
+    "redis",
+    "requests",
+    "tqdm",
+    "pytz",
+    # UI
+    "streamlit",
+    # Testing
+    "pytest",
+    "pytest-asyncio",
+    # Utilities
+    "python-dotenv",
+    "rich",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "pytest-cov",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "vendor/TradingAgents"]
