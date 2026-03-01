@@ -28,6 +28,8 @@ dependencies = [
     # Utilities
     "python-dotenv",
     "rich",
+    # Trade execution
+    "alpaca-py",
 ]
 
 [project.optional-dependencies]

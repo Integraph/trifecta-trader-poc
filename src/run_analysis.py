@@ -187,6 +187,64 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
     return result
 
 
+def _run_execution_flow(result: dict, config: dict, args) -> None:
+    """Run the trade execution flow after analysis completes."""
+    from src.execution.trade_params import extract_trade_params
+
+    ticker = result["ticker"]
+    decision = result["decision"]
+    final_trade_text = result.get("final_trade_decision_text", "")
+    quality_score = result.get("quality_score", {}).get("composite", 0.0)
+
+    trade_params = extract_trade_params(
+        ticker=ticker,
+        decision=decision,
+        quality_score=quality_score,
+        decision_text=final_trade_text,
+        current_price=None,
+    )
+
+    print(f"\n{'='*60}")
+    print(f"TRADE PARAMETERS")
+    print(f"{'='*60}")
+    print(f"  Decision:    {trade_params.decision}")
+    print(f"  Stop-loss:   ${trade_params.stop_loss or 'N/A'}")
+    print(f"  Target:      ${trade_params.price_target or 'N/A'}")
+    print(f"  Position:    {trade_params.position_pct or 'N/A'}%")
+    print(f"  R/R Ratio:   {trade_params.risk_reward_ratio or 'N/A'}")
+    print(f"  Actionable:  {trade_params.is_actionable}")
+
+    if args.dry_run:
+        print(f"\n  [DRY RUN — no order submitted]")
+    elif args.execute and trade_params.is_actionable:
+        from src.execution.executor import TradeExecutor
+        from src.execution.position_manager import PositionManager
+
+        audit_dir = str(Path(config["results_dir"]) / "audit")
+        executor = TradeExecutor(audit_dir=audit_dir)
+        pm = PositionManager(executor.client)
+
+        order = pm.calculate_order(trade_params)
+        print(f"\n{'='*60}")
+        print(f"ORDER CALCULATION")
+        print(f"{'='*60}")
+        print(f"  Side:        {order.side}")
+        print(f"  Qty:         {order.qty}")
+        print(f"  Value:       ${order.position_value:.0f}")
+        print(f"  Portfolio %: {order.position_pct_of_portfolio:.1f}%")
+        print(f"  Risk/trade:  ${order.total_risk:.0f} ({order.portfolio_risk_pct:.2f}% of portfolio)")
+        print(f"  Approved:    {order.approved}")
+        if not order.approved:
+            print(f"  Rejections:  {order.rejection_reasons}")
+
+        exec_result = executor.execute(order, trade_params)
+        print(f"\n  Action: {exec_result['action']}")
+        if exec_result.get("alpaca_order_id"):
+            print(f"  Order ID: {exec_result['alpaca_order_id']}")
+    elif args.execute and not trade_params.is_actionable:
+        print(f"\n  [NOT ACTIONABLE — {trade_params.decision}, score={quality_score}]")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Trifecta Trader POC - Run trading analysis")
     parser.add_argument("--ticker", type=str, default="AAPL", help="Stock ticker symbol")
@@ -203,10 +261,18 @@ def main():
                                  "hybrid_qwen32", "hybrid_aggressive_qwen32",
                                  "hybrid_qwen_enhanced"],
                         help="Use hybrid LLM routing config")
+    parser.add_argument("--execute", action="store_true",
+                        help="Execute the trade on Alpaca paper trading")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="Calculate order but don't submit (shows what would happen)")
 
     args = parser.parse_args()
 
-    run_analysis(
+    config = None
+    # Capture config for execution flow
+    _original_get_config = get_config
+
+    result = run_analysis(
         ticker=args.ticker,
         trade_date=args.date,
         provider=args.provider,
@@ -215,6 +281,10 @@ def main():
         debug=not args.no_debug,
         hybrid=args.hybrid,
     )
+
+    if args.execute or args.dry_run:
+        config = get_config(args.provider, args.deep_model, args.quick_model)
+        _run_execution_flow(result, config, args)
 
 
 if __name__ == "__main__":
