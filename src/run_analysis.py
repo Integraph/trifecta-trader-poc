@@ -11,6 +11,7 @@ import argparse
 import json
 import sys
 import os
+import time
 from pathlib import Path
 from datetime import date, datetime
 
@@ -116,14 +117,28 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
     else:
         ta = TradingAgentsGraph(debug=debug, config=config)
 
+    start_time = time.time()
     final_state, upstream_decision = ta.propagate(ticker, trade_date)
+    elapsed_seconds = time.time() - start_time
 
     # Override the upstream signal processing with our improved version
     final_trade_text = final_state.get("final_trade_decision", "")
     decision = extract_decision(final_trade_text)
 
-    if decision != upstream_decision:
+    decision_corrected = decision != upstream_decision
+    if decision_corrected:
         print(f"[signal_processing] Corrected decision: upstream='{upstream_decision}' -> ours='{decision}'")
+
+    # Quality scoring
+    from src.quality_scorer import score_pipeline_output
+    config_label = hybrid if hybrid else provider
+    score = score_pipeline_output(
+        config_name=config_label,
+        ticker=ticker,
+        trade_date=trade_date,
+        final_trade_decision=final_trade_text,
+        extracted_decision=decision,
+    )
 
     # Save results
     results_dir = Path(config["results_dir"]) / ticker
@@ -138,16 +153,35 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
         "quick_model": config["quick_think_llm"],
         "decision": decision,
         "upstream_decision": upstream_decision,
+        "decision_corrected": decision_corrected,
+        "final_trade_decision_text": final_trade_text,
+        "elapsed_seconds": round(elapsed_seconds, 1),
         "run_timestamp": datetime.now().isoformat(),
+        "quality_score": {
+            "composite": score.composite_score,
+            "reasoning_depth": score.reasoning_depth,
+            "data_grounding": score.data_grounding,
+            "risk_awareness": score.risk_awareness,
+            "decision_consistent": score.decision_consistent,
+            "has_stop_loss": score.has_stop_loss,
+            "has_price_target": score.has_price_target,
+            "has_position_sizing": score.has_position_sizing,
+        },
     }
 
-    result_file = results_dir / f"analysis_{trade_date}_{provider}.json"
+    result_file = results_dir / f"analysis_{trade_date}_{config_label}.json"
     with open(result_file, "w") as f:
         json.dump(result, f, indent=2)
 
     print(f"\n{'='*60}")
     print(f"DECISION: {decision}")
-    print(f"Results saved to: {result_file}")
+    print(f"\nQuality Score: {score.composite_score:.1f}/10")
+    print(f"  Reasoning depth:     {score.reasoning_depth}/10")
+    print(f"  Data grounding:      {score.data_grounding}/10")
+    print(f"  Risk awareness:      {score.risk_awareness}/10")
+    print(f"  Decision consistent: {'Yes' if score.decision_consistent else 'No'}")
+    print(f"  Elapsed time:        {elapsed_seconds:.1f}s")
+    print(f"\nResults saved to: {result_file}")
     print(f"{'='*60}\n")
 
     return result

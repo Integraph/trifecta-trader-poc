@@ -1,0 +1,54 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.12, pytest-9.0.2, pluggy-1.6.0 -- /opt/homebrew/Caskroom/miniconda/base/envs/tradingagents/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc
+configfile: pyproject.toml
+plugins: anyio-4.12.1, langsmith-0.7.9
+collecting ... collected 2 items
+
+tests/test_reasoning_comparison.py::test_bull_case_quality 
+================================================================================
+BULL CASE COMPARISON
+================================================================================
+
+--- qwen2.5:14b ---
+Words: 511, Has numbers: True
+First 300 chars: ### Bull Case for Investing in Apple (AAPL)
+
+#### Current Market Position and Technical Indicators
+Apple Inc. (AAPL) is currently trading at $270.15, which is well above its 52-week low of $218.42 but slightly below its 52-week high of $295.80. The stock's RSI stands at 62.3, indicating it’s in a mo
+
+--- mistral-small:22b ---
+Words: 347, Has numbers: True
+First 300 chars:  ### Bull Case for Buying AAPL
+
+#### 1. Specific Data Points from Market Data
+- **Current Price**: $270.15, which is close to the 52-week high of $295.80, indicating strong recent performance.
+- **Revenue Growth**: 8.2% YoY, demonstrating consistent growth despite economic headwinds.
+- **Free Cash F
+PASSED
+tests/test_reasoning_comparison.py::test_trader_decision_format 
+================================================================================
+TRADER DECISION FORMAT
+================================================================================
+
+--- qwen2.5:14b ---
+Decision: BUY
+Last 200 chars: rexposed to this single stock.
+
+### Final Transaction Proposal:
+**BUY**
+
+This decision is balanced between recognizing the positive catalysts and maintaining a disciplined approach to risk management.
+
+--- mistral-small:22b ---
+Decision: HOLD
+Last 200 chars: p-Loss:** $250.00 (approximately 7% below current price)
+- **Price Target:** $300.00 (approximately 11% above current price)
+- **Position Size:** 10% of the portfolio
+
+FINAL TRANSACTION PROPOSAL: HOLD
+PASSED
+
+======================== 2 passed in 143.23s (0:02:23) =========================
+
