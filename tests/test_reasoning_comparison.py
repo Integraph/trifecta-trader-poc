@@ -12,6 +12,9 @@ import pytest
 import os
 import re
 
+from dotenv import load_dotenv
+load_dotenv()
+
 
 def _ollama_available():
     try:
@@ -89,6 +92,19 @@ FINAL TRANSACTION PROPOSAL: <BUY|HOLD|SELL>
 Include specific risk management parameters (stop-loss, price target, position size)."""
 
 
+def _model_available(model_name: str) -> bool:
+    """Check if a specific Ollama model is pulled."""
+    try:
+        import urllib.request
+        import json
+        response = urllib.request.urlopen("http://localhost:11434/api/tags", timeout=2)
+        data = json.loads(response.read())
+        available = [m["name"] for m in data.get("models", [])]
+        return any(model_name in m for m in available)
+    except Exception:
+        return False
+
+
 def _create_model_configs():
     """Define models to compare."""
     configs = []
@@ -105,6 +121,14 @@ def _create_model_configs():
             "model": "mistral-small:22b",
         })
 
+        for model_name in ["qwen2.5:32b", "qwen2.5:72b", "llama3.3:70b", "command-r:35b"]:
+            if _model_available(model_name):
+                configs.append({
+                    "name": model_name,
+                    "provider": "ollama",
+                    "model": model_name,
+                })
+
     if os.environ.get("ANTHROPIC_API_KEY"):
         configs.append({
             "name": "claude-sonnet-4.5",
@@ -115,8 +139,10 @@ def _create_model_configs():
     return configs
 
 
-def _invoke_model(provider: str, model: str, prompt: str) -> str:
-    """Invoke a model and return the response text."""
+def _invoke_model(provider: str, model: str, prompt: str) -> tuple:
+    """Invoke a model and return (response_text, elapsed_seconds)."""
+    import time
+
     if provider == "ollama":
         from langchain_openai import ChatOpenAI
         llm = ChatOpenAI(
@@ -134,8 +160,11 @@ def _invoke_model(provider: str, model: str, prompt: str) -> str:
     else:
         raise ValueError(f"Unknown provider: {provider}")
 
+    start = time.time()
     result = llm.invoke(prompt)
-    return result.content
+    elapsed = time.time() - start
+
+    return result.content, elapsed
 
 
 @pytest.fixture(scope="module")
@@ -160,10 +189,13 @@ def comparison_results(request):
             ("trader", TRADER_PROMPT),
         ]:
             try:
-                response = _invoke_model(config["provider"], config["model"], prompt)
+                response, elapsed = _invoke_model(config["provider"], config["model"], prompt)
                 results[name][prompt_name] = response
+                results[name][f"{prompt_name}_elapsed"] = elapsed
+                print(f"  {name} / {prompt_name}: {elapsed:.1f}s, {len(response.split())} words")
             except Exception as e:
                 results[name][prompt_name] = f"ERROR: {e}"
+                results[name][f"{prompt_name}_elapsed"] = 0
 
     return results
 
@@ -210,3 +242,59 @@ def test_trader_decision_format(comparison_results):
                 f"{model_name} did not produce a parseable decision. "
                 f"Response tail: {response[-300:]}"
             )
+
+
+@skip_unless_comparison
+def test_detailed_quality_comparison(comparison_results):
+    """Detailed quality comparison with scoring across all models."""
+    print("\n" + "=" * 90)
+    print("DETAILED QUALITY COMPARISON -- ALL MODELS")
+    print("=" * 90)
+
+    header = (
+        f"{'Model':<22} {'Role':<8} {'Words':<7} {'Numbers':<8} "
+        f"{'Decision':<10} {'StopLoss':<9} {'Target':<8} {'Time':<7}"
+    )
+    print(header)
+    print("-" * 90)
+
+    for model_name, responses in comparison_results.items():
+        for prompt_name in ["bull", "bear", "trader"]:
+            response = responses.get(prompt_name, "NOT RUN")
+            elapsed = responses.get(f"{prompt_name}_elapsed", 0)
+            if isinstance(response, str) and response.startswith("ERROR"):
+                print(f"{model_name:<22} {prompt_name:<8} ERROR: {response[:50]}")
+                continue
+
+            word_count = len(response.split())
+            numbers = re.findall(r'\$[\d,.]+|\d+\.?\d*%', response)
+            has_stop = bool(re.search(r'stop.?loss', response, re.IGNORECASE))
+            has_target = bool(re.search(r'(?:price\s+)?target|upside|downside', response, re.IGNORECASE))
+
+            decision = ""
+            if prompt_name == "trader":
+                from src.signal_processing import extract_decision
+                decision = extract_decision(response)
+
+            print(
+                f"{model_name:<22} {prompt_name:<8} {word_count:<7} "
+                f"{len(numbers):<8} {decision:<10} "
+                f"{'Yes' if has_stop else 'No':<9} {'Yes' if has_target else 'No':<8} "
+                f"{elapsed:<7.1f}"
+            )
+
+    print("-" * 90)
+
+    print("\n" + "=" * 90)
+    print("TRADER OUTPUT -- LAST 500 CHARS (decision + risk params)")
+    print("=" * 90)
+
+    for model_name, responses in comparison_results.items():
+        trader_response = responses.get("trader", "NOT RUN")
+        if not (isinstance(trader_response, str) and trader_response.startswith("ERROR")):
+            print(f"\n{'='*30} {model_name} {'='*30}")
+            print(f"Word count: {len(trader_response.split())}")
+            print(f"Char count: {len(trader_response)}")
+            print(f"\n--- Last 500 chars ---")
+            print(trader_response[-500:])
+            print()

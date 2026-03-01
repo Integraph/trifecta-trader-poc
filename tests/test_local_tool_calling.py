@@ -42,6 +42,18 @@ OLLAMA_MODELS = [
     "mistral-small:22b",
 ]
 
+try:
+    import urllib.request as _urllib_req
+    import json as _json_mod
+    _resp = _urllib_req.urlopen("http://localhost:11434/api/tags", timeout=2)
+    _data = _json_mod.loads(_resp.read())
+    _available = [m["name"] for m in _data.get("models", [])]
+    for _model in ["qwen2.5:32b", "qwen2.5:72b", "llama3.3:70b", "command-r:35b"]:
+        if any(_model in m for m in _available) and _model not in OLLAMA_MODELS:
+            OLLAMA_MODELS.append(_model)
+except Exception:
+    pass
+
 
 @pytest.mark.parametrize("model_name", OLLAMA_MODELS)
 def test_tool_calling_basic(model_name):

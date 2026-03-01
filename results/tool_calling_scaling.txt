@@ -1,0 +1,142 @@
+ERROR conda.cli.main_run:execute(127): `conda run python -m pytest tests/test_local_tool_calling.py -v -s` failed. (See above for error)
+============================= test session starts ==============================
+platform darwin -- Python 3.13.12, pytest-9.0.2, pluggy-1.6.0 -- /opt/homebrew/Caskroom/miniconda/base/envs/tradingagents/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc
+configfile: pyproject.toml
+plugins: anyio-4.12.1, langsmith-0.7.9
+collecting ... collected 9 items
+
+tests/test_local_tool_calling.py::test_tool_calling_basic[qwen2.5:14b] 
+  qwen2.5:14b: Tool calling WORKS
+   Tool call: get_stock_price({'ticker': 'AAPL', 'date': '2026-02-27'})
+PASSED
+tests/test_local_tool_calling.py::test_tool_calling_basic[mistral-small:22b] 
+  mistral-small:22b: Tool calling FAILED
+   Response (first 200 chars):  [{"name":"get_stock_price","arguments":{"ticker":"AAPL","date":"2026-02-27"}}]
+FAILED
+tests/test_local_tool_calling.py::test_tool_calling_basic[qwen2.5:32b] 
+  qwen2.5:32b: Tool calling WORKS
+   Tool call: get_stock_price({'ticker': 'AAPL', 'date': '2026-02-27'})
+PASSED
+tests/test_local_tool_calling.py::test_tool_calling_multi_tool[qwen2.5:14b] 
+  qwen2.5:14b: Multi-tool selection WORKS -- chose get_stock_price
+PASSED
+tests/test_local_tool_calling.py::test_tool_calling_multi_tool[mistral-small:22b] 
+  mistral-small:22b: Multi-tool selection FAILED -- no tool calls
+FAILED
+tests/test_local_tool_calling.py::test_tool_calling_multi_tool[qwen2.5:32b] 
+  qwen2.5:32b: Multi-tool selection WORKS -- chose get_stock_price
+PASSED
+tests/test_local_tool_calling.py::test_reasoning_quality[qwen2.5:14b] 
+  qwen2.5:14b: Reasoning quality OK
+   Length: 2723 chars
+   Bull keywords found: 5
+   First 200 chars: To make a compelling bull case for investing in Apple Inc. (AAPL), we need to focus on several key factors that indicate strong future growth potential and undervaluation relative to its peers.
+
+### R
+PASSED
+tests/test_local_tool_calling.py::test_reasoning_quality[mistral-small:22b] 
+  mistral-small:22b: Reasoning quality OK
+   Length: 1448 chars
+   Bull keywords found: 2
+   First 200 chars:  Apple Inc. (AAPL) presents a compelling bull case driven by robust revenue growth, strong cash position, and innovative product launches. With a current price of $270 and a P/E ratio of 33x, AAPL is 
+PASSED
+tests/test_local_tool_calling.py::test_reasoning_quality[qwen2.5:32b] 
+  qwen2.5:32b: Reasoning quality OK
+   Length: 2252 chars
+   Bull keywords found: 4
+   First 200 chars: To make a strong bull-case argument for buying AAPL, we need to highlight its robust financial health and growth potential across various segments.
+
+**Revenue Growth and Services Segment:**
+AAPL's cur
+PASSED
+
+=================================== FAILURES ===================================
+__________________ test_tool_calling_basic[mistral-small:22b] __________________
+
+model_name = 'mistral-small:22b'
+
+    @pytest.mark.parametrize("model_name", OLLAMA_MODELS)
+    def test_tool_calling_basic(model_name):
+        """Test if the model can produce a valid tool call."""
+        llm = ChatOpenAI(
+            model=model_name,
+            base_url="http://localhost:11434/v1",
+            api_key="ollama",
+            temperature=0,
+        )
+    
+        tool = _get_test_tool()
+        llm_with_tools = llm.bind_tools([tool])
+    
+        result = llm_with_tools.invoke(
+            "What is the stock price of AAPL on 2026-02-27?"
+        )
+    
+        has_tool_calls = hasattr(result, "tool_calls") and len(result.tool_calls) > 0
+    
+        if has_tool_calls:
+            tc = result.tool_calls[0]
+            assert tc["name"] == "get_stock_price", f"Wrong tool name: {tc['name']}"
+            assert "ticker" in tc["args"], f"Missing 'ticker' arg: {tc['args']}"
+            print(f"\n  {model_name}: Tool calling WORKS")
+            print(f"   Tool call: {tc['name']}({tc['args']})")
+        else:
+            print(f"\n  {model_name}: Tool calling FAILED")
+            print(f"   Response (first 200 chars): {result.content[:200]}")
+>           pytest.fail(
+                f"{model_name} did not produce tool calls. "
+                f"Response: {result.content[:200]}"
+            )
+E           Failed: mistral-small:22b did not produce tool calls. Response:  [{"name":"get_stock_price","arguments":{"ticker":"AAPL","date":"2026-02-27"}}]
+
+tests/test_local_tool_calling.py:86: Failed
+_______________ test_tool_calling_multi_tool[mistral-small:22b] ________________
+
+model_name = 'mistral-small:22b'
+
+    @pytest.mark.parametrize("model_name", OLLAMA_MODELS)
+    def test_tool_calling_multi_tool(model_name):
+        """Test if the model can choose the right tool when multiple are available."""
+        from langchain_core.tools import tool
+    
+        @tool
+        def get_stock_price(ticker: str) -> str:
+            """Get the current stock price for a ticker symbol."""
+            return json.dumps({"ticker": ticker, "price": 185.50})
+    
+        @tool
+        def get_company_news(company: str) -> str:
+            """Get recent news articles about a company."""
+            return json.dumps({"company": company, "articles": []})
+    
+        llm = ChatOpenAI(
+            model=model_name,
+            base_url="http://localhost:11434/v1",
+            api_key="ollama",
+            temperature=0,
+        )
+    
+        llm_with_tools = llm.bind_tools([get_stock_price, get_company_news])
+    
+        result = llm_with_tools.invoke("What is AAPL trading at?")
+    
+        has_tool_calls = hasattr(result, "tool_calls") and len(result.tool_calls) > 0
+        if has_tool_calls:
+            tc = result.tool_calls[0]
+            assert tc["name"] == "get_stock_price", (
+                f"Model called wrong tool: {tc['name']} (expected get_stock_price)"
+            )
+            print(f"\n  {model_name}: Multi-tool selection WORKS -- chose {tc['name']}")
+        else:
+            print(f"\n  {model_name}: Multi-tool selection FAILED -- no tool calls")
+>           pytest.fail(f"{model_name} did not produce tool calls")
+E           Failed: mistral-small:22b did not produce tool calls
+
+tests/test_local_tool_calling.py:127: Failed
+=========================== short test summary info ============================
+FAILED tests/test_local_tool_calling.py::test_tool_calling_basic[mistral-small:22b] - Failed: mistral-small:22b did not produce tool calls. Response:  [{"name":"get_stock_price","arguments":{"ticker":"AAPL","date":"2026-02-27"}}]
+FAILED tests/test_local_tool_calling.py::test_tool_calling_multi_tool[mistral-small:22b] - Failed: mistral-small:22b did not produce tool calls
+==================== 2 failed, 7 passed in 97.72s (0:01:37) ====================
+

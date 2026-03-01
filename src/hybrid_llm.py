@@ -91,6 +91,24 @@ CONFIGS = {
         reasoning_deep_provider="ollama",
         reasoning_deep_model="mistral-small:22b",
     ),
+
+    "hybrid_qwen32": HybridLLMConfig(
+        tool_provider="anthropic",
+        tool_model="claude-sonnet-4-5-20250929",
+        reasoning_quick_provider="ollama",
+        reasoning_quick_model="qwen2.5:32b",
+        reasoning_deep_provider="anthropic",
+        reasoning_deep_model="claude-sonnet-4-5-20250929",
+    ),
+
+    "hybrid_aggressive_qwen32": HybridLLMConfig(
+        tool_provider="anthropic",
+        tool_model="claude-sonnet-4-5-20250929",
+        reasoning_quick_provider="ollama",
+        reasoning_quick_model="qwen2.5:32b",
+        reasoning_deep_provider="ollama",
+        reasoning_deep_model="qwen2.5:32b",
+    ),
 }
 
 

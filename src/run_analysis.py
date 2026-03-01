@@ -199,7 +199,8 @@ def main():
     parser.add_argument("--no-debug", action="store_true", help="Disable debug output")
     parser.add_argument("--hybrid", type=str, default=None,
                         choices=["all_cloud", "hybrid_qwen", "hybrid_mistral",
-                                 "hybrid_aggressive_qwen", "hybrid_aggressive_mistral"],
+                                 "hybrid_aggressive_qwen", "hybrid_aggressive_mistral",
+                                 "hybrid_qwen32", "hybrid_aggressive_qwen32"],
                         help="Use hybrid LLM routing config")
 
     args = parser.parse_args()

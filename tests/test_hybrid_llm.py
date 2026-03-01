@@ -19,6 +19,8 @@ class TestHybridLLMConfig:
         assert "hybrid_mistral" in CONFIGS
         assert "hybrid_aggressive_qwen" in CONFIGS
         assert "hybrid_aggressive_mistral" in CONFIGS
+        assert "hybrid_qwen32" in CONFIGS
+        assert "hybrid_aggressive_qwen32" in CONFIGS
 
     def test_all_cloud_config(self):
         config = CONFIGS["all_cloud"]
@@ -39,10 +41,23 @@ class TestHybridLLMConfig:
         assert config.reasoning_deep_provider == "anthropic"
 
     def test_aggressive_configs_use_local_for_deep(self):
-        for name in ("hybrid_aggressive_qwen", "hybrid_aggressive_mistral"):
+        for name in ("hybrid_aggressive_qwen", "hybrid_aggressive_mistral", "hybrid_aggressive_qwen32"):
             config = CONFIGS[name]
             assert config.tool_provider == "anthropic"
             assert config.reasoning_deep_provider == "ollama"
+
+    def test_hybrid_qwen32_config(self):
+        config = CONFIGS["hybrid_qwen32"]
+        assert config.tool_provider == "anthropic"
+        assert config.reasoning_quick_provider == "ollama"
+        assert config.reasoning_quick_model == "qwen2.5:32b"
+        assert config.reasoning_deep_provider == "anthropic"
+
+    def test_hybrid_aggressive_qwen32_config(self):
+        config = CONFIGS["hybrid_aggressive_qwen32"]
+        assert config.tool_provider == "anthropic"
+        assert config.reasoning_quick_model == "qwen2.5:32b"
+        assert config.reasoning_deep_model == "qwen2.5:32b"
 
     def test_to_dict(self):
         config = CONFIGS["hybrid_qwen"]

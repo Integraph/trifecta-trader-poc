@@ -1,0 +1,190 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.12, pytest-9.0.2, pluggy-1.6.0 -- /opt/homebrew/Caskroom/miniconda/base/envs/tradingagents/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc
+configfile: pyproject.toml
+plugins: anyio-4.12.1, langsmith-0.7.9
+collecting ... collected 3 items
+
+tests/test_reasoning_comparison.py::test_bull_case_quality   qwen2.5:14b / bull: 25.4s, 511 words
+  qwen2.5:14b / bear: 18.8s, 412 words
+  qwen2.5:14b / trader: 18.3s, 430 words
+  mistral-small:22b / bull: 30.8s, 347 words
+  mistral-small:22b / bear: 25.2s, 325 words
+  mistral-small:22b / trader: 9.7s, 108 words
+  qwen2.5:32b / bull: 50.2s, 385 words
+  qwen2.5:32b / bear: 49.5s, 381 words
+  qwen2.5:32b / trader: 53.2s, 351 words
+  claude-sonnet-4.5 / bull: 19.4s, 367 words
+  claude-sonnet-4.5 / bear: 18.0s, 355 words
+  claude-sonnet-4.5 / trader: 15.0s, 308 words
+
+================================================================================
+BULL CASE COMPARISON
+================================================================================
+
+--- qwen2.5:14b ---
+Words: 511, Has numbers: True
+First 300 chars: ### Bull Case for Investing in Apple (AAPL)
+
+#### Current Market Position and Technical Indicators
+Apple Inc. (AAPL) is currently trading at $270.15, which is well above its 52-week low of $218.42 but slightly below its 52-week high of $295.80. The stock's RSI stands at 62.3, indicating it’s in a mo
+
+--- mistral-small:22b ---
+Words: 347, Has numbers: True
+First 300 chars:  ### Bull Case for Buying AAPL
+
+#### 1. Specific Data Points from Market Data
+- **Current Price**: $270.15, which is close to the 52-week high of $295.80, indicating strong recent performance.
+- **Revenue Growth**: 8.2% YoY, demonstrating consistent growth despite economic headwinds.
+- **Free Cash F
+
+--- qwen2.5:32b ---
+Words: 385, Has numbers: True
+First 300 chars: ### Bull Case for Buying Apple Inc. (AAPL)
+
+#### Market Data Highlights:
+- **Current Price**: $270.15, close to the 52-week high of $295.80.
+- **Revenue Growth**: A robust YoY growth rate of 8.2% with trailing twelve months (TTM) revenue at $412B.
+- **Net Income and EPS**: TTM net income stands at $
+
+--- claude-sonnet-4.5 ---
+Words: 367, Has numbers: True
+First 300 chars: # The Bull Case for AAPL at $270.15
+
+## Compelling Valuation with Multiple Expansion Runway
+
+At a forward P/E of **28.5x**, AAPL trades at a significant discount to its historical premium multiple, especially given its **$110B free cash flow** machine. The company generates **$105B in net income** o
+PASSED
+tests/test_reasoning_comparison.py::test_trader_decision_format 
+================================================================================
+TRADER DECISION FORMAT
+================================================================================
+
+--- qwen2.5:14b ---
+Decision: BUY
+Last 200 chars: rexposed to this single stock.
+
+### Final Transaction Proposal:
+**BUY**
+
+This decision is balanced between recognizing the positive catalysts and maintaining a disciplined approach to risk management.
+
+--- mistral-small:22b ---
+Decision: HOLD
+Last 200 chars: p-Loss:** $250.00 (approximately 7% below current price)
+- **Price Target:** $300.00 (approximately 11% above current price)
+- **Position Size:** 10% of the portfolio
+
+FINAL TRANSACTION PROPOSAL: HOLD
+
+--- qwen2.5:32b ---
+Decision: BUY
+Last 200 chars: negative news or changes in technical indicators that could signal a reversal of trend.
+- Consider scaling out of position if price target is reached to lock in gains.
+
+FINAL TRANSACTION PROPOSAL: BUY
+
+--- claude-sonnet-4.5 ---
+Decision: BUY
+Last 200 chars: ion Strategy:
+- Enter 60% position now at market
+- Reserve 40% for potential add at $265 (50-day SMA test)
+- Trail stop-loss to breakeven if price reaches $282 (+4.4%)
+
+FINAL TRANSACTION PROPOSAL: BUY
+PASSED
+tests/test_reasoning_comparison.py::test_detailed_quality_comparison 
+==========================================================================================
+DETAILED QUALITY COMPARISON -- ALL MODELS
+==========================================================================================
+Model                  Role     Words   Numbers  Decision   StopLoss  Target   Time   
+------------------------------------------------------------------------------------------
+qwen2.5:14b            bull     511     12                  No        No       25.4   
+qwen2.5:14b            bear     412     6                   No        No       18.8   
+qwen2.5:14b            trader   430     8        BUY        Yes       Yes      18.3   
+mistral-small:22b      bull     347     7                   No        No       30.8   
+mistral-small:22b      bear     325     4                   No        Yes      25.2   
+mistral-small:22b      trader   108     5        HOLD       Yes       Yes      9.7    
+qwen2.5:32b            bull     385     12                  No        Yes      50.2   
+qwen2.5:32b            bear     381     5                   No        Yes      49.5   
+qwen2.5:32b            trader   351     7        BUY        Yes       Yes      53.2   
+claude-sonnet-4.5      bull     367     30                  No        Yes      19.4   
+claude-sonnet-4.5      bear     355     17                  No        Yes      18.0   
+claude-sonnet-4.5      trader   308     28       BUY        Yes       Yes      15.0   
+------------------------------------------------------------------------------------------
+
+==========================================================================================
+TRADER OUTPUT -- LAST 500 CHARS (decision + risk params)
+==========================================================================================
+
+============================== qwen2.5:14b ==============================
+Word count: 430
+Char count: 2841
+
+--- Last 500 chars ---
+ut above the recent support level.
+  
+- **Price Target**: Aim for a price target of $300 based on potential upside from the Vision Pro 2 announcement and continued strong performance in services.
+
+- **Position Size**: Allocate no more than 10% of your portfolio to AAPL, ensuring that you are not overexposed to this single stock.
+
+### Final Transaction Proposal:
+**BUY**
+
+This decision is balanced between recognizing the positive catalysts and maintaining a disciplined approach to risk management.
+
+
+============================== mistral-small:22b ==============================
+Word count: 108
+Char count: 771
+
+--- Last 500 chars ---
+ and growth in services, the elevated P/E ratio and regulatory costs are significant concerns. Additionally, the below-average trading volume suggests institutional investors may be exercising caution.
+
+Given these factors, I propose a HOLD position with specific risk management parameters:
+
+- **Stop-Loss:** $250.00 (approximately 7% below current price)
+- **Price Target:** $300.00 (approximately 11% above current price)
+- **Position Size:** 10% of the portfolio
+
+FINAL TRANSACTION PROPOSAL: HOLD
+
+
+============================== qwen2.5:32b ==============================
+Word count: 351
+Char count: 2255
+
+--- Last 500 chars ---
+- **Price Target:** Set a price target at $280 based on potential positive market reaction to Vision Pro 2 announcement.
+- **Stop-Loss:** Place a stop-loss order at $260, which is below the recent support level and provides room for normal volatility.
+
+**Risk Management:**
+- Monitor closely for any negative news or changes in technical indicators that could signal a reversal of trend.
+- Consider scaling out of position if price target is reached to lock in gains.
+
+FINAL TRANSACTION PROPOSAL: BUY
+
+
+============================== claude-sonnet-4.5 ==============================
+Word count: 308
+Char count: 2125
+
+--- Last 500 chars ---
+*: 60% of intended allocation (scale in approach given below-average volume)
+- **Price Target**: $295.00 (near 52-week high, +9.2% upside)
+- **Stop-Loss**: $257.50 (below 200-day SMA, -4.7% risk)
+- **Risk/Reward**: 1.96:1
+- **Time Horizon**: 2-3 months (capture Vision Pro 2 announcement)
+
+### Execution Strategy:
+- Enter 60% position now at market
+- Reserve 40% for potential add at $265 (50-day SMA test)
+- Trail stop-loss to breakeven if price reaches $282 (+4.4%)
+
+FINAL TRANSACTION PROPOSAL: BUY
+
+PASSED
+
+======================== 3 passed in 334.14s (0:05:34) =========================
+
