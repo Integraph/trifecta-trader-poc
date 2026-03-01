@@ -1,0 +1,115 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.12, pytest-9.0.2, pluggy-1.6.0 -- /opt/homebrew/Caskroom/miniconda/base/envs/tradingagents/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc
+configfile: pyproject.toml
+plugins: anyio-4.12.1, langsmith-0.7.9
+collecting ... collected 3 items
+
+tests/test_prompt_engineering.py::test_prompt_variant_comparison   qwen2.5:14b / bull / original: 25.5s, 15 numbers, 14 AAPL refs
+  qwen2.5:14b / bull / variant_b: 15.2s, 9 numbers, 8 AAPL refs
+  qwen2.5:14b / bull / variant_c: 16.1s, 27 numbers, 10 AAPL refs
+  qwen2.5:14b / bull / variant_d: 14.5s, 22 numbers, 8 AAPL refs
+  qwen2.5:14b / trader / original: 18.5s, 9 numbers, 4 AAPL refs
+  qwen2.5:14b / trader / variant_b: 16.1s, 22 numbers, 10 AAPL refs
+  qwen2.5:14b / trader / variant_c: 8.5s, 12 numbers, 7 AAPL refs
+  qwen2.5:14b / trader / variant_d: 8.9s, 20 numbers, 9 AAPL refs
+  claude-sonnet-4.5 / bull / original: 18.7s, 29 numbers, 14 AAPL refs
+  claude-sonnet-4.5 / bull / variant_b: 17.4s, 38 numbers, 13 AAPL refs
+  claude-sonnet-4.5 / bull / variant_c: 19.6s, 40 numbers, 11 AAPL refs
+  claude-sonnet-4.5 / bull / variant_d: 19.0s, 41 numbers, 14 AAPL refs
+  claude-sonnet-4.5 / trader / original: 15.8s, 29 numbers, 10 AAPL refs
+  claude-sonnet-4.5 / trader / variant_b: 17.2s, 46 numbers, 15 AAPL refs
+  claude-sonnet-4.5 / trader / variant_c: 8.2s, 20 numbers, 9 AAPL refs
+  claude-sonnet-4.5 / trader / variant_d: 13.4s, 34 numbers, 14 AAPL refs
+
+====================================================================================================
+PROMPT ENGINEERING EXPERIMENT — DATA GROUNDING COMPARISON
+====================================================================================================
+
+================================================== BULL PROMPT ==================================================
+Model                Variant      Words   Numbers   AAPL Refs  StopLoss  Target   Sizing   R/R   Time   
+----------------------------------------------------------------------------------------------------
+qwen2.5:14b          original     511     15        14         No        No       No       No    25.5   
+qwen2.5:14b          variant_b    344     9         8          Yes       Yes      No       Yes   15.2   
+qwen2.5:14b          variant_c    287     27        10         Yes       Yes      No       Yes   16.1   
+qwen2.5:14b          variant_d    305     22        8          Yes       Yes      Yes      Yes   14.5   
+claude-sonnet-4.5    original     369     29        14         No        Yes      No       No    18.7   
+claude-sonnet-4.5    variant_b    322     38        13         Yes       Yes      No       Yes   17.4   
+claude-sonnet-4.5    variant_c    359     40        11         Yes       Yes      No       Yes   19.6   
+claude-sonnet-4.5    variant_d    339     41        14         Yes       Yes      Yes      Yes   19.0   
+----------------------------------------------------------------------------------------------------
+
+================================================== TRADER PROMPT ==================================================
+Model                Variant      Words   Numbers   AAPL Refs  StopLoss  Target   Sizing   R/R   Time   
+----------------------------------------------------------------------------------------------------
+qwen2.5:14b          original     430     9         4          Yes       Yes      Yes      No    18.5   
+qwen2.5:14b          variant_b    328     22        10         Yes       Yes      Yes      Yes   16.1   
+qwen2.5:14b          variant_c    128     12        7          Yes       Yes      Yes      Yes   8.5    
+qwen2.5:14b          variant_d    139     20        9          Yes       Yes      Yes      Yes   8.9    
+claude-sonnet-4.5    original     338     29        10         Yes       Yes      Yes      Yes   15.8   
+claude-sonnet-4.5    variant_b    380     46        15         Yes       Yes      Yes      Yes   17.2   
+claude-sonnet-4.5    variant_c    176     20        9          Yes       Yes      Yes      Yes   8.2    
+claude-sonnet-4.5    variant_d    207     34        14         Yes       Yes      Yes      Yes   13.4   
+----------------------------------------------------------------------------------------------------
+PASSED
+tests/test_prompt_engineering.py::test_best_variant_vs_claude 
+====================================================================================================
+GAP ANALYSIS: Best Local Variant vs Claude Baseline
+====================================================================================================
+
+--- BULL ---
+Claude baseline (original prompt): 29 numbers, 14 AAPL refs
+Best Qwen variant: variant_c
+  Numbers cited: 27 (Claude: 29)
+  AAPL data refs: 10 (Claude: 14)
+  Risk params: 3/4
+  Gap closure: 93% of Claude's data density
+
+  --- Best variant response (last 500 chars) ---
+  ### RISK/REWARD
+
+**Entry Price**: $265
+**Stop-Loss**: $250
+**Price Target**: $300
+
+The risk/reward ratio is favorable, with a potential upside of 13.4% ($300 - $265) and a downside risk of 6% ($265 - $250). This results in a risk/reward ratio of approximately 2.2:1, indicating a strong reward for the level of risk taken.
+
+Given Apple's robust financials, upcoming product launches, and strategic initiatives, the current valuation offers an attractive entry point with significant upside potential.
+
+--- TRADER ---
+Claude baseline (original prompt): 29 numbers, 10 AAPL refs
+Best Qwen variant: variant_b
+  Numbers cited: 22 (Claude: 29)
+  AAPL data refs: 10 (Claude: 10)
+  Risk params: 4/4
+  Gap closure: 76% of Claude's data density
+
+  --- Best variant response (last 500 chars) ---
+  ). The target is set at the next resistance level, which could be around $300 based on historical patterns and the 52-week high of $295.80.
+
+The risk/reward ratio can be calculated as follows:
+- Risk: Entry price - Stop-loss = $270.15 - $252.80 = $17.35
+- Reward: Target - Entry price = $300 - $270.15 = $29.85
+- Ratio: 29.85 / 17.35 ≈ 1.72
+
+Given the strong technical support and positive fundamentals, I would allocate a position size of 4% of my portfolio to AAPL.
+
+FINAL TRANSACTION PROPOSAL: BUY
+PASSED
+tests/test_prompt_engineering.py::test_trader_decision_across_variants 
+================================================================================
+TRADER DECISION EXTRACTION ACROSS VARIANTS
+================================================================================
+  qwen2.5:14b          original     -> BUY    [PASS]
+  qwen2.5:14b          variant_b    -> BUY    [PASS]
+  qwen2.5:14b          variant_c    -> BUY    [PASS]
+  qwen2.5:14b          variant_d    -> BUY    [PASS]
+  claude-sonnet-4.5    original     -> BUY    [PASS]
+  claude-sonnet-4.5    variant_b    -> BUY    [PASS]
+  claude-sonnet-4.5    variant_c    -> BUY    [PASS]
+  claude-sonnet-4.5    variant_d    -> BUY    [PASS]
+PASSED
+
+======================== 3 passed in 253.21s (0:04:13) =========================
+

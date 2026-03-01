@@ -1,0 +1,42 @@
+
+============================================================
+Run: all_cloud
+  Decision: SELL
+  Elapsed: 1230.1s
+  Output length: 18204 chars
+  Quality score: 10.0/10
+============================================================
+
+============================================================
+Run: hybrid_qwen
+  Decision: HOLD
+  Elapsed: 1242.5s
+  Output length: 8644 chars
+  Quality score: 8.6/10
+============================================================
+
+============================================================
+Run: hybrid_qwen_enhanced
+  Decision: HOLD
+  Elapsed: 1925.7s
+  Output length: 12813 chars
+  Quality score: 10.0/10
+============================================================
+
+
+================================================================================
+HYBRID LLM QUALITY COMPARISON
+================================================================================
+
+Config                    Decision Consistent  Depth  Data   Risk   Score  Cost    
+--------------------------------------------------------------------------------
+all_cloud                 SELL     yes         10     10     10     10.0   $0.0000 
+hybrid_qwen_enhanced      HOLD     yes         10     10     10     10.0   $0.0000 
+hybrid_qwen               HOLD     yes         8      10     6      8.6    $0.0000 
+--------------------------------------------------------------------------------
+
+Best quality:  all_cloud (score: 10.0)
+Lowest cost:   all_cloud ($0.0000)
+
+Report saved to: results/comparison_report.txt
+

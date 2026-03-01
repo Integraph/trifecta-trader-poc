@@ -21,6 +21,7 @@ class TestHybridLLMConfig:
         assert "hybrid_aggressive_mistral" in CONFIGS
         assert "hybrid_qwen32" in CONFIGS
         assert "hybrid_aggressive_qwen32" in CONFIGS
+        assert "hybrid_qwen_enhanced" in CONFIGS
 
     def test_all_cloud_config(self):
         config = CONFIGS["all_cloud"]
@@ -58,6 +59,30 @@ class TestHybridLLMConfig:
         assert config.tool_provider == "anthropic"
         assert config.reasoning_quick_model == "qwen2.5:32b"
         assert config.reasoning_deep_model == "qwen2.5:32b"
+
+    def test_hybrid_qwen_enhanced_config(self):
+        config = CONFIGS["hybrid_qwen_enhanced"]
+        assert config.tool_provider == "anthropic"
+        assert config.reasoning_quick_provider == "ollama"
+        assert config.reasoning_quick_model == "qwen2.5:14b"
+        assert config.reasoning_deep_provider == "anthropic"
+        assert config.enhance_local is True
+        assert config.enhance_style == "financial_analysis"
+
+    def test_enhance_local_default_false(self):
+        config = HybridLLMConfig()
+        assert config.enhance_local is False
+
+    def test_to_dict_includes_enhance_style_when_enabled(self):
+        config = CONFIGS["hybrid_qwen_enhanced"]
+        d = config.to_dict()
+        assert "enhance_style" in d
+        assert d["enhance_style"] == "financial_analysis"
+
+    def test_to_dict_omits_enhance_style_when_disabled(self):
+        config = CONFIGS["hybrid_qwen"]
+        d = config.to_dict()
+        assert "enhance_style" not in d
 
     def test_to_dict(self):
         config = CONFIGS["hybrid_qwen"]

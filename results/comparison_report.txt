@@ -5,6 +5,7 @@ HYBRID LLM QUALITY COMPARISON
 Config                    Decision Consistent  Depth  Data   Risk   Score  Cost    
 --------------------------------------------------------------------------------
 all_cloud                 SELL     yes         10     10     10     10.0   $0.0000 
+hybrid_qwen_enhanced      HOLD     yes         10     10     10     10.0   $0.0000 
 hybrid_qwen               HOLD     yes         8      10     6      8.6    $0.0000 
 --------------------------------------------------------------------------------
 
