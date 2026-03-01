@@ -58,10 +58,16 @@ class TestEnhancedChatModel:
         assert "financial_analysis" in ENHANCEMENT_STYLES
         assert "structured" in ENHANCEMENT_STYLES
         assert "few_shot" in ENHANCEMENT_STYLES
+        assert "execution_params_only" in ENHANCEMENT_STYLES
 
     def test_prefix_contains_data_requirements(self):
-        """All prefixes should mention data citation requirements."""
-        for style, prefix in ENHANCEMENT_STYLES.items():
+        """Data-citation styles should mention data citation requirements.
+        execution_params_only is exempt — it's a lightweight structural-only style."""
+        data_citation_styles = {
+            k: v for k, v in ENHANCEMENT_STYLES.items()
+            if k != "execution_params_only"
+        }
+        for style, prefix in data_citation_styles.items():
             assert "10" in prefix or "data point" in prefix.lower(), (
                 f"Style '{style}' doesn't mention data citation count"
             )
@@ -91,3 +97,36 @@ class TestEnhancedChatModel:
 
         call_args = mock_llm.invoke.call_args[0][0]
         assert "MY PREFIX\n\nMY PROMPT" == call_args
+
+    def test_execution_parameters_in_financial_prefix(self):
+        """FINANCIAL_ANALYSIS_PREFIX must contain ## EXECUTION PARAMETERS block."""
+        from src.enhanced_llm import FINANCIAL_ANALYSIS_PREFIX
+        assert "## EXECUTION PARAMETERS" in FINANCIAL_ANALYSIS_PREFIX
+        assert "Stop-Loss:" in FINANCIAL_ANALYSIS_PREFIX
+        assert "Price Target:" in FINANCIAL_ANALYSIS_PREFIX
+        assert "Position Size:" in FINANCIAL_ANALYSIS_PREFIX
+
+    def test_execution_parameters_in_structured_prefix(self):
+        """STRUCTURED_OUTPUT_PREFIX must contain ## EXECUTION PARAMETERS block."""
+        from src.enhanced_llm import STRUCTURED_OUTPUT_PREFIX
+        assert "## EXECUTION PARAMETERS" in STRUCTURED_OUTPUT_PREFIX
+        assert "Stop-Loss:" in STRUCTURED_OUTPUT_PREFIX
+        assert "Price Target:" in STRUCTURED_OUTPUT_PREFIX
+        assert "Position Size:" in STRUCTURED_OUTPUT_PREFIX
+
+    def test_execution_parameters_in_few_shot_prefix(self):
+        """FEW_SHOT_PREFIX must contain ## EXECUTION PARAMETERS block."""
+        from src.enhanced_llm import FEW_SHOT_PREFIX
+        assert "## EXECUTION PARAMETERS" in FEW_SHOT_PREFIX
+        assert "Stop-Loss:" in FEW_SHOT_PREFIX
+        assert "Price Target:" in FEW_SHOT_PREFIX
+        assert "Position Size:" in FEW_SHOT_PREFIX
+
+    def test_execution_params_only_style_exists(self):
+        """execution_params_only style should exist and only contain the EXECUTION PARAMETERS block."""
+        from src.enhanced_llm import EXECUTION_PARAMS_ONLY_PREFIX, ENHANCEMENT_STYLES
+        assert "execution_params_only" in ENHANCEMENT_STYLES
+        assert "## EXECUTION PARAMETERS" in EXECUTION_PARAMS_ONLY_PREFIX
+        assert "Stop-Loss:" in EXECUTION_PARAMS_ONLY_PREFIX
+        # Should NOT contain the data citation requirements (that's for local models)
+        assert "cite at least 10" not in EXECUTION_PARAMS_ONLY_PREFIX

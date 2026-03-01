@@ -1,0 +1,235 @@
+ERROR conda.cli.main_run:execute(127): `conda run python -m pytest tests/ -v --ignore=tests/test_reasoning_comparison.py --ignore=tests/test_prompt_engineering.py --ignore=tests/test_structured_output.py` failed. (See above for error)
+============================= test session starts ==============================
+platform darwin -- Python 3.13.12, pytest-9.0.2, pluggy-1.6.0 -- /opt/homebrew/Caskroom/miniconda/base/envs/tradingagents/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc
+configfile: pyproject.toml
+plugins: anyio-4.12.1, langsmith-0.7.9
+collecting ... collected 112 items
+
+tests/test_alpaca_connection.py::TestAlpacaConnection::test_paper_account_accessible SKIPPED [  0%]
+tests/test_alpaca_connection.py::TestAlpacaConnection::test_position_manager_integration SKIPPED [  1%]
+tests/test_alpaca_connection.py::TestAlpacaConnection::test_executor_initialization SKIPPED [  2%]
+tests/test_compare_runs.py::TestCompareRuns::test_load_result PASSED     [  3%]
+tests/test_compare_runs.py::TestCompareRuns::test_result_to_score PASSED [  4%]
+tests/test_compare_runs.py::TestCompareRuns::test_result_to_score_missing_quality PASSED [  5%]
+tests/test_config.py::test_tradingagents_importable PASSED               [  6%]
+tests/test_config.py::test_config_creation PASSED                        [  7%]
+tests/test_config.py::test_data_vendors_default_to_yfinance PASSED       [  8%]
+tests/test_config.py::test_results_directory PASSED                      [  8%]
+tests/test_enhanced_llm.py::TestEnhancedChatModel::test_string_prompt_gets_prefix PASSED [  9%]
+tests/test_enhanced_llm.py::TestEnhancedChatModel::test_list_prompt_gets_system_message PASSED [ 10%]
+tests/test_enhanced_llm.py::TestEnhancedChatModel::test_bind_tools_passes_through PASSED [ 11%]
+tests/test_enhanced_llm.py::TestEnhancedChatModel::test_create_enhanced_llm_valid_style PASSED [ 12%]
+tests/test_enhanced_llm.py::TestEnhancedChatModel::test_create_enhanced_llm_invalid_style PASSED [ 13%]
+tests/test_enhanced_llm.py::TestEnhancedChatModel::test_all_styles_exist PASSED [ 14%]
+tests/test_enhanced_llm.py::TestEnhancedChatModel::test_prefix_contains_data_requirements PASSED [ 15%]
+tests/test_enhanced_llm.py::TestEnhancedChatModel::test_unknown_input_type_passthrough PASSED [ 16%]
+tests/test_enhanced_llm.py::TestEnhancedChatModel::test_getattr_proxies_to_base PASSED [ 16%]
+tests/test_enhanced_llm.py::TestEnhancedChatModel::test_string_prompt_prefix_separator PASSED [ 17%]
+tests/test_enhanced_llm.py::TestEnhancedChatModel::test_execution_parameters_in_financial_prefix PASSED [ 18%]
+tests/test_enhanced_llm.py::TestEnhancedChatModel::test_execution_parameters_in_structured_prefix PASSED [ 19%]
+tests/test_enhanced_llm.py::TestEnhancedChatModel::test_execution_parameters_in_few_shot_prefix PASSED [ 20%]
+tests/test_executor.py::TestTradeExecutor::test_rejected_order_not_submitted PASSED [ 21%]
+tests/test_executor.py::TestTradeExecutor::test_approved_bracket_order_submitted PASSED [ 22%]
+tests/test_executor.py::TestTradeExecutor::test_paper_only_hardcoded PASSED [ 23%]
+tests/test_executor.py::TestTradeExecutor::test_audit_file_created PASSED [ 24%]
+tests/test_executor.py::TestTradeExecutor::test_failed_order_logs_error PASSED [ 25%]
+tests/test_executor.py::TestTradeExecutor::test_audit_entry_contains_key_fields PASSED [ 25%]
+tests/test_hybrid_llm.py::TestHybridLLMConfig::test_default_config PASSED [ 26%]
+tests/test_hybrid_llm.py::TestHybridLLMConfig::test_predefined_configs_exist PASSED [ 27%]
+tests/test_hybrid_llm.py::TestHybridLLMConfig::test_all_cloud_config PASSED [ 28%]
+tests/test_hybrid_llm.py::TestHybridLLMConfig::test_hybrid_qwen_config PASSED [ 29%]
+tests/test_hybrid_llm.py::TestHybridLLMConfig::test_hybrid_mistral_config PASSED [ 30%]
+tests/test_hybrid_llm.py::TestHybridLLMConfig::test_aggressive_configs_use_local_for_deep PASSED [ 31%]
+tests/test_hybrid_llm.py::TestHybridLLMConfig::test_hybrid_qwen32_config PASSED [ 32%]
+tests/test_hybrid_llm.py::TestHybridLLMConfig::test_hybrid_aggressive_qwen32_config PASSED [ 33%]
+tests/test_hybrid_llm.py::TestHybridLLMConfig::test_hybrid_qwen_enhanced_config PASSED [ 33%]
+tests/test_hybrid_llm.py::TestHybridLLMConfig::test_enhance_local_default_false PASSED [ 34%]
+tests/test_hybrid_llm.py::TestHybridLLMConfig::test_to_dict_includes_enhance_style_when_enabled PASSED [ 35%]
+tests/test_hybrid_llm.py::TestHybridLLMConfig::test_to_dict_omits_enhance_style_when_disabled PASSED [ 36%]
+tests/test_hybrid_llm.py::TestHybridLLMConfig::test_to_dict PASSED       [ 37%]
+tests/test_hybrid_llm.py::TestHybridLLMConfig::test_custom_config PASSED [ 38%]
+tests/test_hybrid_llm.py::TestHybridLLMConfig::test_to_dict_format PASSED [ 39%]
+tests/test_hybrid_llm.py::TestHybridGraphSetup::test_hybrid_graph_setup_importable PASSED [ 40%]
+tests/test_hybrid_llm.py::TestHybridGraphSetup::test_hybrid_graph_setup_accepts_three_llms PASSED [ 41%]
+tests/test_local_tool_calling.py::test_tool_calling_basic[qwen2.5:14b] PASSED [ 41%]
+tests/test_local_tool_calling.py::test_tool_calling_basic[mistral-small:22b] FAILED [ 42%]
+tests/test_local_tool_calling.py::test_tool_calling_basic[qwen2.5:32b] PASSED [ 43%]
+tests/test_local_tool_calling.py::test_tool_calling_multi_tool[qwen2.5:14b] PASSED [ 44%]
+tests/test_local_tool_calling.py::test_tool_calling_multi_tool[mistral-small:22b] FAILED [ 45%]
+tests/test_local_tool_calling.py::test_tool_calling_multi_tool[qwen2.5:32b] PASSED [ 46%]
+tests/test_local_tool_calling.py::test_reasoning_quality[qwen2.5:14b] PASSED [ 47%]
+tests/test_local_tool_calling.py::test_reasoning_quality[mistral-small:22b] PASSED [ 48%]
+tests/test_local_tool_calling.py::test_reasoning_quality[qwen2.5:32b] PASSED [ 49%]
+tests/test_pipeline.py::test_decision_not_repeated PASSED                [ 50%]
+tests/test_pipeline.py::test_conditional_logic_defaults PASSED           [ 50%]
+tests/test_pipeline.py::test_conditional_logic_risk_round_limit PASSED   [ 51%]
+tests/test_pipeline.py::test_conditional_logic_config_not_passed PASSED  [ 52%]
+tests/test_pipeline.py::test_propagator_defaults PASSED                  [ 53%]
+tests/test_position_manager.py::TestPositionManager::test_buy_order_calculation PASSED [ 54%]
+tests/test_position_manager.py::TestPositionManager::test_sell_order_with_position PASSED [ 55%]
+tests/test_position_manager.py::TestPositionManager::test_sell_without_position_rejected PASSED [ 56%]
+tests/test_position_manager.py::TestPositionManager::test_hold_not_actionable PASSED [ 57%]
+tests/test_position_manager.py::TestPositionManager::test_low_quality_rejected PASSED [ 58%]
+tests/test_position_manager.py::TestPositionManager::test_no_stop_loss_rejected PASSED [ 58%]
+tests/test_position_manager.py::TestPositionManager::test_position_size_capped PASSED [ 59%]
+tests/test_position_manager.py::TestPositionManager::test_insufficient_buying_power PASSED [ 60%]
+tests/test_position_manager.py::TestPositionManager::test_existing_position_reduces_buy PASSED [ 61%]
+tests/test_position_manager.py::TestPositionManager::test_get_account_state PASSED [ 62%]
+tests/test_position_manager.py::TestPositionManager::test_order_calculation_to_dict PASSED [ 63%]
+tests/test_quality_scorer.py::TestQualityScorer::test_high_quality_output PASSED [ 64%]
+tests/test_quality_scorer.py::TestQualityScorer::test_low_quality_output PASSED [ 65%]
+tests/test_quality_scorer.py::TestQualityScorer::test_inconsistent_decision PASSED [ 66%]
+tests/test_quality_scorer.py::TestQualityScorer::test_comparison_report PASSED [ 66%]
+tests/test_signal_processing.py::TestExtractDecision::test_final_transaction_proposal_hold PASSED [ 67%]
+tests/test_signal_processing.py::TestExtractDecision::test_final_transaction_proposal_buy PASSED [ 68%]
+tests/test_signal_processing.py::TestExtractDecision::test_final_transaction_proposal_sell PASSED [ 69%]
+tests/test_signal_processing.py::TestExtractDecision::test_ignores_negation_not_recommending_sell PASSED [ 70%]
+tests/test_signal_processing.py::TestExtractDecision::test_multiple_proposals_takes_last PASSED [ 71%]
+tests/test_signal_processing.py::TestExtractDecision::test_recommendation_pattern PASSED [ 72%]
+tests/test_signal_processing.py::TestExtractDecision::test_no_markdown_bold PASSED [ 73%]
+tests/test_signal_processing.py::TestExtractDecision::test_empty_input PASSED [ 74%]
+tests/test_signal_processing.py::TestExtractDecision::test_no_decision_found PASSED [ 75%]
+tests/test_signal_processing.py::TestExtractDecision::test_sell_in_reasoning_hold_in_proposal PASSED [ 75%]
+tests/test_signal_processing.py::TestExtractDecision::test_case_insensitive PASSED [ 76%]
+tests/test_signal_processing.py::TestExtractDecision::test_standalone_decision_fallback PASSED [ 77%]
+tests/test_signal_processing.py::TestEdgeCases::test_buy_with_extra_text PASSED [ 78%]
+tests/test_signal_processing.py::TestEdgeCases::test_hold_with_conditions PASSED [ 79%]
+tests/test_signal_processing.py::TestEdgeCases::test_hash_prefix_on_proposal PASSED [ 80%]
+tests/test_signal_processing.py::TestEdgeCases::test_conviction_level_does_not_interfere PASSED [ 81%]
+tests/test_trade_params.py::TestExtractTradeParams::test_standard_format PASSED [ 82%]
+tests/test_trade_params.py::TestExtractTradeParams::test_hybrid_output_format PASSED [ 83%]
+tests/test_trade_params.py::TestExtractTradeParams::test_all_cloud_sell_format PASSED [ 83%]
+tests/test_trade_params.py::TestExtractTradeParams::test_hold_not_actionable PASSED [ 84%]
+tests/test_trade_params.py::TestExtractTradeParams::test_low_quality_not_actionable PASSED [ 85%]
+tests/test_trade_params.py::TestExtractTradeParams::test_missing_stop_loss PASSED [ 86%]
+tests/test_trade_params.py::TestExtractTradeParams::test_risk_metrics_calculated PASSED [ 87%]
+tests/test_trade_params.py::TestExtractTradeParams::test_trailing_stop_format PASSED [ 88%]
+tests/test_trade_params.py::TestExtractTradeParams::test_empty_text PASSED [ 89%]
+tests/test_trade_params.py::TestExtractTradeParams::test_confidence_extraction PASSED [ 90%]
+tests/test_trade_params.py::TestExtractTradeParams::test_has_bracket_params_both_present PASSED [ 91%]
+tests/test_trade_params.py::TestExtractTradeParams::test_has_bracket_params_missing_target PASSED [ 91%]
+tests/test_trade_params.py::TestExtractTradeParams::test_raw_text_excerpt_captured PASSED [ 92%]
+tests/test_trade_params.py::TestExtractTradeParams::test_allocation_pattern PASSED [ 93%]
+tests/test_trade_params.py::TestExtractTradeParams::test_take_profit_pattern PASSED [ 94%]
+tests/test_trade_params.py::TestStructuredBlockExtraction::test_full_structured_block PASSED [ 95%]
+tests/test_trade_params.py::TestStructuredBlockExtraction::test_structured_block_overrides_body_text PASSED [ 96%]
+tests/test_trade_params.py::TestStructuredBlockExtraction::test_partial_structured_block_falls_through PASSED [ 97%]
+tests/test_trade_params.py::TestStructuredBlockExtraction::test_no_structured_block_uses_regex PASSED [ 98%]
+tests/test_trade_params.py::TestStructuredBlockExtraction::test_structured_block_with_commas_in_numbers PASSED [ 99%]
+tests/test_trade_params.py::TestStructuredBlockExtraction::test_risk_reward_from_structured_block PASSED [100%]
+
+=================================== FAILURES ===================================
+__________________ test_tool_calling_basic[mistral-small:22b] __________________
+
+model_name = 'mistral-small:22b'
+
+    @pytest.mark.parametrize("model_name", OLLAMA_MODELS)
+    def test_tool_calling_basic(model_name):
+        """Test if the model can produce a valid tool call."""
+        llm = ChatOpenAI(
+            model=model_name,
+            base_url="http://localhost:11434/v1",
+            api_key="ollama",
+            temperature=0,
+        )
+    
+        tool = _get_test_tool()
+        llm_with_tools = llm.bind_tools([tool])
+    
+        result = llm_with_tools.invoke(
+            "What is the stock price of AAPL on 2026-02-27?"
+        )
+    
+        has_tool_calls = hasattr(result, "tool_calls") and len(result.tool_calls) > 0
+    
+        if has_tool_calls:
+            tc = result.tool_calls[0]
+            assert tc["name"] == "get_stock_price", f"Wrong tool name: {tc['name']}"
+            assert "ticker" in tc["args"], f"Missing 'ticker' arg: {tc['args']}"
+            print(f"\n  {model_name}: Tool calling WORKS")
+            print(f"   Tool call: {tc['name']}({tc['args']})")
+        else:
+            print(f"\n  {model_name}: Tool calling FAILED")
+            print(f"   Response (first 200 chars): {result.content[:200]}")
+>           pytest.fail(
+                f"{model_name} did not produce tool calls. "
+                f"Response: {result.content[:200]}"
+            )
+E           Failed: mistral-small:22b did not produce tool calls. Response:  [{"name":"get_stock_price","arguments":{"ticker":"AAPL","date":"2026-02-27"}}]
+
+tests/test_local_tool_calling.py:86: Failed
+----------------------------- Captured stdout call -----------------------------
+
+  mistral-small:22b: Tool calling FAILED
+   Response (first 200 chars):  [{"name":"get_stock_price","arguments":{"ticker":"AAPL","date":"2026-02-27"}}]
+_______________ test_tool_calling_multi_tool[mistral-small:22b] ________________
+
+model_name = 'mistral-small:22b'
+
+    @pytest.mark.parametrize("model_name", OLLAMA_MODELS)
+    def test_tool_calling_multi_tool(model_name):
+        """Test if the model can choose the right tool when multiple are available."""
+        from langchain_core.tools import tool
+    
+        @tool
+        def get_stock_price(ticker: str) -> str:
+            """Get the current stock price for a ticker symbol."""
+            return json.dumps({"ticker": ticker, "price": 185.50})
+    
+        @tool
+        def get_company_news(company: str) -> str:
+            """Get recent news articles about a company."""
+            return json.dumps({"company": company, "articles": []})
+    
+        llm = ChatOpenAI(
+            model=model_name,
+            base_url="http://localhost:11434/v1",
+            api_key="ollama",
+            temperature=0,
+        )
+    
+        llm_with_tools = llm.bind_tools([get_stock_price, get_company_news])
+    
+        result = llm_with_tools.invoke("What is AAPL trading at?")
+    
+        has_tool_calls = hasattr(result, "tool_calls") and len(result.tool_calls) > 0
+        if has_tool_calls:
+            tc = result.tool_calls[0]
+            assert tc["name"] == "get_stock_price", (
+                f"Model called wrong tool: {tc['name']} (expected get_stock_price)"
+            )
+            print(f"\n  {model_name}: Multi-tool selection WORKS -- chose {tc['name']}")
+        else:
+            print(f"\n  {model_name}: Multi-tool selection FAILED -- no tool calls")
+>           pytest.fail(f"{model_name} did not produce tool calls")
+E           Failed: mistral-small:22b did not produce tool calls
+
+tests/test_local_tool_calling.py:127: Failed
+----------------------------- Captured stdout call -----------------------------
+
+  mistral-small:22b: Multi-tool selection FAILED -- no tool calls
+=============================== warnings summary ===============================
+tests/test_executor.py::TestTradeExecutor::test_rejected_order_not_submitted
+  /opt/homebrew/Caskroom/miniconda/base/envs/tradingagents/lib/python3.13/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions
+    warnings.warn(  # deprecated in 14.0 - 2024-11-09
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_local_tool_calling.py::test_tool_calling_basic[mistral-small:22b] - Failed: mistral-small:22b did not produce tool calls. Response:  [{"name":"get_stock_price","arguments":{"ticker":"AAPL","date":"2026-02-27"}}]
+FAILED tests/test_local_tool_calling.py::test_tool_calling_multi_tool[mistral-small:22b] - Failed: mistral-small:22b did not produce tool calls
+======= 2 failed, 107 passed, 3 skipped, 1 warning in 108.32s (0:01:48) ========
+
+  mistral-small:22b: Multi-tool selection FAILED -- no tool calls
+=============================== warnings summary ===============================
+tests/test_executor.py::TestTradeExecutor::test_rejected_order_not_submitted
+  /opt/homebrew/Caskroom/miniconda/base/envs/tradingagents/lib/python3.13/site-packages/websockets/legacy/__init__.py:6: DeprecationWarning: websockets.legacy is deprecated; see https://websockets.readthedocs.io/en/stable/howto/upgrade.html for upgrade instructions
+    warnings.warn(  # deprecated in 14.0 - 2024-11-09
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_local_tool_calling.py::test_tool_calling_basic[mistral-small:22b] - Failed: mistral-small:22b did not produce tool calls. Response:  [{"name":"get_stock_price","arguments":{"ticker":"AAPL","date":"2026-02-27"}}]
+FAILED tests/test_local_tool_calling.py::test_tool_calling_multi_tool[mistral-small:22b] - Failed: mistral-small:22b did not produce tool calls
+2 failed, 108 passed, 3 skipped, 1 warning in 101.39s (0:01:41)
+

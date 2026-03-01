@@ -131,3 +131,107 @@ class TestExtractTradeParams:
         text = "Stop-loss: $258. Take-profit: $295."
         params = extract_trade_params("AAPL", "BUY", 9.5, text)
         assert params.price_target == 295.0
+
+
+class TestStructuredBlockExtraction:
+    """Test extraction from the ## EXECUTION PARAMETERS block."""
+
+    def test_full_structured_block(self):
+        """Full structured block should extract all values."""
+        text = """
+        ... analysis text ...
+
+        ## EXECUTION PARAMETERS
+        - Decision: BUY
+        - Entry Price: $270.15
+        - Stop-Loss: $258.00 (4.5% below entry)
+        - Price Target: $295.00 (9.2% above entry)
+        - Risk/Reward Ratio: 2.1:1
+        - Position Size: 5% of portfolio
+        - Confidence: HIGH
+        - Timeframe: 2-4 weeks
+        """
+        params = extract_trade_params("AAPL", "BUY", 9.5, text)
+        assert params.stop_loss == 258.0
+        assert params.price_target == 295.0
+        assert params.entry_price == 270.15
+        assert params.position_pct == 5.0
+        assert params.confidence == "high"
+        assert params.is_actionable
+
+    def test_structured_block_overrides_body_text(self):
+        """Structured block values should take priority over body text."""
+        text = """
+        The stop is around $250 based on support.
+        Target could be $310 at resistance.
+
+        ## EXECUTION PARAMETERS
+        - Decision: BUY
+        - Entry Price: $270.00
+        - Stop-Loss: $258.00 (4.4% below entry)
+        - Price Target: $295.00 (9.3% above entry)
+        - Risk/Reward Ratio: 2.1:1
+        - Position Size: 4% of portfolio
+        - Confidence: MEDIUM
+        - Timeframe: 1-3 months
+        """
+        params = extract_trade_params("AAPL", "BUY", 9.5, text)
+        assert params.stop_loss == 258.0  # Not $250
+        assert params.price_target == 295.0  # Not $310
+        assert params.position_pct == 4.0
+
+    def test_partial_structured_block_falls_through(self):
+        """If structured block is missing some values, fall through to regex."""
+        text = """
+        Target at $295 based on fibonacci.
+
+        ## EXECUTION PARAMETERS
+        - Decision: BUY
+        - Entry Price: $270.00
+        - Stop-Loss: $258.00 (4.4% below entry)
+        - Position Size: 5% of portfolio
+        - Confidence: HIGH
+        """
+        params = extract_trade_params("AAPL", "BUY", 9.5, text)
+        assert params.stop_loss == 258.0  # From structured block
+        assert params.price_target == 295.0  # Fell through to regex
+        assert params.position_pct == 5.0  # From structured block
+
+    def test_no_structured_block_uses_regex(self):
+        """Without structured block, existing regex should still work."""
+        text = "Stop-loss: $258. Target: $295. Position size: 5% of portfolio."
+        params = extract_trade_params("AAPL", "BUY", 9.5, text)
+        assert params.stop_loss == 258.0
+        assert params.price_target == 295.0
+
+    def test_structured_block_with_commas_in_numbers(self):
+        """Numbers with commas (e.g., $1,250.00) should parse correctly."""
+        text = """
+        ## EXECUTION PARAMETERS
+        - Decision: BUY
+        - Entry Price: $1,250.00
+        - Stop-Loss: $1,200.00 (4% below entry)
+        - Price Target: $1,350.00 (8% above entry)
+        - Risk/Reward Ratio: 2.0:1
+        - Position Size: 3% of portfolio
+        - Confidence: MEDIUM
+        """
+        params = extract_trade_params("GOOG", "BUY", 9.0, text)
+        assert params.entry_price == 1250.0
+        assert params.stop_loss == 1200.0
+        assert params.price_target == 1350.0
+
+    def test_risk_reward_from_structured_block(self):
+        """R/R ratio should be extracted from structured block."""
+        text = """
+        ## EXECUTION PARAMETERS
+        - Decision: BUY
+        - Entry Price: $270.00
+        - Stop-Loss: $258.00 (4.4% below entry)
+        - Price Target: $295.00 (9.3% above entry)
+        - Risk/Reward Ratio: 2.1:1
+        - Position Size: 5% of portfolio
+        - Confidence: HIGH
+        """
+        params = extract_trade_params("AAPL", "BUY", 9.5, text)
+        assert params.risk_reward_ratio == 2.1

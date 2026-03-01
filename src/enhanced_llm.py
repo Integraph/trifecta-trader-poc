@@ -36,6 +36,20 @@ FINANCIAL_ANALYSIS_PREFIX = """CRITICAL REQUIREMENTS FOR YOUR ANALYSIS:
   * For risk management: provide stop-loss (exact price + % risk), price target (exact + % upside), risk/reward ratio, and position size (% of portfolio)
 - Every sentence should contain at least one specific number from the data
 - Prioritize data density and quantitative precision over narrative prose
+
+IMPORTANT: At the END of your final analysis, you MUST include this exact section with real values:
+
+## EXECUTION PARAMETERS
+- Decision: [BUY/HOLD/SELL]
+- Entry Price: $[current price]
+- Stop-Loss: $[exact price] ([X]% below entry)
+- Price Target: $[exact price] ([X]% above entry)
+- Risk/Reward Ratio: [X.X]:1
+- Position Size: [X]% of portfolio
+- Confidence: [HIGH/MEDIUM/LOW]
+- Timeframe: [e.g., 2-4 weeks, 1-3 months]
+
+This section is REQUIRED. Use the data from your analysis to fill in real values. Never omit the stop-loss or price target.
 """
 
 # Alternative: structured output style (use if variant C wins)
@@ -45,6 +59,20 @@ For trading decisions, always calculate and state:
 - Entry price (exact), Stop-loss (exact price and % risk), Target (exact price and % upside)
 - Risk/reward ratio, Position sizing (% of portfolio)
 Reference at least 10 specific numbers from the provided data.
+
+IMPORTANT: At the END of your final analysis, you MUST include this exact section with real values:
+
+## EXECUTION PARAMETERS
+- Decision: [BUY/HOLD/SELL]
+- Entry Price: $[current price]
+- Stop-Loss: $[exact price] ([X]% below entry)
+- Price Target: $[exact price] ([X]% above entry)
+- Risk/Reward Ratio: [X.X]:1
+- Position Size: [X]% of portfolio
+- Confidence: [HIGH/MEDIUM/LOW]
+- Timeframe: [e.g., 2-4 weeks, 1-3 months]
+
+This section is REQUIRED. Use the data from your analysis to fill in real values. Never omit the stop-loss or price target.
 """
 
 # Alternative: few-shot style (use if variant D wins)
@@ -53,12 +81,44 @@ For example, instead of "the stock is near its moving average", say
 "price at $270.15 is 1.9% above the 50-day SMA of $265.20 and 6.8% above the 200-day SMA of $252.80."
 Always calculate exact percentages, risk/reward ratios, and position sizes.
 Cite at least 10 specific data points from the data provided.
+
+IMPORTANT: At the END of your final analysis, you MUST include this exact section with real values:
+
+## EXECUTION PARAMETERS
+- Decision: [BUY/HOLD/SELL]
+- Entry Price: $[current price]
+- Stop-Loss: $[exact price] ([X]% below entry)
+- Price Target: $[exact price] ([X]% above entry)
+- Risk/Reward Ratio: [X.X]:1
+- Position Size: [X]% of portfolio
+- Confidence: [HIGH/MEDIUM/LOW]
+- Timeframe: [e.g., 2-4 weeks, 1-3 months]
+
+This section is REQUIRED. Use the data from your analysis to fill in real values. Never omit the stop-loss or price target.
+"""
+
+# Lightweight style — only the structured block requirement, without data-citation boilerplate.
+# Use for cloud models (Claude) that already cite data well, but need deterministic output format.
+EXECUTION_PARAMS_ONLY_PREFIX = """IMPORTANT: At the END of your final analysis, you MUST include this exact section with real values:
+
+## EXECUTION PARAMETERS
+- Decision: [BUY/HOLD/SELL]
+- Entry Price: $[current price]
+- Stop-Loss: $[exact price] ([X]% below entry)
+- Price Target: $[exact price] ([X]% above entry)
+- Risk/Reward Ratio: [X.X]:1
+- Position Size: [X]% of portfolio
+- Confidence: [HIGH/MEDIUM/LOW]
+- Timeframe: [e.g., 2-4 weeks, 1-3 months]
+
+This section is REQUIRED. Use the data from your analysis to fill in real values. Never omit the stop-loss or price target.
 """
 
 ENHANCEMENT_STYLES = {
     "financial_analysis": FINANCIAL_ANALYSIS_PREFIX,
     "structured": STRUCTURED_OUTPUT_PREFIX,
     "few_shot": FEW_SHOT_PREFIX,
+    "execution_params_only": EXECUTION_PARAMS_ONLY_PREFIX,
 }
 
 

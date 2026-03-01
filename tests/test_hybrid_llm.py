@@ -68,10 +68,13 @@ class TestHybridLLMConfig:
         assert config.reasoning_deep_provider == "anthropic"
         assert config.enhance_local is True
         assert config.enhance_style == "financial_analysis"
+        assert config.enhance_deep is True
+        assert config.enhance_deep_style == "execution_params_only"
 
     def test_enhance_local_default_false(self):
         config = HybridLLMConfig()
         assert config.enhance_local is False
+        assert config.enhance_deep is False
 
     def test_to_dict_includes_enhance_style_when_enabled(self):
         config = CONFIGS["hybrid_qwen_enhanced"]

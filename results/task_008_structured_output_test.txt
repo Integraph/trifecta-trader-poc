@@ -1,0 +1,41 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.13.12, pytest-9.0.2, pluggy-1.6.0 -- /opt/homebrew/Caskroom/miniconda/base/envs/tradingagents/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc
+configfile: pyproject.toml
+plugins: anyio-4.12.1, langsmith-0.7.9
+collecting ... collected 2 items
+
+tests/test_structured_output.py::TestStructuredOutput::test_qwen14b_produces_execution_params_block 
+============================================================
+Structured output from qwen2.5:14b:
+============================================================
+a stop-loss should be placed at $260.00, representing approximately 4.4% below the entry price of $272.15. The target price is set at $300.00, which represents an upside potential of 10.2%. This results in a risk/reward ratio of 2.3:1, indicating favorable risk-adjusted returns.
+
+## POSITION SIZE
+Considering the strong technical setup and positive analyst consensus (with only two sell ratings), we recommend allocating 5% of the portfolio to AAPL. The high level of confidence stems from both fundamental strength and robust technical indicators.
+
+## EXECUTION PARAMETERS
+- Decision: BUY
+- Entry Price: $272.15
+- Stop-Loss: $260.00 (4.4% below entry)
+- Price Target: $300.00 (10.2% above entry)
+- Risk/Reward Ratio: 2.3:1
+- Position Size: 5% of portfolio
+- Confidence: HIGH
+- Timeframe: 1-3 months
+PASSED
+tests/test_structured_output.py::TestStructuredOutput::test_extracted_params_from_live_model 
+Extracted params:
+  Stop-loss:   $260.15
+  Target:      $300.0
+  Position %:  5.0%
+  Entry:       $272.15
+  R/R ratio:   2.5
+  Confidence:  high
+  Actionable:  True
+  Bracket:     True
+PASSED
+
+============================== 2 passed in 39.96s ==============================
+

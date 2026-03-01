@@ -33,6 +33,8 @@ class HybridLLMConfig:
         reasoning_deep_model: str = "claude-sonnet-4-5-20250929",
         enhance_local: bool = False,
         enhance_style: str = "financial_analysis",
+        enhance_deep: bool = False,
+        enhance_deep_style: str = "execution_params_only",
     ):
         self.tool_provider = tool_provider
         self.tool_model = tool_model
@@ -42,6 +44,8 @@ class HybridLLMConfig:
         self.reasoning_deep_model = reasoning_deep_model
         self.enhance_local = enhance_local
         self.enhance_style = enhance_style
+        self.enhance_deep = enhance_deep
+        self.enhance_deep_style = enhance_deep_style
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a summary dict for logging/reporting."""
@@ -52,6 +56,8 @@ class HybridLLMConfig:
         }
         if self.enhance_local:
             d["enhance_style"] = self.enhance_style
+        if self.enhance_deep:
+            d["enhance_deep_style"] = self.enhance_deep_style
         return d
 
 
@@ -128,6 +134,8 @@ CONFIGS = {
         reasoning_deep_model="claude-sonnet-4-5-20250929",
         enhance_local=True,
         enhance_style="financial_analysis",
+        enhance_deep=True,
+        enhance_deep_style="execution_params_only",
     ),
 }
 
@@ -168,6 +176,11 @@ def create_hybrid_llms(hybrid_config: HybridLLMConfig) -> Dict[str, Any]:
         from src.enhanced_llm import create_enhanced_llm
         reasoning_deep_llm = create_enhanced_llm(reasoning_deep_llm, style=hybrid_config.enhance_style)
         logger.info("Enhanced reasoning_deep_llm with style '%s'", hybrid_config.enhance_style)
+    elif hybrid_config.enhance_deep:
+        # Apply structured output requirement to deep LLM regardless of provider
+        from src.enhanced_llm import create_enhanced_llm
+        reasoning_deep_llm = create_enhanced_llm(reasoning_deep_llm, style=hybrid_config.enhance_deep_style)
+        logger.info("Enhanced reasoning_deep_llm with style '%s'", hybrid_config.enhance_deep_style)
     llms["reasoning_deep_llm"] = reasoning_deep_llm
 
     logger.info("Hybrid LLM routing: %s", hybrid_config.to_dict())

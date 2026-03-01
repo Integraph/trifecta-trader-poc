@@ -1,0 +1,39 @@
+
+============================================================
+Trifecta Trader POC - Analysis Run
+============================================================
+Ticker:    TSLA
+Date:      2026-03-01
+Mode:      HYBRID (hybrid_qwen_enhanced)
+Deep LLM:  claude-sonnet-4-5-20250929
+Quick LLM: claude-sonnet-4-5-20250929
+============================================================
+
+Hybrid routing: {'tool_calling': 'anthropic/claude-sonnet-4-5-20250929', 'reasoning_quick': 'ollama/qwen2.5:14b', 'reasoning_deep': 'anthropic/claude-sonnet-4-5-20250929', 'enhance_style': 'financial_analysis', 'enhance_deep_style': 'execution_params_only'}
+
+============================================================
+DECISION: SELL
+
+Quality Score: 9.7/10
+  Reasoning depth:     9/10
+  Data grounding:      10/10
+  Risk awareness:      10/10
+  Decision consistent: Yes
+  Elapsed time:        1566.2s
+
+Results saved to: /Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc/results/TSLA/analysis_2026-03-01_hybrid_qwen_enhanced.json
+============================================================
+
+
+============================================================
+TRADE PARAMETERS
+============================================================
+  Decision:    SELL
+  Stop-loss:   $415.0
+  Target:      $325.0
+  Position:    3.0%
+  R/R Ratio:   N/A
+  Actionable:  True
+
+  [DRY RUN — no order submitted]
+
