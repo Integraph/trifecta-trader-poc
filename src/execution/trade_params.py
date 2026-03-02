@@ -15,7 +15,14 @@ logger = logging.getLogger(__name__)
 
 
 def _extract_from_structured_block(text: str) -> dict:
-    """Extract parameters from the ## EXECUTION PARAMETERS block.
+    """Extract parameters from an EXECUTION PARAMETERS block.
+
+    Matches multiple formats that LLMs actually produce:
+    - ## EXECUTION PARAMETERS           (h2 header — our requested format)
+    - **Execution Parameters:**         (bold — format Qwen uses)
+    - ### Execution Parameters          (h3 header)
+    - 3. **Execution Parameters:**      (numbered bold list item)
+    - EXECUTION PARAMETERS              (plain uppercase)
 
     Returns dict with keys: stop_loss, price_target, position_pct,
     entry_price, confidence, risk_reward_ratio.
@@ -30,15 +37,30 @@ def _extract_from_structured_block(text: str) -> dict:
         "risk_reward_ratio": None,
     }
 
-    block_match = re.search(
+    # Try multiple heading patterns in priority order.
+    # Use [*:]* to match any trailing combination of * and : (handles **Param:**, **Param**, etc.)
+    block_patterns = [
+        # Original h2 format: ## EXECUTION PARAMETERS
         r'##\s*EXECUTION PARAMETERS\s*\n(.*?)(?:\n##|\Z)',
-        text,
-        re.DOTALL | re.IGNORECASE,
-    )
-    if not block_match:
-        return result
+        # Bold format: **Execution Parameters:** or **Execution Parameters**
+        r'\*\*Execution Parameters[*:]*\s*\n(.*?)(?:\n##|\n\*\*[A-Z]|\Z)',
+        # Numbered bold: 3. **Execution Parameters:**
+        r'\d+\.\s*\*\*Execution Parameters[*:]*\s*\n(.*?)(?:\n##|\n\d+\.|\Z)',
+        # h3 format: ### Execution Parameters
+        r'###\s*Execution Parameters\s*\n(.*?)(?:\n##|\Z)',
+        # Plain uppercase (fallback)
+        r'EXECUTION PARAMETERS\s*\n(.*?)(?:\n##|\Z)',
+    ]
 
-    block_text = block_match.group(1)
+    block_text = None
+    for pattern in block_patterns:
+        match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
+        if match:
+            block_text = match.group(1)
+            break
+
+    if block_text is None:
+        return result
 
     stop_match = re.search(r'Stop-Loss:\s*\$?([\d,]+(?:\.\d+)?)', block_text, re.IGNORECASE)
     if stop_match:
@@ -282,5 +304,79 @@ def extract_trade_params(
         params.price_target or 0,
         params.position_pct or 0,
     )
+
+    return params
+
+
+def extract_trade_params_dual(
+    ticker: str,
+    decision: str,
+    quality_score: float,
+    final_decision_text: str,
+    trader_plan_text: str = "",
+    current_price: Optional[float] = None,
+) -> TradeParams:
+    """Extract trade parameters from both Risk Judge and Trader outputs.
+
+    Strategy:
+    1. Try extracting from final_decision_text (Risk Judge) first
+    2. For any missing values, try trader_plan_text (Trader) as fallback
+    3. For any still-missing values, fall through to regex on both texts
+
+    Args:
+        ticker: Stock ticker
+        decision: BUY/HOLD/SELL from signal processor
+        quality_score: Composite quality score (0-10)
+        final_decision_text: Risk Judge's final_trade_decision
+        trader_plan_text: Trader's trader_investment_plan
+        current_price: Current market price
+
+    Returns:
+        TradeParams with extracted values from best available source
+    """
+    # First: try primary source (Risk Judge)
+    params = extract_trade_params(
+        ticker=ticker,
+        decision=decision,
+        quality_score=quality_score,
+        decision_text=final_decision_text,
+        current_price=current_price,
+    )
+
+    # Second: if missing critical values, try Trader output as fallback
+    if trader_plan_text and (params.stop_loss is None or params.price_target is None):
+        trader_params = extract_trade_params(
+            ticker=ticker,
+            decision=decision,
+            quality_score=quality_score,
+            decision_text=trader_plan_text,
+            current_price=current_price,
+        )
+
+        if params.stop_loss is None and trader_params.stop_loss is not None:
+            params.stop_loss = trader_params.stop_loss
+        if params.price_target is None and trader_params.price_target is not None:
+            params.price_target = trader_params.price_target
+        if params.position_pct is None and trader_params.position_pct is not None:
+            params.position_pct = trader_params.position_pct
+        if params.entry_price is None and trader_params.entry_price is not None:
+            params.entry_price = trader_params.entry_price
+        if params.confidence == "medium" and trader_params.confidence != "medium":
+            params.confidence = trader_params.confidence
+
+        # Recalculate risk metrics with potentially new values
+        if params.entry_price and params.stop_loss:
+            params.risk_pct = abs(params.entry_price - params.stop_loss) / params.entry_price * 100
+        if params.entry_price and params.price_target:
+            params.reward_pct = abs(params.price_target - params.entry_price) / params.entry_price * 100
+        if params.risk_reward_ratio is None and params.risk_pct and params.reward_pct and params.risk_pct > 0:
+            params.risk_reward_ratio = params.reward_pct / params.risk_pct
+
+        logger.info(
+            "Dual-source extraction for %s: used Trader fallback — stop=%.2f, target=%.2f",
+            ticker,
+            params.stop_loss or 0,
+            params.price_target or 0,
+        )
 
     return params

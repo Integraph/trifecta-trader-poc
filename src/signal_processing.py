@@ -64,3 +64,38 @@ def extract_decision(full_signal: str) -> str:
         return decisions[-1].upper()
 
     return "UNKNOWN"
+
+
+def deduplicate_repeated_blocks(text: str, min_block_length: int = 200) -> str:
+    """Remove repeated text blocks from pipeline output.
+
+    The TradingAgents pipeline sometimes repeats agent outputs when hitting
+    max_recur_limit. This function detects and removes duplicate long lines/blocks.
+
+    Strategy: any line >= min_block_length chars whose first min_block_length
+    characters have already been seen is considered a duplicate and dropped.
+    Short lines (separators, headers, etc.) are always kept.
+
+    Args:
+        text: Full pipeline output text
+        min_block_length: Minimum line length to consider for dedup
+
+    Returns:
+        Text with duplicate long-line blocks removed
+    """
+    if not text or len(text) < min_block_length * 2:
+        return text
+
+    lines = text.split('\n')
+    seen_keys: set = set()
+    result_lines = []
+
+    for line in lines:
+        if len(line) >= min_block_length:
+            key = line.strip()[:min_block_length]
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+        result_lines.append(line)
+
+    return '\n'.join(result_lines)

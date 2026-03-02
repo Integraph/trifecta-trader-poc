@@ -1,6 +1,6 @@
 """Tests for improved signal processing."""
 
-from src.signal_processing import extract_decision
+from src.signal_processing import extract_decision, deduplicate_repeated_blocks
 
 
 class TestExtractDecision:
@@ -127,3 +127,34 @@ class TestEdgeCases:
         ## FINAL TRANSACTION PROPOSAL: **HOLD**
         """
         assert extract_decision(text) == "HOLD"
+
+
+class TestDeduplicateRepeatedBlocks:
+    """Test the deduplication utility for repeated pipeline output."""
+
+    def test_deduplicate_removes_repeated_blocks(self):
+        """Repeated identical blocks should be reduced to one occurrence."""
+        block = "A" * 250
+        text = f"{block}\nContinue\n{block}\nContinue\n{block}"
+        result = deduplicate_repeated_blocks(text)
+        assert result.count(block) == 1
+
+    def test_deduplicate_preserves_unique_content(self):
+        """Unique content should pass through unchanged."""
+        text = "First unique block.\n\nSecond unique block.\n\nThird unique block."
+        result = deduplicate_repeated_blocks(text)
+        assert result == text
+
+    def test_short_text_returned_unchanged(self):
+        """Texts shorter than 2x min_block_length are returned as-is."""
+        text = "Short text."
+        result = deduplicate_repeated_blocks(text)
+        assert result == text
+
+    def test_empty_text_returned_unchanged(self):
+        """Empty string should be returned unchanged."""
+        assert deduplicate_repeated_blocks("") == ""
+
+    def test_none_text_returned_unchanged(self):
+        """None should be returned as-is (guard against None input)."""
+        assert deduplicate_repeated_blocks(None) is None

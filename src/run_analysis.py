@@ -144,6 +144,8 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
     results_dir = Path(config["results_dir"]) / ticker
     results_dir.mkdir(parents=True, exist_ok=True)
 
+    trader_plan_text = final_state.get("trader_investment_plan", "")
+
     result = {
         "ticker": ticker,
         "trade_date": trade_date,
@@ -155,6 +157,7 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
         "upstream_decision": upstream_decision,
         "decision_corrected": decision_corrected,
         "final_trade_decision_text": final_trade_text,
+        "trader_investment_plan": trader_plan_text,
         "elapsed_seconds": round(elapsed_seconds, 1),
         "run_timestamp": datetime.now().isoformat(),
         "quality_score": {
@@ -189,18 +192,20 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
 
 def _run_execution_flow(result: dict, config: dict, args) -> None:
     """Run the trade execution flow after analysis completes."""
-    from src.execution.trade_params import extract_trade_params
+    from src.execution.trade_params import extract_trade_params_dual
 
     ticker = result["ticker"]
     decision = result["decision"]
     final_trade_text = result.get("final_trade_decision_text", "")
+    trader_plan_text = result.get("trader_investment_plan", "")
     quality_score = result.get("quality_score", {}).get("composite", 0.0)
 
-    trade_params = extract_trade_params(
+    trade_params = extract_trade_params_dual(
         ticker=ticker,
         decision=decision,
         quality_score=quality_score,
-        decision_text=final_trade_text,
+        final_decision_text=final_trade_text,
+        trader_plan_text=trader_plan_text,
         current_price=None,
     )
 

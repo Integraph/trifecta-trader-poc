@@ -235,3 +235,67 @@ class TestStructuredBlockExtraction:
         """
         params = extract_trade_params("AAPL", "BUY", 9.5, text)
         assert params.risk_reward_ratio == 2.1
+
+
+class TestMultiFormatStructuredBlock:
+    """Test that _extract_from_structured_block matches multiple heading formats."""
+
+    def test_bold_execution_parameters_format(self):
+        """Should match **Execution Parameters:** format from Qwen."""
+        text = """
+    some analysis...
+
+    **Execution Parameters:**
+
+    - Decision: SELL
+    - Entry Price: $264.18
+    - Stop-Loss: $256.50 (3% below entry)
+    - Price Target: $248.00 (6% downside)
+    - Risk/Reward Ratio: 2.0:1
+    - Position Size: 3% of portfolio
+    - Confidence: HIGH
+    """
+        params = extract_trade_params("AAPL", "SELL", 9.4, text, current_price=264.18)
+        assert params.stop_loss == 256.50
+        assert params.price_target == 248.0
+        assert params.position_pct == 3.0
+        assert params.confidence == "high"
+
+    def test_numbered_bold_execution_parameters_format(self):
+        """Should match '3. **Execution Parameters:**' format."""
+        text = """
+    1. **Near-term Risks:**
+        - Potential compression
+
+    2. **Technical Analysis:**
+        - Price has broken below 50 SMA
+
+    3. **Execution Parameters:**
+
+    - Decision: SELL (40-50% position reduction)
+    - Entry Price: $264.18
+    - Stop-Loss: $256.50 (3% below current market price)
+    - Price Target: $248.00 (to capture 6% downside)
+    - Risk/Reward Ratio: 1:2
+    - Position Size: 2% of portfolio
+    - Confidence: MEDIUM
+    """
+        params = extract_trade_params("AAPL", "SELL", 9.4, text, current_price=264.18)
+        assert params.stop_loss == 256.50
+        assert params.price_target == 248.0
+        assert params.position_pct == 2.0
+
+    def test_h3_execution_parameters_format(self):
+        """Should match ### Execution Parameters h3 format."""
+        text = """
+    ### Execution Parameters
+    - Entry Price: $264.18
+    - Stop-Loss: $255.00
+    - Price Target: $280.00
+    - Position Size: 4% of portfolio
+    - Confidence: HIGH
+    """
+        params = extract_trade_params("AAPL", "BUY", 9.0, text, current_price=264.18)
+        assert params.stop_loss == 255.0
+        assert params.price_target == 280.0
+        assert params.position_pct == 4.0
