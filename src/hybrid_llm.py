@@ -137,6 +137,34 @@ CONFIGS = {
         enhance_deep=True,
         enhance_deep_style="execution_params_only",
     ),
+
+    # Haiku tier: tool-calling agents on Haiku (1/10th cost), reasoning on Qwen+Sonnet
+    "hybrid_haiku_tools": HybridLLMConfig(
+        tool_provider="anthropic",
+        tool_model="claude-haiku-4-5-20251001",
+        reasoning_quick_provider="ollama",
+        reasoning_quick_model="qwen2.5:14b",
+        reasoning_deep_provider="anthropic",
+        reasoning_deep_model="claude-sonnet-4-5-20250929",
+        enhance_local=True,
+        enhance_style="financial_analysis",
+        enhance_deep=True,
+        enhance_deep_style="execution_params_only",
+    ),
+
+    # Aggressive: Haiku for tool-calling, fully local for reasoning (max cost savings)
+    "hybrid_haiku_aggressive": HybridLLMConfig(
+        tool_provider="anthropic",
+        tool_model="claude-haiku-4-5-20251001",
+        reasoning_quick_provider="ollama",
+        reasoning_quick_model="qwen2.5:14b",
+        reasoning_deep_provider="ollama",
+        reasoning_deep_model="qwen2.5:14b",
+        enhance_local=True,
+        enhance_style="financial_analysis",
+        enhance_deep=True,
+        enhance_deep_style="execution_params_only",
+    ),
 }
 
 

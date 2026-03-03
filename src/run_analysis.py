@@ -74,7 +74,8 @@ def get_config(provider: str = "anthropic", deep_model: str = None, quick_model:
 
 def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
                  deep_model: str = None, quick_model: str = None,
-                 debug: bool = True, hybrid: str = None) -> dict:
+                 debug: bool = True, hybrid: str = None,
+                 use_cache: bool = True, cost_breakdown: bool = True) -> dict:
     """Run the full trading agents analysis pipeline.
 
     Args:
@@ -84,7 +85,9 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
         deep_model: Override for deep thinking model
         quick_model: Override for quick thinking model
         debug: Enable debug output
-        hybrid: Hybrid LLM config name (e.g., 'hybrid_qwen')
+        hybrid: Hybrid LLM config name (e.g., 'hybrid_haiku_tools')
+        use_cache: Enable analyst output caching (HybridTradingGraph only)
+        cost_breakdown: Print cost breakdown after run
 
     Returns:
         Dictionary with analysis results and decision
@@ -112,6 +115,7 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
             hybrid_config=hybrid_config,
             debug=debug,
             config=config,
+            use_cache=use_cache,
         )
         print(f"Hybrid routing: {hybrid_config.to_dict()}")
     else:
@@ -120,6 +124,11 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
     start_time = time.time()
     final_state, upstream_decision = ta.propagate(ticker, trade_date)
     elapsed_seconds = time.time() - start_time
+
+    # Collect cost breakdown (only available for HybridTradingGraph)
+    cost_info = {}
+    if hybrid and hasattr(ta, "cost_breakdown"):
+        cost_info = ta.cost_breakdown()
 
     # Override the upstream signal processing with our improved version
     final_trade_text = final_state.get("final_trade_decision", "")
@@ -170,6 +179,7 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
             "has_price_target": score.has_price_target,
             "has_position_sizing": score.has_position_sizing,
         },
+        "cost_breakdown": cost_info,
     }
 
     result_file = results_dir / f"analysis_{trade_date}_{config_label}.json"
@@ -184,10 +194,56 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
     print(f"  Risk awareness:      {score.risk_awareness}/10")
     print(f"  Decision consistent: {'Yes' if score.decision_consistent else 'No'}")
     print(f"  Elapsed time:        {elapsed_seconds:.1f}s")
+
+    # Cost breakdown (only when available and requested)
+    if cost_breakdown and cost_info:
+        _print_cost_breakdown(cost_info, hybrid)
+
     print(f"\nResults saved to: {result_file}")
     print(f"{'='*60}\n")
 
     return result
+
+
+def _print_cost_breakdown(cost_info: dict, hybrid_config: str = None) -> None:
+    """Print a formatted cost breakdown table."""
+    # Estimated all-cloud baseline cost (Sonnet for all agents, ~$0.50 typical)
+    ALL_CLOUD_BASELINE_USD = 0.50
+
+    by_model = cost_info.get("by_model", {})
+    total_usd = cost_info.get("total_usd", 0.0)
+    cache_hits = cost_info.get("cache_hits", 0)
+    cache_misses = cost_info.get("cache_misses", 0)
+    cache_total = cache_hits + cache_misses
+
+    savings_pct = 0.0
+    if ALL_CLOUD_BASELINE_USD > 0 and total_usd < ALL_CLOUD_BASELINE_USD:
+        savings_pct = (1 - total_usd / ALL_CLOUD_BASELINE_USD) * 100
+
+    print(f"\n{'='*60}")
+    print(f"COST BREAKDOWN")
+    print(f"{'='*60}")
+    for model_key, usage in sorted(by_model.items()):
+        label = model_key
+        if "haiku" in model_key:
+            label = f"Claude Haiku 4.5  (tool-calling agents)"
+        elif "sonnet" in model_key:
+            label = f"Claude Sonnet 4.5 (reasoning judge)"
+        elif "opus" in model_key:
+            label = f"Claude Opus 4.5   (deep reasoning)"
+        elif "qwen" in model_key.lower() or "ollama" in model_key.lower():
+            label = f"Ollama/Qwen       (local — free)"
+        tokens = usage.get("input_tokens", 0) + usage.get("output_tokens", 0)
+        cost = usage.get("cost_usd", 0.0)
+        calls = usage.get("calls", 0)
+        print(f"  {label}")
+        print(f"      {tokens:,} tokens ({calls} calls) → ${cost:.4f}")
+    if cache_total > 0:
+        print(f"  Cache hits:       {cache_hits}/{cache_total} analyst calls ({cost_info.get('cache_hit_rate_pct', 0):.0f}%)")
+    print(f"  {'─'*50}")
+    print(f"  Total:            ${total_usd:.4f}")
+    if savings_pct > 0:
+        print(f"  vs All-Cloud:     ~{savings_pct:.0f}% savings (baseline ${ALL_CLOUD_BASELINE_USD:.2f})")
 
 
 def _run_execution_flow(result: dict, config: dict, args) -> None:
@@ -264,8 +320,13 @@ def main():
                         choices=["all_cloud", "hybrid_qwen", "hybrid_mistral",
                                  "hybrid_aggressive_qwen", "hybrid_aggressive_mistral",
                                  "hybrid_qwen32", "hybrid_aggressive_qwen32",
-                                 "hybrid_qwen_enhanced"],
+                                 "hybrid_qwen_enhanced",
+                                 "hybrid_haiku_tools", "hybrid_haiku_aggressive"],
                         help="Use hybrid LLM routing config")
+    parser.add_argument("--no-cache", action="store_true",
+                        help="Disable analyst output caching")
+    parser.add_argument("--no-cost-breakdown", action="store_true",
+                        help="Suppress per-model cost breakdown output")
     parser.add_argument("--execute", action="store_true",
                         help="Execute the trade on Alpaca paper trading")
     parser.add_argument("--dry-run", action="store_true",
@@ -285,6 +346,8 @@ def main():
         quick_model=args.quick_model,
         debug=not args.no_debug,
         hybrid=args.hybrid,
+        use_cache=not args.no_cache,
+        cost_breakdown=not args.no_cost_breakdown,
     )
 
     if args.execute or args.dry_run:

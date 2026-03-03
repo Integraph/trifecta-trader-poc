@@ -12,8 +12,11 @@ with a three-LLM split instead of the original two-LLM split.
 """
 
 import logging
+import time
 from typing import Any, Dict, List, Optional
 
+from langchain_core.messages import AIMessage
+from langchain_core.callbacks import BaseCallbackHandler
 from langgraph.graph import END, StateGraph, START
 
 from tradingagents.graph.trading_graph import TradingAgentsGraph
@@ -36,8 +39,156 @@ from tradingagents.agents import (
     create_risk_manager,
 )
 from src.hybrid_llm import HybridLLMConfig, create_hybrid_llms
+from src.data_cache import DataCache, ANALYST_TTL
 
 logger = logging.getLogger(__name__)
+
+# Maps analyst type → AgentState field name
+ANALYST_STATE_FIELD = {
+    "market":       "market_report",
+    "social":       "sentiment_report",
+    "news":         "news_report",
+    "fundamentals": "fundamentals_report",
+}
+
+# Anthropic pricing (USD per 1M tokens, as of early 2026)
+MODEL_PRICING = {
+    "claude-sonnet-4-5-20250929": {"input": 3.00,  "output": 15.00},
+    "claude-haiku-4-5-20251001":  {"input": 0.80,  "output": 4.00},
+    "claude-opus-4-5-20251101":   {"input": 15.00, "output": 75.00},
+}
+
+
+class TokenUsageCallback(BaseCallbackHandler):
+    """LangChain callback handler that tracks token usage per LLM call.
+
+    Accumulates usage_metadata from each LLM response so we can compute
+    cost breakdowns after the pipeline completes.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.usage_by_model: Dict[str, Dict] = {}
+        self.call_count = 0
+
+    def on_llm_end(self, response, **kwargs):
+        """Called after each LLM API call completes."""
+        try:
+            for gen_list in response.generations:
+                for gen in gen_list:
+                    meta = getattr(gen.message, "usage_metadata", None) or {}
+                    model = getattr(gen.message, "response_metadata", {}).get(
+                        "model", "unknown"
+                    )
+                    # Normalize model name (strip version suffix variations)
+                    model_key = self._normalize_model(model)
+
+                    if model_key not in self.usage_by_model:
+                        self.usage_by_model[model_key] = {
+                            "input_tokens": 0,
+                            "output_tokens": 0,
+                            "calls": 0,
+                        }
+
+                    self.usage_by_model[model_key]["input_tokens"] += meta.get(
+                        "input_tokens", 0
+                    )
+                    self.usage_by_model[model_key]["output_tokens"] += meta.get(
+                        "output_tokens", 0
+                    )
+                    self.usage_by_model[model_key]["calls"] += 1
+                    self.call_count += 1
+        except Exception:
+            pass  # Never let callback errors break the pipeline
+
+    def cost_breakdown(self, cache_stats: dict = None) -> dict:
+        """Compute cost breakdown from tracked token usage.
+
+        Returns:
+            Dict with per-model costs and totals.
+        """
+        breakdown = {"by_model": {}, "total_usd": 0.0}
+
+        for model_key, usage in self.usage_by_model.items():
+            pricing = MODEL_PRICING.get(model_key, {"input": 3.00, "output": 15.00})
+            input_cost = usage["input_tokens"] / 1_000_000 * pricing["input"]
+            output_cost = usage["output_tokens"] / 1_000_000 * pricing["output"]
+            total_cost = input_cost + output_cost
+
+            breakdown["by_model"][model_key] = {
+                "input_tokens": usage["input_tokens"],
+                "output_tokens": usage["output_tokens"],
+                "calls": usage["calls"],
+                "cost_usd": round(total_cost, 6),
+            }
+            breakdown["total_usd"] += total_cost
+
+        breakdown["total_usd"] = round(breakdown["total_usd"], 6)
+
+        if cache_stats:
+            breakdown["cache_hits"] = cache_stats.get("hits", 0)
+            breakdown["cache_misses"] = cache_stats.get("misses", 0)
+            breakdown["cache_hit_rate_pct"] = cache_stats.get("hit_rate_pct", 0.0)
+
+        return breakdown
+
+    @staticmethod
+    def _normalize_model(model: str) -> str:
+        """Map raw model name to a canonical key."""
+        model_lower = model.lower()
+        if "haiku" in model_lower:
+            return "claude-haiku-4-5-20251001"
+        if "sonnet" in model_lower:
+            return "claude-sonnet-4-5-20250929"
+        if "opus" in model_lower:
+            return "claude-opus-4-5-20251101"
+        return model
+
+
+def make_cached_analyst(
+    analyst_creator_fn,
+    analyst_type: str,
+    llm,
+    cache: DataCache,
+    ticker: str,
+    trade_date: str,
+):
+    """Return a cache-aware analyst node function.
+
+    On cache HIT:  injects cached report into state without LLM call.
+    On cache MISS: runs analyst normally and caches the final report.
+
+    The cache-hit path returns an AIMessage with no tool_calls, which
+    causes ConditionalLogic.should_continue_<type> to route directly to
+    the Msg Clear node (skipping the tool-call loop entirely).
+    """
+    state_field = ANALYST_STATE_FIELD[analyst_type]
+    cache_key = cache.key_for(ticker, analyst_type, trade_date)
+    cached_value = cache.get(cache_key)
+
+    if cached_value:
+        logger.info("Analyst cache HIT: %s — skipping LLM call", cache_key)
+
+        def cached_node(state: dict) -> dict:
+            return {
+                state_field: cached_value,
+                "messages": [AIMessage(content=cached_value)],
+            }
+
+        return cached_node
+
+    # Cache miss — create real analyst and wrap to cache on completion
+    real_node = analyst_creator_fn(llm)
+    ttl = ANALYST_TTL.get(analyst_type, 3600)
+
+    def caching_node(state: dict) -> dict:
+        result = real_node(state)
+        report = result.get(state_field, "")
+        if report:
+            cache.set(cache_key, report, ttl=ttl)
+        return result
+
+    return caching_node
 
 
 class HybridGraphSetup:
@@ -48,6 +199,9 @@ class HybridGraphSetup:
     - tool_llm: for analyst nodes that call external tools
     - reasoning_quick_llm: for debaters, researchers, and trader
     - reasoning_deep_llm: for judge nodes (Research Manager, Risk Manager)
+
+    Optionally accepts a DataCache and ticker/date to enable analyst-level
+    output caching — skipping LLM calls for analysts whose outputs are cached.
     """
 
     def __init__(
@@ -62,6 +216,9 @@ class HybridGraphSetup:
         invest_judge_memory,
         risk_manager_memory,
         conditional_logic: ConditionalLogic,
+        cache: Optional[DataCache] = None,
+        ticker: str = "",
+        trade_date: str = "",
     ):
         self.tool_llm = tool_llm
         self.reasoning_quick_llm = reasoning_quick_llm
@@ -73,6 +230,9 @@ class HybridGraphSetup:
         self.invest_judge_memory = invest_judge_memory
         self.risk_manager_memory = risk_manager_memory
         self.conditional_logic = conditional_logic
+        self.cache = cache
+        self.ticker = ticker
+        self.trade_date = trade_date
 
     def setup_graph(self, selected_analysts=None):
         """Set up and compile the agent workflow graph with three-LLM routing.
@@ -80,6 +240,9 @@ class HybridGraphSetup:
         This method mirrors GraphSetup.setup_graph() from
         vendor/TradingAgents/tradingagents/graph/setup.py but assigns LLMs
         based on agent role rather than giving all quick agents the same LLM.
+
+        When a DataCache is provided, each analyst is wrapped with a cache-aware
+        node that injects cached reports (skipping the LLM call) on a cache hit.
         """
         if selected_analysts is None:
             selected_analysts = ["market", "social", "news", "fundamentals"]
@@ -99,8 +262,18 @@ class HybridGraphSetup:
         tool_nodes = {}
 
         for analyst_type in selected_analysts:
-            # Analysts use tool_llm (they call external tools)
-            analyst_nodes[analyst_type] = analyst_creators[analyst_type](self.tool_llm)
+            # Optionally wrap analyst with cache-aware node
+            if self.cache and self.ticker and self.trade_date:
+                analyst_nodes[analyst_type] = make_cached_analyst(
+                    analyst_creator_fn=analyst_creators[analyst_type],
+                    analyst_type=analyst_type,
+                    llm=self.tool_llm,
+                    cache=self.cache,
+                    ticker=self.ticker,
+                    trade_date=self.trade_date,
+                )
+            else:
+                analyst_nodes[analyst_type] = analyst_creators[analyst_type](self.tool_llm)
             delete_nodes[analyst_type] = create_msg_delete()
             tool_nodes[analyst_type] = self.tool_nodes[analyst_type]
 
@@ -205,15 +378,24 @@ class HybridGraphSetup:
 class HybridTradingGraph(TradingAgentsGraph):
     """TradingAgentsGraph with per-agent LLM provider routing.
 
+    Adds two capabilities over the base graph:
+    1. Three-LLM routing: tool-calling, quick-reasoning, deep-reasoning agents
+       each get their own LLM (enabling cost-optimised hybrid configs).
+    2. Analyst output caching: via DataCache, analyst reports are cached by
+       ticker+date with TTLs. On cache hit, the LLM call is skipped entirely.
+    3. Token usage tracking: TokenUsageCallback accumulates per-model token
+       counts so run_analysis can report a cost breakdown.
+
     Usage:
         from src.hybrid_llm import CONFIGS
         from src.hybrid_graph import HybridTradingGraph
 
         graph = HybridTradingGraph(
-            hybrid_config=CONFIGS["hybrid_qwen"],
+            hybrid_config=CONFIGS["hybrid_haiku_tools"],
             config={...},
         )
-        result = graph.propagate("AAPL", "2026-02-27")
+        final_state, decision = graph.propagate("AAPL", "2026-03-02")
+        breakdown = graph.cost_breakdown()   # dict with token counts and USD
     """
 
     def __init__(
@@ -223,11 +405,20 @@ class HybridTradingGraph(TradingAgentsGraph):
         debug=False,
         config: Dict[str, Any] = None,
         callbacks: Optional[List] = None,
+        cache_dir: str = "cache",
+        use_cache: bool = True,
     ):
         self._hybrid_config = hybrid_config
         if selected_analysts is None:
             selected_analysts = ["market", "social", "news", "fundamentals"]
         self._selected_analysts = selected_analysts
+        self._use_cache = use_cache
+
+        # DataCache — created now, wired into graph in propagate()
+        self._cache = DataCache(cache_dir=cache_dir) if use_cache else None
+
+        # Token usage tracker — attached as a LangChain callback
+        self._token_callback = TokenUsageCallback()
 
         # Let parent __init__ do all the standard setup
         super().__init__(
@@ -237,13 +428,20 @@ class HybridTradingGraph(TradingAgentsGraph):
             callbacks=callbacks,
         )
 
-        # Now rebuild the graph with hybrid LLM routing
-        llms = create_hybrid_llms(self._hybrid_config)
+        # Rebuild graph with hybrid LLM routing (no ticker/date yet — set in propagate())
+        self._llms = create_hybrid_llms(self._hybrid_config)
+        self._rebuild_graph(ticker="", trade_date="")
 
+        logger.info(
+            "HybridTradingGraph initialized: %s", self._hybrid_config.to_dict()
+        )
+
+    def _rebuild_graph(self, ticker: str, trade_date: str) -> None:
+        """(Re)build the compiled graph, optionally wiring in the cache."""
         self.graph_setup = HybridGraphSetup(
-            tool_llm=llms["tool_calling_llm"],
-            reasoning_quick_llm=llms["reasoning_quick_llm"],
-            reasoning_deep_llm=llms["reasoning_deep_llm"],
+            tool_llm=self._llms["tool_calling_llm"],
+            reasoning_quick_llm=self._llms["reasoning_quick_llm"],
+            reasoning_deep_llm=self._llms["reasoning_deep_llm"],
             tool_nodes=self.tool_nodes,
             bull_memory=self.bull_memory,
             bear_memory=self.bear_memory,
@@ -251,10 +449,35 @@ class HybridTradingGraph(TradingAgentsGraph):
             invest_judge_memory=self.invest_judge_memory,
             risk_manager_memory=self.risk_manager_memory,
             conditional_logic=self.conditional_logic,
+            cache=self._cache,
+            ticker=ticker,
+            trade_date=trade_date,
         )
-
         self.graph = self.graph_setup.setup_graph(self._selected_analysts)
 
-        logger.info(
-            "HybridTradingGraph initialized: %s", self._hybrid_config.to_dict()
-        )
+    def propagate(self, company_name: str, trade_date: str):
+        """Run the trading pipeline, with caching and token tracking.
+
+        Overrides TradingAgentsGraph.propagate() to:
+        1. Rebuild the compiled graph with the current ticker/date so the
+           cache-aware analyst wrappers have the right keys.
+        2. Inject the TokenUsageCallback so every LLM call is tracked.
+        3. Delegate to the parent propagate() for actual graph execution.
+        """
+        # Rebuild graph with ticker+date so cache keys are correct
+        self._rebuild_graph(ticker=company_name, trade_date=str(trade_date))
+
+        # Attach our callback to all LLMs
+        for llm_key, llm_obj in self._llms.items():
+            try:
+                llm_obj.callbacks = [self._token_callback]
+            except Exception:
+                pass
+
+        result = super().propagate(company_name, trade_date)
+        return result
+
+    def cost_breakdown(self) -> dict:
+        """Return cost breakdown from the last (or current) pipeline run."""
+        cache_stats = self._cache.stats() if self._cache else {}
+        return self._token_callback.cost_breakdown(cache_stats=cache_stats)
