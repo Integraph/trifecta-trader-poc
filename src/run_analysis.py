@@ -321,7 +321,9 @@ def main():
                                  "hybrid_aggressive_qwen", "hybrid_aggressive_mistral",
                                  "hybrid_qwen32", "hybrid_aggressive_qwen32",
                                  "hybrid_qwen_enhanced",
-                                 "hybrid_haiku_tools", "hybrid_haiku_aggressive"],
+                                 "hybrid_haiku_tools", "hybrid_haiku_aggressive",
+                                 "hybrid_haiku_qwen35_27b", "hybrid_haiku_qwen35_35b",
+                                 "hybrid_haiku_qwen35_9b"],
                         help="Use hybrid LLM routing config")
     parser.add_argument("--no-cache", action="store_true",
                         help="Disable analyst output caching")

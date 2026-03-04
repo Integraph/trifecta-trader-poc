@@ -284,3 +284,118 @@ class TestTokenUsageCallback:
         bad_response = MagicMock()
         bad_response.generations = [None]  # Will cause AttributeError
         cb.on_llm_end(bad_response)  # Should not raise
+
+
+# ---------------------------------------------------------------------------
+# Qwen 3.5 config tests (Task 011)
+# ---------------------------------------------------------------------------
+
+class TestQwen35Configs:
+    """Verify the three new Qwen 3.5 benchmark configs are correctly constructed."""
+
+    QWEN35_CONFIGS = [
+        "hybrid_haiku_qwen35_27b",
+        "hybrid_haiku_qwen35_35b",
+        "hybrid_haiku_qwen35_9b",
+    ]
+
+    EXPECTED_MODELS = {
+        "hybrid_haiku_qwen35_27b":  "qwen3.5:27b",
+        "hybrid_haiku_qwen35_35b":  "qwen3.5:35b-a3b",
+        "hybrid_haiku_qwen35_9b":   "qwen3.5:9b",
+    }
+
+    def test_all_qwen35_configs_exist(self):
+        """All three Qwen 3.5 configs must be present in CONFIGS."""
+        from src.hybrid_llm import CONFIGS
+        for name in self.QWEN35_CONFIGS:
+            assert name in CONFIGS, f"{name} missing from CONFIGS"
+
+    def test_qwen35_configs_use_haiku_for_tool_calling(self):
+        """All Qwen 3.5 configs must use Haiku for tool-calling (same as baseline)."""
+        from src.hybrid_llm import CONFIGS
+        for name in self.QWEN35_CONFIGS:
+            cfg = CONFIGS[name]
+            assert cfg.tool_provider == "anthropic"
+            assert "haiku" in cfg.tool_model.lower(), (
+                f"{name}: expected Haiku tool model, got {cfg.tool_model}"
+            )
+
+    def test_qwen35_configs_use_sonnet_for_deep_reasoning(self):
+        """All Qwen 3.5 configs must use Sonnet as Risk Judge (same as baseline)."""
+        from src.hybrid_llm import CONFIGS
+        for name in self.QWEN35_CONFIGS:
+            cfg = CONFIGS[name]
+            assert cfg.reasoning_deep_provider == "anthropic"
+            assert "sonnet" in cfg.reasoning_deep_model.lower(), (
+                f"{name}: expected Sonnet deep model, got {cfg.reasoning_deep_model}"
+            )
+
+    def test_qwen35_configs_use_ollama_for_quick_reasoning(self):
+        """All Qwen 3.5 configs must use Ollama for the quick reasoning tier."""
+        from src.hybrid_llm import CONFIGS
+        for name in self.QWEN35_CONFIGS:
+            cfg = CONFIGS[name]
+            assert cfg.reasoning_quick_provider == "ollama", (
+                f"{name}: expected ollama provider, got {cfg.reasoning_quick_provider}"
+            )
+
+    def test_qwen35_model_strings_are_correct(self):
+        """Each config must reference the right Qwen 3.5 model tag."""
+        from src.hybrid_llm import CONFIGS
+        for config_name, expected_model in self.EXPECTED_MODELS.items():
+            cfg = CONFIGS[config_name]
+            assert cfg.reasoning_quick_model == expected_model, (
+                f"{config_name}: expected model '{expected_model}', "
+                f"got '{cfg.reasoning_quick_model}'"
+            )
+
+    def test_qwen35_configs_have_enhance_local(self):
+        """All Qwen 3.5 configs must have enhance_local=True for prompt enhancement."""
+        from src.hybrid_llm import CONFIGS
+        for name in self.QWEN35_CONFIGS:
+            cfg = CONFIGS[name]
+            assert cfg.enhance_local is True, f"{name}: enhance_local should be True"
+
+    def test_qwen35_configs_have_enhance_deep(self):
+        """All Qwen 3.5 configs must have enhance_deep=True for structured output."""
+        from src.hybrid_llm import CONFIGS
+        for name in self.QWEN35_CONFIGS:
+            cfg = CONFIGS[name]
+            assert cfg.enhance_deep is True, f"{name}: enhance_deep should be True"
+
+    def test_qwen35_configs_match_baseline_except_model(self):
+        """Qwen 3.5 configs should differ from hybrid_haiku_tools only in quick model."""
+        from src.hybrid_llm import CONFIGS
+        baseline = CONFIGS["hybrid_haiku_tools"]
+        for name in self.QWEN35_CONFIGS:
+            cfg = CONFIGS[name]
+            assert cfg.tool_model == baseline.tool_model, \
+                f"{name}: tool_model differs from baseline"
+            assert cfg.reasoning_deep_model == baseline.reasoning_deep_model, \
+                f"{name}: reasoning_deep_model differs from baseline"
+            assert cfg.enhance_style == baseline.enhance_style, \
+                f"{name}: enhance_style differs from baseline"
+            # Only the quick model should differ
+            assert cfg.reasoning_quick_model != baseline.reasoning_quick_model, \
+                f"{name}: reasoning_quick_model should differ from baseline"
+
+    def test_qwen35_model_string_format(self):
+        """Qwen 3.5 model strings must follow the 'qwen3.5:variant' format."""
+        from src.hybrid_llm import CONFIGS
+        for name in self.QWEN35_CONFIGS:
+            cfg = CONFIGS[name]
+            model = cfg.reasoning_quick_model
+            assert model.startswith("qwen3.5:"), (
+                f"{name}: model '{model}' should start with 'qwen3.5:'"
+            )
+
+    def test_qwen35_to_dict_shows_ollama_prefix(self):
+        """to_dict() should show 'ollama/qwen3.5:...' in reasoning_quick field."""
+        from src.hybrid_llm import CONFIGS
+        for name in self.QWEN35_CONFIGS:
+            d = CONFIGS[name].to_dict()
+            assert d["reasoning_quick"].startswith("ollama/qwen3.5:"), (
+                f"{name}: to_dict reasoning_quick should have ollama prefix, "
+                f"got: {d['reasoning_quick']}"
+            )

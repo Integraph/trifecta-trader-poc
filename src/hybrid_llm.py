@@ -152,6 +152,49 @@ CONFIGS = {
         enhance_deep_style="execution_params_only",
     ),
 
+    # ── Qwen 3.5 benchmark configs (Task 011) ────────────────────────────────
+    # Mirror hybrid_haiku_tools but swap reasoning_quick to a Qwen 3.5 model.
+    # Tool-calling stays on Haiku; Risk Judge stays on Sonnet.
+
+    "hybrid_haiku_qwen35_27b": HybridLLMConfig(
+        tool_provider="anthropic",
+        tool_model="claude-haiku-4-5-20251001",
+        reasoning_quick_provider="ollama",
+        reasoning_quick_model="qwen3.5:27b",
+        reasoning_deep_provider="anthropic",
+        reasoning_deep_model="claude-sonnet-4-5-20250929",
+        enhance_local=True,
+        enhance_style="financial_analysis",
+        enhance_deep=True,
+        enhance_deep_style="execution_params_only",
+    ),
+
+    "hybrid_haiku_qwen35_35b": HybridLLMConfig(
+        tool_provider="anthropic",
+        tool_model="claude-haiku-4-5-20251001",
+        reasoning_quick_provider="ollama",
+        reasoning_quick_model="qwen3.5:35b-a3b",
+        reasoning_deep_provider="anthropic",
+        reasoning_deep_model="claude-sonnet-4-5-20250929",
+        enhance_local=True,
+        enhance_style="financial_analysis",
+        enhance_deep=True,
+        enhance_deep_style="execution_params_only",
+    ),
+
+    "hybrid_haiku_qwen35_9b": HybridLLMConfig(
+        tool_provider="anthropic",
+        tool_model="claude-haiku-4-5-20251001",
+        reasoning_quick_provider="ollama",
+        reasoning_quick_model="qwen3.5:9b",
+        reasoning_deep_provider="anthropic",
+        reasoning_deep_model="claude-sonnet-4-5-20250929",
+        enhance_local=True,
+        enhance_style="financial_analysis",
+        enhance_deep=True,
+        enhance_deep_style="execution_params_only",
+    ),
+
     # Aggressive: Haiku for tool-calling, fully local for reasoning (max cost savings)
     "hybrid_haiku_aggressive": HybridLLMConfig(
         tool_provider="anthropic",
