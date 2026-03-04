@@ -1,0 +1,11 @@
+name: "Default Watchlist"
+description: "Core large-cap positions and high-conviction candidates"
+tickers:
+  - AAPL
+  - MSFT
+  - NVDA
+  - GOOGL
+  - TSLA
+  - AMD
+  - META
+  - AMZN

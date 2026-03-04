@@ -20,6 +20,7 @@ data_cache/
 eval_results/
 results/
 cache/
+data/
 *.cache
 
 # OS files

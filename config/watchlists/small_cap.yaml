@@ -1,0 +1,8 @@
+name: "Small-Cap Candidates"
+description: "High-growth small-cap tickers from manual screening"
+tickers:
+  - DCMM
+  - IONQ
+  - RKLB
+  - AEHR
+  - SOUN
