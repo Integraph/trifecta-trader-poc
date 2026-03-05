@@ -30,6 +30,9 @@ dependencies = [
     "rich",
     # Trade execution
     "alpaca-py",
+    # Platform integration (Task 013)
+    "supabase>=2.0.0",
+    "pyyaml",
 ]
 
 [project.optional-dependencies]

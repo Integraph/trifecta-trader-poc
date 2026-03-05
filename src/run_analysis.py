@@ -389,6 +389,29 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
     return result
 
 
+def _publish_signal(result: dict, trade_params=None) -> None:
+    """Transform result into an AISignal and write it to Supabase.
+
+    Called when --publish is active.  Errors are caught and logged — they
+    never propagate to the caller.
+
+    Args:
+        result: Pipeline result dict from run_analysis().
+        trade_params: TradeParams instance (may be None).
+    """
+    import logging
+    _log = logging.getLogger(__name__)
+    try:
+        from src.integration.signal_adapter import transform_to_signal
+        from src.integration.supabase_writer import SupabaseWriter
+
+        signal = transform_to_signal(result, trade_params)
+        writer = SupabaseWriter()
+        writer.write_signal(signal)
+    except Exception as e:
+        _log.error("Signal publish failed: %s", e)
+
+
 # ── Cost breakdown printer ────────────────────────────────────────────────────
 
 def _print_cost_breakdown(cost_info: dict, hybrid_config: str = None) -> None:
@@ -637,6 +660,8 @@ def main():
                         help="Execute trade on Alpaca paper trading")
     parser.add_argument("--dry-run",   action="store_true",
                         help="Calculate order but don't submit")
+    parser.add_argument("--publish",   action="store_true",
+                        help="Transform result to AISignal and write to Supabase platform")
     parser.add_argument("--portfolio", action="store_true",
                         help="Print portfolio summary from DB and exit (no --ticker required)")
 
@@ -662,6 +687,23 @@ def main():
         cost_breakdown=not args.no_cost_breakdown,
     )
 
+    # Extract trade params whenever publish / execute / dry-run is active
+    trade_params = None
+    if args.publish or args.execute or args.dry_run:
+        try:
+            from src.execution.trade_params import extract_trade_params_dual
+            trade_params = extract_trade_params_dual(
+                ticker=args.ticker,
+                decision=result["decision"],
+                quality_score=result.get("quality_score", {}).get("composite", 0.0),
+                final_decision_text=result.get("final_trade_decision_text", ""),
+                trader_plan_text=result.get("trader_investment_plan", ""),
+                current_price=None,
+            )
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).warning("Trade param extraction failed: %s", e)
+
     if args.execute or args.dry_run:
         config = get_config(args.provider, args.deep_model, args.quick_model)
 
@@ -679,6 +721,10 @@ def main():
             pass
 
         _run_execution_flow(result, config, args, tracker=tracker, analysis_id=analysis_id)
+
+    # Publish signal to Supabase platform (additive — never blocks pipeline)
+    if args.publish:
+        _publish_signal(result, trade_params)
 
 
 if __name__ == "__main__":

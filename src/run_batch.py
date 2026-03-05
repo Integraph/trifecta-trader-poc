@@ -262,6 +262,7 @@ def run_batch(
     trade_date:   str,
     execute:      bool = False,
     dry_run:      bool = False,
+    publish:      bool = False,
     use_cache:    bool = True,
     cost_breakdown: bool = True,
     skip_held:    bool = False,
@@ -338,10 +339,25 @@ def run_batch(
             })
             continue
 
+        # Extract trade params (needed for execute, dry-run, or publish)
+        ticker_trade_params = None
+        if execute or dry_run or publish:
+            try:
+                from src.execution.trade_params import extract_trade_params_dual
+                ticker_trade_params = extract_trade_params_dual(
+                    ticker=ticker,
+                    decision=result["decision"],
+                    quality_score=result.get("quality_score", {}).get("composite", 0.0),
+                    final_decision_text=result.get("final_trade_decision_text", ""),
+                    trader_plan_text=result.get("trader_investment_plan", ""),
+                    current_price=None,
+                )
+            except Exception as e:
+                print(f"  ⚠ Trade param extraction failed for {ticker}: {e}")
+
         # Execute / dry-run per-ticker if requested
         if execute or dry_run:
             try:
-                # Fetch analysis_id for tracker wiring
                 from src.portfolio.tracker import PortfolioTracker
                 from src.portfolio.database import PortfolioDatabase
                 trk = PortfolioTracker()
@@ -359,6 +375,14 @@ def run_batch(
                 _run_execution_flow(result, config, fa, tracker=trk, analysis_id=aid)
             except Exception as e:
                 print(f"  ⚠ Execution flow failed for {ticker}: {e}")
+
+        # Publish signal to Supabase (per-ticker, additive)
+        if publish:
+            try:
+                from src.run_analysis import _publish_signal
+                _publish_signal(result, ticker_trade_params)
+            except Exception as e:
+                print(f"  ⚠ Signal publish failed for {ticker}: {e}")
 
         results.append(result)
 
@@ -403,6 +427,8 @@ def main():
     parser.add_argument("--date",     type=str, default=str(date.today()))
     parser.add_argument("--execute",  action="store_true")
     parser.add_argument("--dry-run",  action="store_true")
+    parser.add_argument("--publish",  action="store_true",
+                        help="Write AISignals to Supabase after each ticker")
     parser.add_argument("--no-debug", action="store_true",
                         help="Disable debug output (passed through to run_analysis)")
     parser.add_argument("--no-cache", action="store_true")
@@ -436,6 +462,7 @@ def main():
         trade_date=args.date,
         execute=args.execute,
         dry_run=args.dry_run,
+        publish=args.publish,
         use_cache=not args.no_cache,
         cost_breakdown=not args.no_cost_breakdown,
         skip_held=args.skip_held,

@@ -1,0 +1,4 @@
+supabase:
+  signal_ttl_hours: 24       # Signal expiry (hours from createdAt)
+  write_enabled: true         # Set to false for dry-run mode (logs but doesn't write)
+  table_name: "signals"       # Target table in Supabase
