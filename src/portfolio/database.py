@@ -66,6 +66,47 @@ CREATE TABLE IF NOT EXISTS portfolio_snapshots (
     total_positions  INTEGER,
     UNIQUE(snapshot_date)
 );
+
+CREATE TABLE IF NOT EXISTS signal_outcomes (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    analysis_id     INTEGER NOT NULL REFERENCES analyses(id),
+    ticker          TEXT    NOT NULL,
+    signal_date     TEXT    NOT NULL,
+    decision        TEXT    NOT NULL,
+    entry_price     REAL,
+    stop_loss       REAL,
+    price_target    REAL,
+
+    -- Actual prices at checkpoints
+    price_at_signal REAL,
+    price_t1        REAL,
+    price_t5        REAL,
+    price_t10       REAL,
+
+    -- Price extremes during the tracking window (T+1 to T+10)
+    high_t10        REAL,
+    low_t10         REAL,
+
+    -- Calculated outcome fields (populated by AccuracyScorer)
+    direction_correct_t1   INTEGER,
+    direction_correct_t5   INTEGER,
+    direction_correct_t10  INTEGER,
+    target_hit             INTEGER,
+    stop_hit               INTEGER,
+    target_hit_first       INTEGER,
+    return_t1_pct          REAL,
+    return_t5_pct          REAL,
+    return_t10_pct         REAL,
+    max_favorable_pct      REAL,
+    max_adverse_pct        REAL,
+
+    -- Tracking status
+    status          TEXT NOT NULL DEFAULT 'pending',
+    last_updated    TEXT NOT NULL,
+    error_message   TEXT,
+
+    UNIQUE(analysis_id)
+);
 """
 
 

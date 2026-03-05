@@ -377,14 +377,64 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
     print(f"\nResults saved to: {result_file}")
     print(f"{'='*60}\n")
 
+    # ── Always extract trade params (stored in result for outcome tracking) ──
+    _trade_params = None
+    try:
+        from src.execution.trade_params import extract_trade_params_dual
+        _trade_params = extract_trade_params_dual(
+            ticker=ticker,
+            decision=decision,
+            quality_score=score.composite_score,
+            final_decision_text=final_trade_text,
+            trader_plan_text=trader_plan_text,
+            current_price=None,
+        )
+        result["trade_params"] = {
+            "entry_price":      _trade_params.entry_price,
+            "stop_loss":        _trade_params.stop_loss,
+            "price_target":     _trade_params.price_target,
+            "position_pct":     _trade_params.position_pct,
+            "risk_reward_ratio": _trade_params.risk_reward_ratio,
+            "confidence":       _trade_params.confidence,
+        }
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("Trade param extraction failed: %s", e)
+        result["trade_params"] = None
+
     # ── Log to portfolio database ──────────────────────────────────────────
+    _analysis_id = None
     try:
         from src.portfolio.tracker import PortfolioTracker
         tracker = PortfolioTracker()
-        tracker.log_analysis(result, portfolio_context)
+        _analysis_id = tracker.log_analysis(result, portfolio_context)
     except Exception as e:
         import logging
         logging.getLogger(__name__).warning("Could not log to portfolio DB: %s", e)
+
+    # ── Auto-create accuracy outcome record ────────────────────────────────
+    try:
+        from src.portfolio.database import PortfolioDatabase
+        from src.accuracy.price_tracker import PriceTracker
+        _db = PortfolioDatabase()
+        if _analysis_id is None:
+            config_label = hybrid or provider
+            _analysis_id = _db.get_analysis_id(ticker, trade_date, config_label)
+        if _analysis_id is not None:
+            _pt = PriceTracker(_db)
+            tp  = result.get("trade_params") or {}
+            _pt.create_outcome(
+                analysis_id=_analysis_id,
+                ticker=ticker,
+                signal_date=trade_date,
+                decision=decision,
+                entry_price=tp.get("entry_price"),
+                stop_loss=tp.get("stop_loss"),
+                price_target=tp.get("price_target"),
+            )
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning("Could not create accuracy outcome: %s", e)
 
     return result
 
@@ -687,9 +737,11 @@ def main():
         cost_breakdown=not args.no_cost_breakdown,
     )
 
-    # Extract trade params whenever publish / execute / dry-run is active
+    # Trade params are always extracted inside run_analysis() and stored in
+    # result["trade_params"].  Re-use them here rather than re-extracting.
+    _tp_dict     = result.get("trade_params") or {}
     trade_params = None
-    if args.publish or args.execute or args.dry_run:
+    if _tp_dict:
         try:
             from src.execution.trade_params import extract_trade_params_dual
             trade_params = extract_trade_params_dual(
@@ -702,7 +754,7 @@ def main():
             )
         except Exception as e:
             import logging
-            logging.getLogger(__name__).warning("Trade param extraction failed: %s", e)
+            logging.getLogger(__name__).warning("Trade param re-extraction failed: %s", e)
 
     if args.execute or args.dry_run:
         config = get_config(args.provider, args.deep_model, args.quick_model)

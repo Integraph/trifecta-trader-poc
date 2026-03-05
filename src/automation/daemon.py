@@ -44,6 +44,14 @@ _CONFIG_DEFAULTS = {
         "cooldown_seconds":       60,
         "max_retries":            2,
     },
+    "accuracy": {
+        "enabled":               True,
+        "update_hour":           17,
+        "update_minute":         0,
+        "timezone":              "US/Eastern",
+        "weekdays_only":         True,
+        "backfill_on_first_run": True,
+    },
 }
 
 
@@ -107,8 +115,9 @@ class PipelineDaemon:
 
         sched_cfg = self._cfg["scheduler"]
         qr_cfg    = self._cfg["queue_reader"]
+        acc_cfg   = self._cfg.get("accuracy", {})
 
-        # ── Scheduler ─────────────────────────────────────────────────────────
+        # ── Watchlist Scheduler ───────────────────────────────────────────────
         if enable_scheduler and sched_cfg.get("enabled", True):
             from src.automation.scheduler import PipelineScheduler, create_watchlist_scan_fn
 
@@ -137,6 +146,10 @@ class PipelineDaemon:
             if run_now:
                 logger.warning("--run-now requested but scheduler is disabled.")
                 return
+
+        # ── Accuracy Updater Scheduler ────────────────────────────────────────
+        if acc_cfg.get("enabled", True):
+            self._start_accuracy_scheduler(acc_cfg)
 
         # ── Queue Reader ───────────────────────────────────────────────────────
         if enable_queue and qr_cfg.get("enabled", True):
@@ -251,6 +264,70 @@ class PipelineDaemon:
         return errors
 
     # ── Private ───────────────────────────────────────────────────────────────
+
+    def _start_accuracy_scheduler(self, acc_cfg: dict) -> None:
+        """Register the accuracy updater as a second CronTrigger job."""
+        import pytz
+        from apscheduler.triggers.cron import CronTrigger
+
+        hour        = acc_cfg.get("update_hour", 17)
+        minute      = acc_cfg.get("update_minute", 0)
+        tz          = acc_cfg.get("timezone", "US/Eastern")
+        weekdays    = acc_cfg.get("weekdays_only", True)
+        do_backfill = acc_cfg.get("backfill_on_first_run", True)
+
+        def _run_accuracy_update():
+            try:
+                from src.accuracy.updater import AccuracyUpdater
+                updater = AccuracyUpdater()
+                result  = updater.run_update()
+                logger.info("Accuracy update complete: %s", result)
+            except Exception as e:
+                logger.error("Accuracy update failed: %s", e)
+
+        # Use the same background scheduler as the watchlist job (or create one)
+        if self._scheduler is None:
+            from src.automation.scheduler import PipelineScheduler
+            _dummy = PipelineScheduler(
+                watchlist_scan_fn=lambda: None,
+                schedule_hour=hour,
+                schedule_minute=minute,
+                timezone=tz,
+                weekdays_only=weekdays,
+            )
+            self._scheduler = _dummy
+
+        day_of_week = "mon-fri" if weekdays else "*"
+        trigger = CronTrigger(
+            hour=hour, minute=minute,
+            day_of_week=day_of_week,
+            timezone=tz,
+        )
+        self._scheduler._scheduler.add_job(
+            _run_accuracy_update,
+            trigger=trigger,
+            max_instances=1,
+            coalesce=True,
+            id="accuracy_update",
+            name="Daily accuracy price update",
+        )
+
+        if not self._scheduler._scheduler.running:
+            self._scheduler._scheduler.start()
+
+        logger.info(
+            "Accuracy updater scheduled: %02d:%02d %s  weekdays_only=%s",
+            hour, minute, tz, weekdays,
+        )
+
+        # Backfill on first daemon start
+        if do_backfill:
+            try:
+                from src.accuracy.updater import AccuracyUpdater
+                logger.info("Running accuracy backfill (backfill_on_first_run=true)...")
+                AccuracyUpdater().backfill(days_back=90)
+            except Exception as e:
+                logger.warning("Accuracy backfill failed (non-fatal): %s", e)
 
     def _load_config(self, path: str) -> dict:
         """Load automation.yaml, merging with defaults."""

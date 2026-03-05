@@ -20,3 +20,11 @@ queue_reader:
   max_concurrent_analyses: 1  # Sequential (LLM rate limits)
   cooldown_seconds: 60         # Min wait between analyses
   max_retries: 2               # Max retry attempts before skipping a candidate
+
+accuracy:
+  enabled: true
+  update_hour: 17            # 5:00 PM ET — after market close, prices are final
+  update_minute: 0
+  timezone: "US/Eastern"
+  weekdays_only: true
+  backfill_on_first_run: true  # Score all existing analyses on first daemon start
