@@ -92,6 +92,7 @@ class PipelineScheduler:
         schedule_minute: int = 30,
         timezone: str = "US/Eastern",
         weekdays_only: bool = True,
+        event_callback: Optional[Callable] = None,
     ):
         """
         Args:
@@ -100,15 +101,19 @@ class PipelineScheduler:
             schedule_minute: Minute to run.
             timezone: Timezone for scheduling (default: US/Eastern).
             weekdays_only: If True, only run Mon-Fri.
+            event_callback: Optional fn(event_type: str, data: dict) called at
+                lifecycle points. Pass the admin event bus when the API is running.
         """
-        self._scan_fn    = watchlist_scan_fn
-        self._hour       = schedule_hour
-        self._minute     = schedule_minute
-        self._timezone   = timezone
-        self._weekdays   = weekdays_only
+        self._scan_fn        = watchlist_scan_fn
+        self._hour           = schedule_hour
+        self._minute         = schedule_minute
+        self._timezone       = timezone
+        self._weekdays       = weekdays_only
+        self._event_callback = event_callback
         self._scheduler  = BackgroundScheduler(timezone=pytz.timezone(timezone))
         self._last_run: Optional[datetime] = None
         self._last_result: Optional[dict]  = None
+        self._last_run_detail: Optional[dict] = None
 
     def start(self) -> None:
         """Start the background scheduler. Non-blocking."""
@@ -157,14 +162,52 @@ class PipelineScheduler:
         """Whether the APScheduler is active."""
         return self._scheduler.running
 
+    def _emit(self, event_type: str, data: dict) -> None:
+        """Publish a lifecycle event to the admin event bus (if connected)."""
+        if self._event_callback:
+            try:
+                self._event_callback(event_type, data)
+            except Exception:
+                pass  # never let event delivery break the scheduler
+
     def _run_scan(self) -> Optional[dict]:
         """Internal: invoke the scan function and record timing."""
         self._last_run = datetime.now(pytz.utc)
+        tickers_count = 0
+        self._emit("scheduler.run_started", {"timestamp": self._last_run.isoformat()})
         try:
             result = self._scan_fn()
             self._last_result = result
+            elapsed   = result.get("elapsed_seconds", 0)
+            tickers   = result.get("tickers_processed", 0)
+            decisions = {
+                r.get("ticker", "?"): r.get("decision", "?")
+                for r in result.get("results", [])
+            } if "results" in result else {}
+            self._last_run_detail = {
+                "timestamp":        self._last_run.isoformat(),
+                "result":           "error" if "error" in result else "success",
+                "tickers_processed": tickers,
+                "elapsed_seconds":  elapsed,
+                "decisions":        decisions,
+                "error":            result.get("error"),
+            }
+            self._emit("scheduler.run_completed", {
+                "tickers_processed": tickers,
+                "elapsed_seconds":   elapsed,
+                "decisions":         decisions,
+            })
             return result
         except Exception as e:
             logger.error("Scheduled scan raised: %s", e)
             self._last_result = {"error": str(e)}
+            self._last_run_detail = {
+                "timestamp":        self._last_run.isoformat(),
+                "result":           "error",
+                "tickers_processed": 0,
+                "elapsed_seconds":  0,
+                "decisions":        {},
+                "error":            str(e),
+            }
+            self._emit("scheduler.run_completed", {"error": str(e), "tickers_processed": 0})
             return self._last_result

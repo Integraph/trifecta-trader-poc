@@ -107,6 +107,7 @@ class QueueReader:
         poll_interval: int = 30,
         max_retries: int = 2,
         cooldown_seconds: int = 60,
+        event_callback: Optional[Callable] = None,
     ):
         """
         Args:
@@ -117,6 +118,8 @@ class QueueReader:
             poll_interval: Seconds between polls of pending/.
             max_retries: Files with retry_count >= max_retries are skipped.
             cooldown_seconds: Minimum gap between analyses (LLM rate limit guard).
+            event_callback: Optional fn(event_type: str, data: dict) called at
+                lifecycle points. Pass the admin event bus when the API is running.
         """
         self._queue_dir   = Path(queue_dir)
         self._pending     = self._queue_dir / "pending"
@@ -127,6 +130,7 @@ class QueueReader:
         self._poll_interval  = poll_interval
         self._max_retries    = max_retries
         self._cooldown       = cooldown_seconds
+        self._event_callback = event_callback
         self._running         = False
         self._stop_requested  = False
         self._last_poll: Optional[datetime]     = None
@@ -208,6 +212,14 @@ class QueueReader:
 
     # ── Internal helpers ──────────────────────────────────────────────────────
 
+    def _emit(self, event_type: str, data: dict) -> None:
+        """Publish a lifecycle event to the admin event bus (if connected)."""
+        if self._event_callback:
+            try:
+                self._event_callback(event_type, data)
+            except Exception:
+                pass
+
     def _process_candidate(self, pending_path: Path) -> Optional[dict]:
         """Move, analyze, and file a single candidate.
 
@@ -226,6 +238,11 @@ class QueueReader:
 
         ticker = message.get("ticker", "UNKNOWN").upper()
         logger.info("Processing candidate: %s  priority=%s", ticker, message.get("priority", "?"))
+        self._emit("queue.candidate_picked", {
+            "ticker":   ticker,
+            "priority": message.get("priority", "medium"),
+            "filename": pending_path.name,
+        })
 
         # Move to processing/
         processing_path = self._processing / pending_path.name
@@ -249,11 +266,17 @@ class QueueReader:
             result = self._analyze_fn(ticker, scanner_context)
             self._last_analysis = datetime.now(timezone.utc)
             self._write_completed(processing_path, message, result)
+            self._emit("queue.analysis_completed", {
+                "ticker":    ticker,
+                "decision":  result.get("decision"),
+                "quality":   result.get("quality_score", {}).get("composite") if isinstance(result.get("quality_score"), dict) else None,
+            })
             return result
 
         except Exception as e:
             logger.error("Analysis failed for %s: %s", ticker, e)
             self._handle_failure(processing_path, message, str(e))
+            self._emit("queue.analysis_failed", {"ticker": ticker, "error": str(e)})
             return None
 
     def _should_skip(self, message: dict) -> bool:

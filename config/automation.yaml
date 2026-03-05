@@ -28,3 +28,8 @@ accuracy:
   timezone: "US/Eastern"
   weekdays_only: true
   backfill_on_first_run: true  # Score all existing analyses on first daemon start
+
+admin_api:
+  enabled: true
+  port: 8420
+  host: "0.0.0.0"

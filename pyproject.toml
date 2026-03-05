@@ -36,6 +36,11 @@ dependencies = [
     # Pipeline automation (Task 014)
     "apscheduler>=3.10.0",
     "pytz>=2024.1",
+    # Admin API (Task 016)
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "websockets>=12.0",
+    "httpx>=0.27.0",
 ]
 
 [project.optional-dependencies]
@@ -51,3 +56,4 @@ target-version = "py311"
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = [".", "vendor/TradingAgents"]
+asyncio_mode = "auto"

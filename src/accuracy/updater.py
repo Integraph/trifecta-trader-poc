@@ -15,7 +15,7 @@ import argparse
 import logging
 import sys
 from datetime import date, datetime, timedelta, timezone
-from typing import Optional
+from typing import Callable, Optional
 
 from src.accuracy.price_tracker import PriceTracker, fetch_outcome_prices
 from src.accuracy.scorer import AccuracyScorer
@@ -26,16 +26,27 @@ logger = logging.getLogger(__name__)
 class AccuracyUpdater:
     """Orchestrates daily price fetching and accuracy scoring."""
 
-    def __init__(self, db=None):
+    def __init__(self, db=None, event_callback: Optional[Callable] = None):
         """
         Args:
             db: PortfolioDatabase instance. If None, a default instance is created.
+            event_callback: Optional fn(event_type: str, data: dict) called at
+                lifecycle points. Pass the admin event bus when the API is running.
         """
         if db is None:
             from src.portfolio.database import PortfolioDatabase
             db = PortfolioDatabase()
-        self.tracker = PriceTracker(db)
-        self.scorer  = AccuracyScorer()
+        self.tracker         = PriceTracker(db)
+        self.scorer          = AccuracyScorer()
+        self._event_callback = event_callback
+
+    def _emit(self, event_type: str, data: dict) -> None:
+        """Publish a lifecycle event to the admin event bus (if connected)."""
+        if self._event_callback:
+            try:
+                self._event_callback(event_type, data)
+            except Exception:
+                pass
 
     def run_update(self, ticker: Optional[str] = None) -> dict:
         """Full update cycle: fetch prices → score complete outcomes.
@@ -64,6 +75,7 @@ class AccuracyUpdater:
         skipped   = 0
 
         logger.info("Accuracy update starting: %d pending outcomes", total)
+        self._emit("accuracy.update_started", {"pending": total})
 
         for outcome in pending:
             outcome_id  = outcome["id"]
@@ -114,6 +126,7 @@ class AccuracyUpdater:
             "skipped":         skipped,
         }
         logger.info("Accuracy update complete: %s", summary)
+        self._emit("accuracy.update_completed", summary)
         return summary
 
     def backfill(self, days_back: int = 30) -> dict:
