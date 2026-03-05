@@ -11,10 +11,12 @@ Usage (standalone dev mode):
 """
 
 import logging
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +81,12 @@ def create_app(daemon=None, db=None) -> FastAPI:
     app.include_router(analyses_router,  prefix="/analyses",   tags=["Analyses"])
     app.include_router(events_router,    tags=["Events"])
     app.include_router(tasks_router,     prefix="/tasks",      tags=["Tasks"])
+
+    # ── Serve admin-ui static files (production build) ───────────────────────
+    # Must come AFTER all API routers so API routes take precedence.
+    static_dir = Path(__file__).parent / "static"
+    if static_dir.exists():
+        app.mount("/", StaticFiles(directory=str(static_dir), html=True), name="admin-ui")
 
     # ── Startup: install admin log handler and register event loop ────────────
 

@@ -112,7 +112,7 @@ async def get_automation_config():
     return merged
 
 
-@config_router.put("/config/automation")
+@config_router.put("/automation")
 async def update_automation_config(body: Dict[str, Any]):
     """Write updated automation config to disk (deep merge with existing).
 
