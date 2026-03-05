@@ -1,0 +1,22 @@
+scheduler:
+  enabled: true
+  watchlist_hour: 8          # 8:30 AM ET = 60 min before market open
+  watchlist_minute: 30
+  timezone: "US/Eastern"
+  weekdays_only: true        # Skip Sat/Sun
+  hybrid_config: "hybrid_haiku_tools"
+  publish: true              # Auto-publish to Supabase
+  watchlist: "default"       # config/watchlists/default.yaml
+
+queue_reader:
+  enabled: true
+  poll_interval_seconds: 30  # How often to check for new candidates
+  queue_dir: "queue"         # Local queue dir (relative to project root)
+                             # Change to "../trifecta-market-scanner/queue"
+                             # when the Scanner repo is cloned alongside this one
+  target_trader: "trifecta-trader"
+  hybrid_config: "hybrid_haiku_tools"
+  publish: true
+  max_concurrent_analyses: 1  # Sequential (LLM rate limits)
+  cooldown_seconds: 60         # Min wait between analyses
+  max_retries: 2               # Max retry attempts before skipping a candidate

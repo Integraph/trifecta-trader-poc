@@ -33,6 +33,9 @@ dependencies = [
     # Platform integration (Task 013)
     "supabase>=2.0.0",
     "pyyaml",
+    # Pipeline automation (Task 014)
+    "apscheduler>=3.10.0",
+    "pytz>=2024.1",
 ]
 
 [project.optional-dependencies]
