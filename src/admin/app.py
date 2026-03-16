@@ -60,27 +60,29 @@ def create_app(daemon=None, db=None) -> FastAPI:
 
     # ── Mount routers ─────────────────────────────────────────────────────────
 
-    from src.admin.health    import health_router
-    from src.admin.scheduler import scheduler_router
-    from src.admin.queue     import queue_router
-    from src.admin.accuracy  import accuracy_router
-    from src.admin.config    import config_router
-    from src.admin.test_run  import test_run_router
-    from src.admin.logs      import logs_router
-    from src.admin.analyses  import analyses_router
-    from src.admin.events    import events_router
-    from src.admin.tasks     import tasks_router
+    from src.admin.health        import health_router
+    from src.admin.scheduler     import scheduler_router
+    from src.admin.queue         import queue_router
+    from src.admin.accuracy      import accuracy_router
+    from src.admin.config        import config_router
+    from src.admin.sanity_check  import sanity_check_router
+    from src.admin.test_run      import test_run_router
+    from src.admin.logs          import logs_router
+    from src.admin.analyses      import analyses_router
+    from src.admin.events        import events_router
+    from src.admin.tasks         import tasks_router
 
-    app.include_router(health_router,    tags=["Health"])
-    app.include_router(scheduler_router, prefix="/scheduler",  tags=["Scheduler"])
-    app.include_router(queue_router,     prefix="/queue",      tags=["Queue"])
-    app.include_router(accuracy_router,  prefix="/accuracy",   tags=["Accuracy"])
-    app.include_router(config_router,    prefix="/config",     tags=["Configuration"])
-    app.include_router(test_run_router,  prefix="/test-run",   tags=["Test Run"])
-    app.include_router(logs_router,      prefix="/logs",       tags=["Logs"])
-    app.include_router(analyses_router,  prefix="/analyses",   tags=["Analyses"])
-    app.include_router(events_router,    tags=["Events"])
-    app.include_router(tasks_router,     prefix="/tasks",      tags=["Tasks"])
+    app.include_router(health_router,         tags=["Health"])
+    app.include_router(scheduler_router,      prefix="/scheduler",             tags=["Scheduler"])
+    app.include_router(queue_router,          prefix="/queue",                 tags=["Queue"])
+    app.include_router(accuracy_router,       prefix="/accuracy",              tags=["Accuracy"])
+    app.include_router(config_router,         prefix="/config",                tags=["Configuration"])
+    app.include_router(sanity_check_router,   prefix="/config/hybrid-configs", tags=["Configuration"])
+    app.include_router(test_run_router,       prefix="/test-run",              tags=["Test Run"])
+    app.include_router(logs_router,           prefix="/logs",                  tags=["Logs"])
+    app.include_router(analyses_router,       prefix="/analyses",              tags=["Analyses"])
+    app.include_router(events_router,         tags=["Events"])
+    app.include_router(tasks_router,          prefix="/tasks",                 tags=["Tasks"])
 
     # ── Serve admin-ui static files (production build) ───────────────────────
     # Must come AFTER all API routers so API routes take precedence.

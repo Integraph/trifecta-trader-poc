@@ -1,16 +1,21 @@
 """
 Configuration Endpoints — /config/*
 
-GET  /config/automation             Current automation.yaml as JSON
-PUT  /config/automation             Write partial/full config update to disk
-GET  /config/supabase               Current supabase.yaml as JSON
-PUT  /config/supabase               Write supabase config update to disk
-GET  /config/watchlists             List available watchlist files + tickers
-PUT  /config/watchlists/{name}      Create / update a watchlist file
-GET  /config/hybrid-configs         List all hybrid LLM configs from CONFIGS
+GET    /config/automation                  Current automation.yaml as JSON
+PUT    /config/automation                  Write partial/full config update to disk
+GET    /config/supabase                    Current supabase.yaml as JSON
+PUT    /config/supabase                    Write supabase config update to disk
+GET    /config/watchlists                  List available watchlist files + tickers
+PUT    /config/watchlists/{name}           Create / update a watchlist file
+GET    /config/hybrid-configs              List all hybrid LLM configs (YAML-backed)
+POST   /config/hybrid-configs              Create a new hybrid LLM config
+PUT    /config/hybrid-configs/{name}       Update an existing config
+DELETE /config/hybrid-configs/{name}       Delete a config
+POST   /config/hybrid-configs/{name}/clone Clone a config with a new name
 """
 
 import logging
+import re
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -19,10 +24,21 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from src.admin.dependencies import get_daemon
+from src.hybrid_llm import (
+    KNOWN_PROVIDERS,
+    KNOWN_ENHANCE_STYLES,
+    HybridLLMConfig,
+    load_configs,
+    save_config,
+    delete_config,
+    CONFIGS,
+)
 
 logger = logging.getLogger(__name__)
 
 config_router = APIRouter()
+
+_NAME_RE = re.compile(r"^[a-zA-Z0-9_]{1,64}$")
 
 # Fields that take effect immediately vs. require daemon restart
 _IMMEDIATE_FIELDS = {
@@ -206,31 +222,168 @@ async def update_watchlist(name: str, body: WatchlistUpdate):
 
 # ── Hybrid configs ────────────────────────────────────────────────────────────
 
+class HybridConfigBody(BaseModel):
+    tool_provider:            str = "anthropic"
+    tool_model:               str = "claude-haiku-4-5-20251001"
+    reasoning_quick_provider: str = "ollama"
+    reasoning_quick_model:    str = "qwen2.5:14b"
+    reasoning_deep_provider:  str = "anthropic"
+    reasoning_deep_model:     str = "claude-sonnet-4-5-20250929"
+    enhance_local:            bool = False
+    enhance_style:            str = "financial_analysis"
+    enhance_deep:             bool = False
+    enhance_deep_style:       str = "execution_params_only"
+
+class CreateHybridConfigBody(HybridConfigBody):
+    name: str
+
+class CloneBody(BaseModel):
+    new_name: str
+
+
+def _validate_config_body(body: HybridConfigBody) -> None:
+    """Raise HTTPException if provider or style values are invalid."""
+    for field, val in [
+        ("tool_provider",            body.tool_provider),
+        ("reasoning_quick_provider", body.reasoning_quick_provider),
+        ("reasoning_deep_provider",  body.reasoning_deep_provider),
+    ]:
+        if val not in KNOWN_PROVIDERS:
+            raise HTTPException(
+                status_code=422,
+                detail={"error": f"Invalid {field}: '{val}'. Must be one of {KNOWN_PROVIDERS}"},
+            )
+    for field, val in [
+        ("enhance_style",      body.enhance_style),
+        ("enhance_deep_style", body.enhance_deep_style),
+    ]:
+        if val not in KNOWN_ENHANCE_STYLES:
+            raise HTTPException(
+                status_code=422,
+                detail={"error": f"Invalid {field}: '{val}'. Must be one of {KNOWN_ENHANCE_STYLES}"},
+            )
+
+
+def _active_hybrid_config() -> Optional[str]:
+    """Return the currently active hybrid_config from automation.yaml or daemon."""
+    daemon = get_daemon()
+    if daemon is not None:
+        return daemon._cfg.get("scheduler", {}).get("hybrid_config")
+    path = Path("config/automation.yaml")
+    if path.exists():
+        with open(path) as f:
+            data = yaml.safe_load(f) or {}
+        return data.get("scheduler", {}).get("hybrid_config")
+    return None
+
+
+def _cfg_to_response(name: str, cfg: HybridLLMConfig) -> dict:
+    d = cfg.to_flat_dict()
+    d["name"] = name
+    return d
+
+
 @config_router.get("/hybrid-configs")
 async def get_hybrid_configs():
-    """List all available hybrid LLM configurations."""
+    """List all hybrid LLM configurations from YAML. Includes providers + styles for UI dropdowns."""
     try:
-        from src.hybrid_llm import CONFIGS
-        daemon = get_daemon()
-        active = None
-        if daemon is not None:
-            active = daemon._cfg.get("scheduler", {}).get("hybrid_config")
-
-        configs = []
-        for name, cfg in CONFIGS.items():
-            # HybridLLMConfig is a class with a to_dict() method
-            cfg_dict = cfg.to_dict() if hasattr(cfg, "to_dict") else (cfg if isinstance(cfg, dict) else {})
-            configs.append({
-                "name":                     name,
-                "tool_provider":            getattr(cfg, "tool_provider", cfg_dict.get("tool_provider")),
-                "tool_model":               getattr(cfg, "tool_model", cfg_dict.get("tool_model")),
-                "reasoning_quick_provider": getattr(cfg, "reasoning_quick_provider", None),
-                "reasoning_quick_model":    getattr(cfg, "reasoning_quick_model", None),
-                "reasoning_deep_provider":  getattr(cfg, "reasoning_deep_provider", None),
-                "reasoning_deep_model":     getattr(cfg, "reasoning_deep_model", None),
-            })
-
-        return {"configs": configs, "active": active}
+        configs_dict = load_configs()
+        active = _active_hybrid_config()
+        return {
+            "configs":        [_cfg_to_response(n, c) for n, c in configs_dict.items()],
+            "active":         active,
+            "providers":      KNOWN_PROVIDERS,
+            "enhance_styles": KNOWN_ENHANCE_STYLES,
+        }
     except Exception as e:
         logger.error("Failed to load hybrid configs: %s", e)
         raise HTTPException(status_code=500, detail={"error": str(e)})
+
+
+@config_router.post("/hybrid-configs", status_code=201)
+async def create_hybrid_config(body: CreateHybridConfigBody):
+    """Create a new hybrid LLM config."""
+    name = body.name.strip()
+    if not _NAME_RE.match(name):
+        raise HTTPException(
+            status_code=422,
+            detail={"error": "name must be 1-64 chars, alphanumeric + underscores only"},
+        )
+    if name in CONFIGS:
+        raise HTTPException(status_code=409, detail={"error": f"Config '{name}' already exists"})
+    _validate_config_body(body)
+
+    cfg = HybridLLMConfig(
+        tool_provider            = body.tool_provider,
+        tool_model               = body.tool_model,
+        reasoning_quick_provider = body.reasoning_quick_provider,
+        reasoning_quick_model    = body.reasoning_quick_model,
+        reasoning_deep_provider  = body.reasoning_deep_provider,
+        reasoning_deep_model     = body.reasoning_deep_model,
+        enhance_local            = body.enhance_local,
+        enhance_style            = body.enhance_style,
+        enhance_deep             = body.enhance_deep,
+        enhance_deep_style       = body.enhance_deep_style,
+    )
+    save_config(name, cfg)
+    return _cfg_to_response(name, cfg)
+
+
+@config_router.put("/hybrid-configs/{name}")
+async def update_hybrid_config(name: str, body: HybridConfigBody):
+    """Update an existing hybrid LLM config."""
+    if name not in CONFIGS:
+        raise HTTPException(status_code=404, detail={"error": f"Config '{name}' not found"})
+    _validate_config_body(body)
+
+    cfg = HybridLLMConfig(
+        tool_provider            = body.tool_provider,
+        tool_model               = body.tool_model,
+        reasoning_quick_provider = body.reasoning_quick_provider,
+        reasoning_quick_model    = body.reasoning_quick_model,
+        reasoning_deep_provider  = body.reasoning_deep_provider,
+        reasoning_deep_model     = body.reasoning_deep_model,
+        enhance_local            = body.enhance_local,
+        enhance_style            = body.enhance_style,
+        enhance_deep             = body.enhance_deep,
+        enhance_deep_style       = body.enhance_deep_style,
+    )
+    save_config(name, cfg)
+    return _cfg_to_response(name, cfg)
+
+
+@config_router.delete("/hybrid-configs/{name}", status_code=204)
+async def delete_hybrid_config(name: str):
+    """Delete a hybrid LLM config. Returns 409 if config is currently active."""
+    if name not in CONFIGS:
+        raise HTTPException(status_code=404, detail={"error": f"Config '{name}' not found"})
+    active = _active_hybrid_config()
+    if active and active == name:
+        raise HTTPException(
+            status_code=409,
+            detail={"error": f"Cannot delete active config '{name}'. Change active config first."},
+        )
+    try:
+        delete_config(name)
+    except KeyError:
+        raise HTTPException(status_code=404, detail={"error": f"Config '{name}' not found"})
+
+
+@config_router.post("/hybrid-configs/{name}/clone", status_code=201)
+async def clone_hybrid_config(name: str, body: CloneBody):
+    """Clone an existing config to a new name."""
+    if name not in CONFIGS:
+        raise HTTPException(status_code=404, detail={"error": f"Config '{name}' not found"})
+    new_name = body.new_name.strip()
+    if not _NAME_RE.match(new_name):
+        raise HTTPException(
+            status_code=422,
+            detail={"error": "new_name must be 1-64 chars, alphanumeric + underscores only"},
+        )
+    if new_name in CONFIGS:
+        raise HTTPException(status_code=409, detail={"error": f"Config '{new_name}' already exists"})
+
+    src_cfg = CONFIGS[name]
+    new_cfg = HybridLLMConfig(**src_cfg.to_flat_dict())
+    save_config(new_name, new_cfg)
+    return _cfg_to_response(new_name, new_cfg)

@@ -1,0 +1,161 @@
+# Hybrid LLM Configurations
+# Auto-generated from src/hybrid_llm.py defaults.
+# Edit via Admin UI (localhost:8420/config) or directly here.
+# Changes take effect immediately for new test runs; restart daemon for scheduler.
+
+configs:
+  all_cloud:
+    tool_provider: anthropic
+    tool_model: claude-sonnet-4-5-20250929
+    reasoning_quick_provider: anthropic
+    reasoning_quick_model: claude-sonnet-4-5-20250929
+    reasoning_deep_provider: anthropic
+    reasoning_deep_model: claude-sonnet-4-5-20250929
+    enhance_local: false
+    enhance_style: financial_analysis
+    enhance_deep: false
+    enhance_deep_style: execution_params_only
+
+  hybrid_qwen:
+    tool_provider: anthropic
+    tool_model: claude-sonnet-4-5-20250929
+    reasoning_quick_provider: ollama
+    reasoning_quick_model: qwen2.5:14b
+    reasoning_deep_provider: anthropic
+    reasoning_deep_model: claude-sonnet-4-5-20250929
+    enhance_local: false
+    enhance_style: financial_analysis
+    enhance_deep: false
+    enhance_deep_style: execution_params_only
+
+  hybrid_mistral:
+    tool_provider: anthropic
+    tool_model: claude-sonnet-4-5-20250929
+    reasoning_quick_provider: ollama
+    reasoning_quick_model: mistral-small:22b
+    reasoning_deep_provider: anthropic
+    reasoning_deep_model: claude-sonnet-4-5-20250929
+    enhance_local: false
+    enhance_style: financial_analysis
+    enhance_deep: false
+    enhance_deep_style: execution_params_only
+
+  hybrid_aggressive_qwen:
+    tool_provider: anthropic
+    tool_model: claude-sonnet-4-5-20250929
+    reasoning_quick_provider: ollama
+    reasoning_quick_model: qwen2.5:14b
+    reasoning_deep_provider: ollama
+    reasoning_deep_model: qwen2.5:14b
+    enhance_local: false
+    enhance_style: financial_analysis
+    enhance_deep: false
+    enhance_deep_style: execution_params_only
+
+  hybrid_aggressive_mistral:
+    tool_provider: anthropic
+    tool_model: claude-sonnet-4-5-20250929
+    reasoning_quick_provider: ollama
+    reasoning_quick_model: mistral-small:22b
+    reasoning_deep_provider: ollama
+    reasoning_deep_model: mistral-small:22b
+    enhance_local: false
+    enhance_style: financial_analysis
+    enhance_deep: false
+    enhance_deep_style: execution_params_only
+
+  hybrid_qwen32:
+    tool_provider: anthropic
+    tool_model: claude-sonnet-4-5-20250929
+    reasoning_quick_provider: ollama
+    reasoning_quick_model: qwen2.5:32b
+    reasoning_deep_provider: anthropic
+    reasoning_deep_model: claude-sonnet-4-5-20250929
+    enhance_local: false
+    enhance_style: financial_analysis
+    enhance_deep: false
+    enhance_deep_style: execution_params_only
+
+  hybrid_aggressive_qwen32:
+    tool_provider: anthropic
+    tool_model: claude-sonnet-4-5-20250929
+    reasoning_quick_provider: ollama
+    reasoning_quick_model: qwen2.5:32b
+    reasoning_deep_provider: ollama
+    reasoning_deep_model: qwen2.5:32b
+    enhance_local: false
+    enhance_style: financial_analysis
+    enhance_deep: false
+    enhance_deep_style: execution_params_only
+
+  hybrid_qwen_enhanced:
+    tool_provider: anthropic
+    tool_model: claude-sonnet-4-5-20250929
+    reasoning_quick_provider: ollama
+    reasoning_quick_model: qwen2.5:14b
+    reasoning_deep_provider: anthropic
+    reasoning_deep_model: claude-sonnet-4-5-20250929
+    enhance_local: true
+    enhance_style: financial_analysis
+    enhance_deep: true
+    enhance_deep_style: execution_params_only
+
+  hybrid_haiku_tools:
+    tool_provider: anthropic
+    tool_model: claude-haiku-4-5-20251001
+    reasoning_quick_provider: ollama
+    reasoning_quick_model: qwen2.5:14b
+    reasoning_deep_provider: anthropic
+    reasoning_deep_model: claude-sonnet-4-5-20250929
+    enhance_local: true
+    enhance_style: financial_analysis
+    enhance_deep: true
+    enhance_deep_style: execution_params_only
+
+  hybrid_haiku_qwen35_27b:
+    tool_provider: anthropic
+    tool_model: claude-haiku-4-5-20251001
+    reasoning_quick_provider: ollama
+    reasoning_quick_model: qwen3.5:27b
+    reasoning_deep_provider: anthropic
+    reasoning_deep_model: claude-sonnet-4-5-20250929
+    enhance_local: true
+    enhance_style: financial_analysis
+    enhance_deep: true
+    enhance_deep_style: execution_params_only
+
+  hybrid_haiku_qwen35_35b:
+    tool_provider: anthropic
+    tool_model: claude-haiku-4-5-20251001
+    reasoning_quick_provider: ollama
+    reasoning_quick_model: qwen3.5:35b-a3b
+    reasoning_deep_provider: anthropic
+    reasoning_deep_model: claude-sonnet-4-5-20250929
+    enhance_local: true
+    enhance_style: financial_analysis
+    enhance_deep: true
+    enhance_deep_style: execution_params_only
+
+  hybrid_haiku_qwen35_9b:
+    tool_provider: anthropic
+    tool_model: claude-haiku-4-5-20251001
+    reasoning_quick_provider: ollama
+    reasoning_quick_model: qwen3.5:9b
+    reasoning_deep_provider: anthropic
+    reasoning_deep_model: claude-sonnet-4-5-20250929
+    enhance_local: true
+    enhance_style: financial_analysis
+    enhance_deep: true
+    enhance_deep_style: execution_params_only
+
+  hybrid_haiku_aggressive:
+    tool_provider: anthropic
+    tool_model: claude-haiku-4-5-20251001
+    reasoning_quick_provider: ollama
+    reasoning_quick_model: qwen2.5:14b
+    reasoning_deep_provider: ollama
+    reasoning_deep_model: qwen2.5:14b
+    enhance_local: true
+    enhance_style: financial_analysis
+    enhance_deep: true
+    enhance_deep_style: execution_params_only

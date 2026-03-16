@@ -276,6 +276,71 @@ export interface HybridConfig {
   reasoning_deep_model: string | null;
 }
 
+export interface HybridConfigFull {
+  name: string;
+  tool_provider: string;
+  tool_model: string;
+  reasoning_quick_provider: string;
+  reasoning_quick_model: string;
+  reasoning_deep_provider: string;
+  reasoning_deep_model: string;
+  enhance_local: boolean;
+  enhance_style: string;
+  enhance_deep: boolean;
+  enhance_deep_style: string;
+}
+
+export interface HybridConfigsResponse {
+  configs: HybridConfigFull[];
+  active: string | null;
+  providers: string[];
+  enhance_styles: string[];
+}
+
+export interface SanityCheckSlot {
+  provider: string;
+  model: string;
+  status: 'pass' | 'fail' | 'skip';
+  latency_ms: number | null;
+  error: string | null;
+}
+
+export interface SanityCheckResult {
+  config_name: string;
+  overall: 'pass' | 'partial' | 'fail';
+  checks: {
+    tool_calling: SanityCheckSlot;
+    reasoning_quick: SanityCheckSlot;
+    reasoning_deep: SanityCheckSlot;
+  };
+}
+
+export interface ABCompareRequest {
+  ticker: string;
+  trade_date: string;
+  config_a: string;
+  config_b: string;
+  publish?: boolean;
+}
+
+export interface ABSide {
+  name: string;
+  task_id: string;
+  status: 'running' | 'complete' | 'error' | 'unknown';
+  result: unknown;
+  error: string | null;
+}
+
+export interface ABCompareResponse {
+  ab_id: string;
+  ticker: string;
+  trade_date: string;
+  status: 'running' | 'complete';
+  started_at: string;
+  config_a: ABSide;
+  config_b: ABSide;
+}
+
 // ── Logs ──────────────────────────────────────────────────────────────────────
 
 export interface LogEntry {
