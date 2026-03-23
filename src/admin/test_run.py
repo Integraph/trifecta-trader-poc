@@ -201,7 +201,7 @@ def _run_analysis_safe(
     trade_date: str,
 ) -> dict:
     """Run a single analysis and return a sanitised result dict."""
-    from src.run_analysis import run_analysis
+    from src.run_analysis import run_analysis, _publish_signal
     import time
 
     start = time.time()
@@ -211,10 +211,19 @@ def _run_analysis_safe(
         hybrid=hybrid_config,
         use_cache=True,
         cost_breakdown=True,
-        publish=publish,
         debug=False,
     )
     elapsed = round(time.time() - start, 1)
+
+    # Publish to Supabase if requested (mirrors CLI --publish behaviour)
+    published = False
+    if publish:
+        try:
+            trade_params = result.get("trade_params_obj")  # raw TradeParams if present
+            _publish_signal(result, trade_params)
+            published = True
+        except Exception as e:
+            logger.warning("Publish failed for %s: %s", ticker, e)
 
     qs = result.get("quality_score", {}) or {}
     tp = result.get("trade_params", {}) or {}
@@ -232,6 +241,6 @@ def _run_analysis_safe(
             "by_provider": cb.get("by_provider", {}),
         },
         "elapsed_seconds": elapsed,
-        "published":        publish,
+        "published":        published,
         "result_file":      result.get("result_file"),
     }

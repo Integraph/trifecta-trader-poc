@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAnalysesStats, useRecentAnalyses } from '../../api/hooks';
 import { apiGet } from '../../api/client';
 import { JsonViewer } from '../shared/JsonViewer';
@@ -47,13 +47,13 @@ function DetailPanel({ id }: { id: number }) {
   const [detail,  setDetail]  = useState<AnalysisDetail | null>(null);
   const [loading, setLoading] = useState(false);
 
-  useState(() => {
+  useEffect(() => {
     setLoading(true);
     apiGet<AnalysisDetail>(`/analyses/${id}`)
       .then(r => setDetail(r))
       .catch(() => {})
       .finally(() => setLoading(false));
-  });
+  }, [id]);
 
   if (loading) return <div className="p-4 text-xs text-slate-500">Loading…</div>;
   if (!detail)  return <div className="p-4 text-xs text-red-400">Failed to load</div>;

@@ -238,6 +238,37 @@ class TestCreateWatchlistScanFn:
         assert "error" in result
         assert result["tickers_processed"] == 0
 
+    def test_load_watchlist_tuple_is_unpacked_correctly(self):
+        """Regression: load_watchlist returns (name, tickers) — tickers must be a list,
+        not the raw tuple. Passing the tuple directly caused 'list object has no attribute upper'."""
+        import sys, types
+        from src.automation.scheduler import create_watchlist_scan_fn
+
+        fn = create_watchlist_scan_fn(
+            hybrid_config="hybrid_haiku_tools",
+            watchlist="default",
+        )
+
+        captured = {}
+        fake_run_batch_mod = types.ModuleType("src.run_batch")
+        fake_run_batch_mod.load_watchlist = MagicMock(
+            return_value=("Default Watchlist", ["AAPL", "MSFT"])
+        )
+        def _capture_run_batch(tickers, watchlist_name, **kwargs):
+            captured["tickers"] = tickers
+            captured["watchlist_name"] = watchlist_name
+            return []
+        fake_run_batch_mod.run_batch = _capture_run_batch
+        with patch.dict(sys.modules, {"src.run_batch": fake_run_batch_mod}):
+            fn()
+
+        # tickers must be the list, not the whole tuple or the name string
+        assert captured["tickers"] == ["AAPL", "MSFT"], (
+            "load_watchlist tuple was not unpacked: tickers passed to run_batch is wrong"
+        )
+        # watchlist_name must be the display name from the YAML, not the file stem
+        assert captured["watchlist_name"] == "Default Watchlist"
+
     def test_handles_run_batch_exception(self):
         import sys, types
         from src.automation.scheduler import create_watchlist_scan_fn
@@ -248,7 +279,8 @@ class TestCreateWatchlistScanFn:
         )
 
         fake_run_batch_mod = types.ModuleType("src.run_batch")
-        fake_run_batch_mod.load_watchlist = MagicMock(return_value=["AAPL"])
+        # load_watchlist returns (name, tickers) tuple — match the real signature
+        fake_run_batch_mod.load_watchlist = MagicMock(return_value=("Default Watchlist", ["AAPL"]))
         fake_run_batch_mod.run_batch = MagicMock(side_effect=RuntimeError("LLM failed"))
         with patch.dict(sys.modules, {"src.run_batch": fake_run_batch_mod}):
             result = fn()

@@ -117,7 +117,7 @@ function EnqueueForm({ onSuccess }: { onSuccess: () => void }) {
 const PENDING_COLS: Column<QueueCandidate & Record<string, unknown>>[] = [
   { key: 'ticker',   label: 'Ticker', sortable: true, render: r => <span className="font-mono font-medium text-white">{r.ticker as string}</span> },
   { key: 'priority', label: 'Priority', render: r => <span className={priorityColor(r.priority as string)}>{r.priority as string}</span> },
-  { key: 'score',    label: 'Score', sortable: true, render: r => <>{r.score != null ? (r.score as number).toFixed(2) : '—'}</> },
+  { key: 'opportunity_score', label: 'Score', sortable: true, render: r => <>{r.opportunity_score != null ? (r.opportunity_score as number).toFixed(2) : '—'}</> },
   { key: 'catalysts', label: 'Catalysts', render: r => <span className="text-xs">{(r.catalysts as string[]).join(', ') || '—'}</span> },
   { key: 'retry_count', label: 'Retries' },
   { key: 'queued_at', label: 'Queued', render: r => <>{formatDateTime(r.queued_at as string)}</> },

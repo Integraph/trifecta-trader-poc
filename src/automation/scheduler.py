@@ -40,21 +40,21 @@ def create_watchlist_scan_fn(
         watchlist_path = f"config/watchlists/{watchlist}.yaml"
 
         try:
-            tickers = load_watchlist(watchlist_path)
+            watchlist_display_name, tickers = load_watchlist(watchlist_path)
         except Exception as e:
             logger.error("Failed to load watchlist %s: %s", watchlist_path, e)
             return {"error": str(e), "tickers_processed": 0}
 
         logger.info(
-            "Watchlist scan starting: %d tickers  config=%s  date=%s",
-            len(tickers), hybrid_config, date,
+            "Watchlist scan starting: %d tickers  config=%s  date=%s  name=%s",
+            len(tickers), hybrid_config, date, watchlist_display_name,
         )
         start = datetime.now()
 
         try:
             results = run_batch(
                 tickers=tickers,
-                watchlist_name=watchlist,
+                watchlist_name=watchlist_display_name,
                 hybrid=hybrid_config,
                 trade_date=date,
                 execute=False,

@@ -2,7 +2,8 @@
 
 export interface HealthResponse {
   status: string;
-  color: 'green' | 'yellow' | 'red';
+  color: 'green' | 'yellow' | 'red' | 'blue';
+  mode?: 'standalone' | 'full';
   timestamp: string;
   uptime_seconds: number | null;
   pid: number | null;
@@ -74,12 +75,12 @@ export interface SchedulerStatus {
 }
 
 export interface SchedulerHistoryItem {
-  trade_date: string;
-  total_analyses: number;
-  decisions: Record<string, number>;
-  avg_quality: number | null;
-  total_cost_usd: number | null;
-  elapsed_seconds: number | null;
+  trade_date:             string;
+  tickers_processed:      number;
+  decisions:              Record<string, number>;
+  avg_quality_score:      number | null;
+  total_cost_usd:         number | null;
+  total_elapsed_seconds:  number | null;
 }
 
 // ── Queue ─────────────────────────────────────────────────────────────────────
@@ -224,8 +225,8 @@ export interface TaskStatus {
 export interface AutomationConfig {
   scheduler?: {
     enabled?: boolean;
-    hour?: number;
-    minute?: number;
+    watchlist_hour?: number;
+    watchlist_minute?: number;
     timezone?: string;
     weekdays_only?: boolean;
     hybrid_config?: string;

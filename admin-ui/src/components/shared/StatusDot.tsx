@@ -1,7 +1,7 @@
 import { clsx } from '../../lib/utils';
 
 interface Props {
-  color: 'green' | 'yellow' | 'red' | 'gray';
+  color: 'green' | 'yellow' | 'red' | 'gray' | 'blue';
   pulse?: boolean;
   size?:  'sm' | 'md' | 'lg';
 }
@@ -12,6 +12,7 @@ const COLOR = {
   yellow: 'bg-yellow-400',
   red:    'bg-red-500',
   gray:   'bg-slate-500',
+  blue:   'bg-blue-400',
 };
 
 export function StatusDot({ color, pulse = false, size = 'md' }: Props) {

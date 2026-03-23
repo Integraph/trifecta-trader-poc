@@ -6,10 +6,10 @@ export const SETTINGS_HELP: Record<string, string> = {
   'scheduler.enabled':
     'Master switch for the daily watchlist scanner. When disabled, no scheduled scans will run. The queue reader and accuracy updater operate independently.',
 
-  'scheduler.hour':
+  'scheduler.watchlist_hour':
     'Hour of day (24h format) in the configured timezone when the watchlist scan runs. Default: 8 (8 AM). Paired with Minute below. Requires daemon restart.',
 
-  'scheduler.minute':
+  'scheduler.watchlist_minute':
     'Minute of the hour when the watchlist scan runs. Default: 30 (giving 8:30 AM ET). ~60 minutes before market open allows analyses to complete before trading begins. Requires daemon restart.',
 
   'scheduler.hybrid_config':

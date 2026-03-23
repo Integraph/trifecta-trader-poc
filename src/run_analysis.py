@@ -695,14 +695,9 @@ def main():
     parser.add_argument("--deep-model",  type=str, default=None)
     parser.add_argument("--quick-model", type=str, default=None)
     parser.add_argument("--no-debug",    action="store_true")
+    from src.hybrid_llm import CONFIGS as _hybrid_configs
     parser.add_argument("--hybrid", type=str, default=None,
-                        choices=["all_cloud", "hybrid_qwen", "hybrid_mistral",
-                                 "hybrid_aggressive_qwen", "hybrid_aggressive_mistral",
-                                 "hybrid_qwen32", "hybrid_aggressive_qwen32",
-                                 "hybrid_qwen_enhanced",
-                                 "hybrid_haiku_tools", "hybrid_haiku_aggressive",
-                                 "hybrid_haiku_qwen35_27b", "hybrid_haiku_qwen35_35b",
-                                 "hybrid_haiku_qwen35_9b"],
+                        choices=list(_hybrid_configs.keys()),
                         help="Use hybrid LLM routing config")
     parser.add_argument("--no-cache",          action="store_true")
     parser.add_argument("--no-cost-breakdown", action="store_true")

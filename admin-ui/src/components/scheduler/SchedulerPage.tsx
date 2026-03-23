@@ -101,14 +101,14 @@ function StatusPanel({ status }: { status: SchedulerStatus }) {
 // ── History table ─────────────────────────────────────────────────────────────
 
 const HIST_COLS: Column<SchedulerHistoryItem & Record<string, unknown>>[] = [
-  { key: 'trade_date', label: 'Date', sortable: true },
-  { key: 'total_analyses', label: 'Tickers', sortable: true },
+  { key: 'trade_date',            label: 'Date',        sortable: true },
+  { key: 'tickers_processed',     label: 'Tickers',     sortable: true },
   { key: 'buy',  label: 'BUY',  render: (r) => <span className="text-green-400">{(r.decisions as Record<string, number>)?.BUY ?? 0}</span> },
   { key: 'sell', label: 'SELL', render: (r) => <span className="text-red-400">{(r.decisions as Record<string, number>)?.SELL ?? 0}</span> },
   { key: 'hold', label: 'HOLD', render: (r) => <span className="text-slate-400">{(r.decisions as Record<string, number>)?.HOLD ?? 0}</span> },
-  { key: 'avg_quality', label: 'Avg Quality', sortable: true, render: (r) => <>{formatScore(r.avg_quality as number)}</> },
-  { key: 'elapsed_seconds', label: 'Elapsed', sortable: true, render: (r) => <>{formatElapsed(r.elapsed_seconds as number)}</> },
-  { key: 'total_cost_usd', label: 'Cost', sortable: true, render: (r) => <>{formatCurrency(r.total_cost_usd as number)}</> },
+  { key: 'avg_quality_score',     label: 'Avg Quality', sortable: true, render: (r) => <>{formatScore(r.avg_quality_score as number)}</> },
+  { key: 'total_elapsed_seconds', label: 'Elapsed',     sortable: true, render: (r) => <>{formatElapsed(r.total_elapsed_seconds as number)}</> },
+  { key: 'total_cost_usd',        label: 'Cost',        sortable: true, render: (r) => <>{formatCurrency(r.total_cost_usd as number)}</> },
 ];
 
 // ── Main page ─────────────────────────────────────────────────────────────────
@@ -123,8 +123,8 @@ export function SchedulerPage() {
 
   useEffect(() => {
     prevDays.current = days;
-    apiGet<{ history: SchedulerHistoryItem[] }>('/scheduler/history', { days })
-      .then(r => setHistory(r.history))
+    apiGet<{ runs: SchedulerHistoryItem[] }>('/scheduler/history', { days })
+      .then(r => setHistory(r.runs ?? []))
       .catch(() => {});
   }, [days]);
 

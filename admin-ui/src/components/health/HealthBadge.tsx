@@ -10,16 +10,25 @@ const COLOR_MAP = {
   green:  'green',
   yellow: 'yellow',
   red:    'red',
+  blue:   'blue',
 } as const;
 
+const STATUS_LABEL: Record<string, string> = {
+  healthy:    'Healthy',
+  degraded:   'Degraded',
+  unhealthy:  'Unhealthy',
+  standalone: 'Standalone',
+};
+
 export function HealthBadge({ health }: Props) {
-  const color = health ? COLOR_MAP[health.color] : 'gray';
-  const label = health ? health.status : 'connecting…';
+  const color = health ? COLOR_MAP[health.color] ?? 'gray' : 'gray';
+  const rawStatus = health ? health.status : 'connecting…';
+  const label = STATUS_LABEL[rawStatus] ?? rawStatus;
 
   return (
     <div className="flex items-center gap-2 text-sm">
       <StatusDot
-        color={color}
+        color={color as 'green' | 'yellow' | 'red' | 'gray' | 'blue'}
         pulse={color === 'green'}
         size="sm"
       />
@@ -29,8 +38,8 @@ export function HealthBadge({ health }: Props) {
           up {formatUptime(health.uptime_seconds)}
         </span>
       )}
-      {health?.pid && (
-        <span className="text-slate-600 text-xs">pid:{health.pid}</span>
+      {health?.mode === 'standalone' && (
+        <span className="text-blue-600 text-xs">(dev)</span>
       )}
     </div>
   );

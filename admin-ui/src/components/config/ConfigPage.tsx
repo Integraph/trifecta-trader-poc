@@ -116,8 +116,8 @@ function AutomationPanel() {
         <div>
           <p className="text-xs font-medium text-slate-400 mb-2 uppercase tracking-wider">Scheduler</p>
           <FieldRow label="Enabled"       value={Boolean(s.enabled)}   onChange={v => set(['scheduler','enabled'], v)} type="boolean" info={SETTINGS_HELP['scheduler.enabled']} />
-          <FieldRow label="Hour (24h)"    value={s.hour ?? 8}          onChange={v => set(['scheduler','hour'], v)} type="number"  info={SETTINGS_HELP['scheduler.hour']} />
-          <FieldRow label="Minute"        value={s.minute ?? 30}       onChange={v => set(['scheduler','minute'], v)} type="number"  info={SETTINGS_HELP['scheduler.minute']} />
+          <FieldRow label="Hour (24h)"    value={s.watchlist_hour ?? 8}   onChange={v => set(['scheduler','watchlist_hour'], v)} type="number"  info={SETTINGS_HELP['scheduler.watchlist_hour']} />
+          <FieldRow label="Minute"        value={s.watchlist_minute ?? 30} onChange={v => set(['scheduler','watchlist_minute'], v)} type="number"  info={SETTINGS_HELP['scheduler.watchlist_minute']} />
           <FieldRow label="Hybrid config" value={s.hybrid_config ?? ''} onChange={v => set(['scheduler','hybrid_config'], v)} info={SETTINGS_HELP['scheduler.hybrid_config']} />
           <FieldRow label="Watchlist"     value={s.watchlist ?? ''}    onChange={v => set(['scheduler','watchlist'], v)} info={SETTINGS_HELP['scheduler.watchlist']} />
           <FieldRow label="Publish"       value={Boolean(s.publish)}   onChange={v => set(['scheduler','publish'], v)} type="boolean" info={SETTINGS_HELP['scheduler.publish']} />

@@ -95,12 +95,14 @@ def create_app(daemon=None, db=None) -> FastAPI:
     @app.on_event("startup")
     async def on_startup():
         import asyncio
-        from src.admin.logs   import install_admin_handler
-        from src.admin.events import get_event_bus
+        from src.admin.logs          import install_admin_handler
+        from src.admin.events        import get_event_bus
+        from src.admin.startup_checks import log_missing_warnings
 
         loop    = asyncio.get_event_loop()
         handler = install_admin_handler(loop)
         get_event_bus().set_loop(loop)
+        log_missing_warnings()
         logger.info("Admin API started. daemon=%s", daemon is not None)
 
     return app

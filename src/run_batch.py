@@ -415,14 +415,9 @@ def main():
     src.add_argument("--tickers",   type=str,
                      help="Comma-separated ticker list (e.g. AAPL,MSFT,NVDA)")
 
+    from src.hybrid_llm import CONFIGS as _hybrid_configs
     parser.add_argument("--hybrid", type=str, default="hybrid_haiku_tools",
-                        choices=["all_cloud", "hybrid_qwen", "hybrid_mistral",
-                                 "hybrid_aggressive_qwen", "hybrid_aggressive_mistral",
-                                 "hybrid_qwen32", "hybrid_aggressive_qwen32",
-                                 "hybrid_qwen_enhanced",
-                                 "hybrid_haiku_tools", "hybrid_haiku_aggressive",
-                                 "hybrid_haiku_qwen35_27b", "hybrid_haiku_qwen35_35b",
-                                 "hybrid_haiku_qwen35_9b"],
+                        choices=list(_hybrid_configs.keys()),
                         help="Hybrid LLM config (default: hybrid_haiku_tools)")
     parser.add_argument("--date",     type=str, default=str(date.today()))
     parser.add_argument("--execute",  action="store_true")

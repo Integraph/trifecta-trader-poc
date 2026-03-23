@@ -38,8 +38,8 @@ class TestHealthColorLogic:
             queue_reader_running=True,
             queue_enabled_in_config=True,
             accuracy_last_error=None,
+            supabase_configured=True,
             supabase_write_enabled=True,
-            ollama_reachable=True,
         )
         defaults.update(kwargs)
         return compute_health_color(**defaults)
@@ -64,13 +64,23 @@ class TestHealthColorLogic:
         color, _ = self._color(scheduler_last_result="error")
         assert color == "yellow"
 
-    def test_yellow_when_ollama_unreachable(self):
-        color, _ = self._color(ollama_reachable=False)
+    def test_ollama_unreachable_does_not_degrade(self):
+        """Ollama is optional — unreachable Ollama should NOT cause degraded status."""
+        # ollama_reachable is no longer a parameter; verify green is still returned
+        color, status = self._color()
+        assert color  == "green"
+        assert status == "healthy"
+
+    def test_yellow_when_supabase_configured_but_write_disabled(self):
+        """Supabase degradation only fires when credentials exist but write is off."""
+        color, _ = self._color(supabase_configured=True, supabase_write_enabled=False)
         assert color == "yellow"
 
-    def test_yellow_when_supabase_write_disabled(self):
-        color, _ = self._color(supabase_write_enabled=False)
-        assert color == "yellow"
+    def test_green_when_supabase_not_configured(self):
+        """Unconfigured Supabase (no creds) should NOT cause degraded status."""
+        color, status = self._color(supabase_configured=False, supabase_write_enabled=False)
+        assert color  == "green"
+        assert status == "healthy"
 
     def test_yellow_when_accuracy_errored(self):
         color, _ = self._color(accuracy_last_error="yfinance timeout")
@@ -83,8 +93,8 @@ class TestHealthColorLogic:
             daemon_running=True, scheduler_last_result="success",
             scheduler_enabled_in_config=True, scheduler_actually_running=True,
             queue_reader_running=True, queue_enabled_in_config=True,
-            accuracy_last_error=None, supabase_write_enabled=True,
-            ollama_reachable=True,
+            accuracy_last_error=None, supabase_configured=True,
+            supabase_write_enabled=True,
         )
         c1 = compute_health_color(**args)
         c2 = compute_health_color(**args)
@@ -117,14 +127,18 @@ class TestHealthEndpoint:
         assert "color"  in data
         assert "subsystems" in data
 
-    async def test_health_color_red_when_no_daemon(self):
+    async def test_health_standalone_mode_when_no_daemon(self):
+        """Standalone mode (no daemon) returns blue/standalone — not red/unhealthy."""
         app = _make_app(daemon=None)
         with patch("src.admin.health._check_ollama", return_value={"reachable": False, "model": None}), \
              patch("src.admin.health._get_supabase_status", return_value={"configured": False, "write_enabled": False}), \
              patch("src.admin.health._get_accuracy_counts", return_value={"pending_outcomes": 0, "complete_outcomes": 0}):
             async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
                 resp = await client.get("/health")
-        assert resp.json()["color"] == "red"
+        data = resp.json()
+        assert data["color"]  == "blue"
+        assert data["status"] == "standalone"
+        assert data["mode"]   == "standalone"
 
     async def test_health_includes_subsystem_breakdown(self):
         app = _make_app()
