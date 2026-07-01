@@ -54,7 +54,8 @@ def test_conditional_logic_risk_round_limit():
 
     state["risk_debate_state"]["count"] = 3
     state["risk_debate_state"]["latest_speaker"] = "Neutral"
-    assert cl.should_continue_risk_analysis(state) == "Risk Judge"
+    # v0.3.0 renamed the final risk node "Risk Judge" -> "Portfolio Manager" (TRI-66).
+    assert cl.should_continue_risk_analysis(state) == "Portfolio Manager"
 
 
 def test_conditional_logic_config_not_passed():
@@ -74,7 +75,8 @@ def test_conditional_logic_config_not_passed():
     state_count_3 = {
         "risk_debate_state": {"count": 3, "latest_speaker": "Neutral"}
     }
-    assert cl_default.should_continue_risk_analysis(state_count_3) == "Risk Judge"
+    # v0.3.0 renamed the final risk node "Risk Judge" -> "Portfolio Manager" (TRI-66).
+    assert cl_default.should_continue_risk_analysis(state_count_3) == "Portfolio Manager"
     assert cl_custom.should_continue_risk_analysis(state_count_3) == "Aggressive Analyst"
 
 

@@ -13,6 +13,8 @@ def extract_decision(full_signal: str) -> str:
     """Extract the trade decision from the full signal text.
 
     Uses a priority-based extraction:
+    0. Look for the v0.3.0 Portfolio Manager rating line
+       ('**Recommendation**: <Buy|Overweight|Hold|Underweight|Sell>')
     1. Look for 'FINAL TRANSACTION PROPOSAL: <DECISION>'
     2. Look for 'MY RECOMMENDATION: <DECISION>'
     3. Look for the last standalone BUY/HOLD/SELL not in a negation context
@@ -26,6 +28,27 @@ def extract_decision(full_signal: str) -> str:
     """
     if not full_signal or not isinstance(full_signal, str):
         return "UNKNOWN"
+
+    # Method 0 (TradingAgents v0.3.0): the Portfolio Manager emits a 5-level
+    # PortfolioDecision rating on a header line — "**Recommendation**: <rating>"
+    # (structured render) or "**Rating**: <rating>" (free-text fallback) — where
+    # <rating> is one of Buy / Overweight / Hold / Underweight / Sell. Anchor to
+    # the header label so we don't pick up a rating word from the reasoning prose.
+    # Collapse the 5-level scale onto our 3-level decision the standard way:
+    #   Overweight -> BUY (favorable, increase exposure)
+    #   Underweight -> SELL (reduce exposure, take partial profits)
+    pm_rating_map = {
+        "BUY": "BUY", "OVERWEIGHT": "BUY",
+        "HOLD": "HOLD",
+        "UNDERWEIGHT": "SELL", "SELL": "SELL",
+    }
+    pm_pattern = (
+        r'\*{0,2}(?:Recommendation|Rating)\*{0,2}[:\s]*\*{0,2}'
+        r'(Buy|Overweight|Hold|Underweight|Sell)\*{0,2}'
+    )
+    pm_matches = re.findall(pm_pattern, full_signal, re.IGNORECASE)
+    if pm_matches:
+        return pm_rating_map[pm_matches[-1].upper()]
 
     # Method 1: Look for FINAL TRANSACTION PROPOSAL line
     # Handles formats like:

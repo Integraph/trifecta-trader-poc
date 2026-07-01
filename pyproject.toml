@@ -5,16 +5,23 @@ description = "Trifecta Trader POC - Multi-agent AI trading system"
 requires-python = ">=3.11"
 dependencies = [
     # Core framework (also installed via TradingAgents requirements.txt)
-    "langgraph",
-    "langchain-core",
+    # LangGraph stack pinned for TRI-66 (v0.3.0 upgrade); full lockfile is TRI-65.
+    "langgraph==1.0.10",
+    "langchain-core==1.2.16",
+    # langgraph-checkpoint-sqlite is imported at module level by v0.3.0
+    # (graph/checkpointer.py) -> required for `import src.run_analysis`.
+    # Pinned to the TRI-66-tested resolve (holds langgraph 1.0.10, no downgrade).
+    "langgraph-checkpoint-sqlite==3.1.0",
+    "langgraph-checkpoint==4.1.1",
     "langchain-openai",
     "langchain-experimental",
     "langchain-anthropic",
     "langchain-google-genai",
     # Data
     "pandas",
-    "yfinance",
-    "stockstats",
+    # yfinance floor raised for TradingAgents v0.3.0 (dataflows rewritten vs 1.4.x API)
+    "yfinance>=1.4.1",
+    "stockstats>=0.6.5",
     # Infrastructure
     "redis",
     "requests",

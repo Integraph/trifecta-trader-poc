@@ -22,6 +22,7 @@ from langgraph.graph import END, StateGraph, START
 from tradingagents.graph.trading_graph import TradingAgentsGraph
 from tradingagents.graph.setup import GraphSetup
 from tradingagents.graph.conditional_logic import ConditionalLogic
+from tradingagents.graph.analyst_execution import build_analyst_execution_plan
 from tradingagents.agents import (
     create_msg_delete,
     AgentState,
@@ -36,7 +37,7 @@ from tradingagents.agents import (
     create_aggressive_debator,
     create_conservative_debator,
     create_neutral_debator,
-    create_risk_manager,
+    create_portfolio_manager,
 )
 from src.hybrid_llm import HybridLLMConfig, create_hybrid_llms
 from src.data_cache import DataCache, ANALYST_TTL
@@ -210,11 +211,6 @@ class HybridGraphSetup:
         reasoning_quick_llm,
         reasoning_deep_llm,
         tool_nodes: Dict,
-        bull_memory,
-        bear_memory,
-        trader_memory,
-        invest_judge_memory,
-        risk_manager_memory,
         conditional_logic: ConditionalLogic,
         cache: Optional[DataCache] = None,
         ticker: str = "",
@@ -224,11 +220,6 @@ class HybridGraphSetup:
         self.reasoning_quick_llm = reasoning_quick_llm
         self.reasoning_deep_llm = reasoning_deep_llm
         self.tool_nodes = tool_nodes
-        self.bull_memory = bull_memory
-        self.bear_memory = bear_memory
-        self.trader_memory = trader_memory
-        self.invest_judge_memory = invest_judge_memory
-        self.risk_manager_memory = risk_manager_memory
         self.conditional_logic = conditional_logic
         self.cache = cache
         self.ticker = ticker
@@ -257,60 +248,64 @@ class HybridGraphSetup:
             "fundamentals": create_fundamentals_analyst,
         }
 
+        # v0.3.0 made analyst node naming SPEC-DRIVEN. The "social" key now maps to
+        # agent_node="Sentiment Analyst" / clear_node="Msg Clear Sentiment", and
+        # conditional_logic.should_continue_social() returns those spec labels. So we
+        # must build nodes and edges from the execution plan — a naive
+        # f"{key.capitalize()} Analyst" pattern produces "Msg Clear Social", which the
+        # v0.3.0 router can't find (KeyError 'Msg Clear Sentiment').
+        plan = build_analyst_execution_plan(selected_analysts)
+
         analyst_nodes = {}
         delete_nodes = {}
         tool_nodes = {}
 
-        for analyst_type in selected_analysts:
-            # Optionally wrap analyst with cache-aware node
+        for spec in plan.specs:
+            # Optionally wrap analyst with cache-aware node (hybrid optimization)
             if self.cache and self.ticker and self.trade_date:
-                analyst_nodes[analyst_type] = make_cached_analyst(
-                    analyst_creator_fn=analyst_creators[analyst_type],
-                    analyst_type=analyst_type,
+                analyst_nodes[spec.key] = make_cached_analyst(
+                    analyst_creator_fn=analyst_creators[spec.key],
+                    analyst_type=spec.key,
                     llm=self.tool_llm,
                     cache=self.cache,
                     ticker=self.ticker,
                     trade_date=self.trade_date,
                 )
             else:
-                analyst_nodes[analyst_type] = analyst_creators[analyst_type](self.tool_llm)
-            delete_nodes[analyst_type] = create_msg_delete()
-            tool_nodes[analyst_type] = self.tool_nodes[analyst_type]
+                analyst_nodes[spec.key] = analyst_creators[spec.key](self.tool_llm)
+            delete_nodes[spec.key] = create_msg_delete()
+            tool_nodes[spec.key] = self.tool_nodes[spec.key]
 
-        # Researchers and trader use reasoning_quick_llm
-        bull_researcher_node = create_bull_researcher(
-            self.reasoning_quick_llm, self.bull_memory
-        )
-        bear_researcher_node = create_bear_researcher(
-            self.reasoning_quick_llm, self.bear_memory
-        )
-        trader_node = create_trader(self.reasoning_quick_llm, self.trader_memory)
+        # Researchers and trader use reasoning_quick_llm.
+        # v0.3.0: agent factories no longer take a per-agent memory object —
+        # memory is centralized in the vendor's file-based TradingMemoryLog and
+        # injected into state as past_context by TradingAgentsGraph.propagate()
+        # (which our propagate() delegates to). See TASK_TRI-66_REPORT.md.
+        bull_researcher_node = create_bull_researcher(self.reasoning_quick_llm)
+        bear_researcher_node = create_bear_researcher(self.reasoning_quick_llm)
+        trader_node = create_trader(self.reasoning_quick_llm)
 
         # Judges use reasoning_deep_llm
-        research_manager_node = create_research_manager(
-            self.reasoning_deep_llm, self.invest_judge_memory
-        )
+        research_manager_node = create_research_manager(self.reasoning_deep_llm)
 
         # Risk debaters use reasoning_quick_llm
         aggressive_analyst = create_aggressive_debator(self.reasoning_quick_llm)
         neutral_analyst = create_neutral_debator(self.reasoning_quick_llm)
         conservative_analyst = create_conservative_debator(self.reasoning_quick_llm)
 
-        # Risk judge uses reasoning_deep_llm
-        risk_manager_node = create_risk_manager(
-            self.reasoning_deep_llm, self.risk_manager_memory
-        )
+        # Risk judge uses reasoning_deep_llm.
+        # v0.3.0 removed create_risk_manager(llm, memory) -> create_portfolio_manager(llm),
+        # and the final node is labeled "Portfolio Manager" (should_continue_risk_analysis
+        # routes here, not to the old "Risk Judge" label).
+        portfolio_manager_node = create_portfolio_manager(self.reasoning_deep_llm)
 
         workflow = StateGraph(AgentState)
 
-        for analyst_type in selected_analysts:
-            workflow.add_node(
-                f"{analyst_type.capitalize()} Analyst", analyst_nodes[analyst_type]
-            )
-            workflow.add_node(
-                f"Msg Clear {analyst_type.capitalize()}", delete_nodes[analyst_type]
-            )
-            workflow.add_node(f"tools_{analyst_type}", tool_nodes[analyst_type])
+        # Analyst nodes — use the v0.3.0 spec labels (agent_node / clear_node / tool_node)
+        for spec in plan.specs:
+            workflow.add_node(spec.agent_node, analyst_nodes[spec.key])
+            workflow.add_node(spec.clear_node, delete_nodes[spec.key])
+            workflow.add_node(spec.tool_node, tool_nodes[spec.key])
 
         workflow.add_node("Bull Researcher", bull_researcher_node)
         workflow.add_node("Bear Researcher", bear_researcher_node)
@@ -319,26 +314,24 @@ class HybridGraphSetup:
         workflow.add_node("Aggressive Analyst", aggressive_analyst)
         workflow.add_node("Neutral Analyst", neutral_analyst)
         workflow.add_node("Conservative Analyst", conservative_analyst)
-        workflow.add_node("Risk Judge", risk_manager_node)
+        workflow.add_node("Portfolio Manager", portfolio_manager_node)
 
-        first_analyst = selected_analysts[0]
-        workflow.add_edge(START, f"{first_analyst.capitalize()} Analyst")
+        workflow.add_edge(START, plan.specs[0].agent_node)
 
-        for i, analyst_type in enumerate(selected_analysts):
-            current_analyst = f"{analyst_type.capitalize()} Analyst"
-            current_tools = f"tools_{analyst_type}"
-            current_clear = f"Msg Clear {analyst_type.capitalize()}"
+        for i, spec in enumerate(plan.specs):
+            current_analyst = spec.agent_node
+            current_tools = spec.tool_node
+            current_clear = spec.clear_node
 
             workflow.add_conditional_edges(
                 current_analyst,
-                getattr(self.conditional_logic, f"should_continue_{analyst_type}"),
+                getattr(self.conditional_logic, f"should_continue_{spec.key}"),
                 [current_tools, current_clear],
             )
             workflow.add_edge(current_tools, current_analyst)
 
-            if i < len(selected_analysts) - 1:
-                next_analyst = f"{selected_analysts[i + 1].capitalize()} Analyst"
-                workflow.add_edge(current_clear, next_analyst)
+            if i < len(plan.specs) - 1:
+                workflow.add_edge(current_clear, plan.specs[i + 1].agent_node)
             else:
                 workflow.add_edge(current_clear, "Bull Researcher")
 
@@ -357,20 +350,20 @@ class HybridGraphSetup:
         workflow.add_conditional_edges(
             "Aggressive Analyst",
             self.conditional_logic.should_continue_risk_analysis,
-            {"Conservative Analyst": "Conservative Analyst", "Risk Judge": "Risk Judge"},
+            {"Conservative Analyst": "Conservative Analyst", "Portfolio Manager": "Portfolio Manager"},
         )
         workflow.add_conditional_edges(
             "Conservative Analyst",
             self.conditional_logic.should_continue_risk_analysis,
-            {"Neutral Analyst": "Neutral Analyst", "Risk Judge": "Risk Judge"},
+            {"Neutral Analyst": "Neutral Analyst", "Portfolio Manager": "Portfolio Manager"},
         )
         workflow.add_conditional_edges(
             "Neutral Analyst",
             self.conditional_logic.should_continue_risk_analysis,
-            {"Aggressive Analyst": "Aggressive Analyst", "Risk Judge": "Risk Judge"},
+            {"Aggressive Analyst": "Aggressive Analyst", "Portfolio Manager": "Portfolio Manager"},
         )
 
-        workflow.add_edge("Risk Judge", END)
+        workflow.add_edge("Portfolio Manager", END)
 
         return workflow.compile()
 
@@ -443,11 +436,6 @@ class HybridTradingGraph(TradingAgentsGraph):
             reasoning_quick_llm=self._llms["reasoning_quick_llm"],
             reasoning_deep_llm=self._llms["reasoning_deep_llm"],
             tool_nodes=self.tool_nodes,
-            bull_memory=self.bull_memory,
-            bear_memory=self.bear_memory,
-            trader_memory=self.trader_memory,
-            invest_judge_memory=self.invest_judge_memory,
-            risk_manager_memory=self.risk_manager_memory,
             conditional_logic=self.conditional_logic,
             cache=self._cache,
             ticker=ticker,

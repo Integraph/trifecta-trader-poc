@@ -54,6 +54,30 @@ class TestExtractDecision:
         text = "## MY RECOMMENDATION: HOLD WITH DISCIPLINED RISK MANAGEMENT"
         assert extract_decision(text) == "HOLD"
 
+    # --- TradingAgents v0.3.0 Portfolio Manager 5-level rating (TRI-66) ---
+
+    def test_pm_rating_overweight_maps_to_buy(self):
+        """v0.3.0 PM free-text render: '**Rating**: Overweight' -> BUY."""
+        text = "**Rating**: Overweight\n\n**Executive Summary**: Initiate/add to AAPL..."
+        assert extract_decision(text) == "BUY"
+
+    def test_pm_recommendation_underweight_maps_to_sell(self):
+        """v0.3.0 PM structured render: '**Recommendation**: Underweight' -> SELL."""
+        assert extract_decision("**Recommendation**: Underweight") == "SELL"
+
+    def test_pm_rating_all_five_levels(self):
+        expected = {
+            "Buy": "BUY", "Overweight": "BUY", "Hold": "HOLD",
+            "Underweight": "SELL", "Sell": "SELL",
+        }
+        for rating, decision in expected.items():
+            assert extract_decision(f"**Rating**: {rating}") == decision
+
+    def test_pm_rating_ignores_prose_mention(self):
+        """A rating word in reasoning prose (no header) must not be picked up."""
+        text = "We weighed an Overweight thesis but the Underweight risks won out."
+        assert extract_decision(text) == "UNKNOWN"
+
     def test_no_markdown_bold(self):
         text = "FINAL TRANSACTION PROPOSAL: HOLD"
         assert extract_decision(text) == "HOLD"
