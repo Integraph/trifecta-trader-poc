@@ -1,7 +1,7 @@
 # Trifecta Trading Platform — Project Brief
 
-**Last updated:** June 30, 2026
-**Version:** v1.0.2 (Task 020 complete)
+**Last updated:** July 1, 2026
+**Version:** v2.0.1 · **TRI-66 (TradingAgents v0.3.0 upgrade) DEVELOP-complete, in QA** — engine runs end-to-end on v0.3.0, zero-mod restored
 **Owner:** Jeff (jeff@integraphpro.com)
 **Purpose:** Single source of truth for any agent working on this project. Read this FIRST.
 
@@ -22,7 +22,7 @@ The system has five components. For full integration architecture, see **`ECOSYS
 | Component | Repo | What It Does | Status |
 |-----------|------|-------------|--------|
 | **Market Scanner** | `trifecta-market-scanner` | Rule-based scanner using TA-Lib indicators. Produces signal candidates. Zero LLMs. | S7 complete (511 tests) |
-| **Stock Trader Engine** | `trifecta-trader-poc` (this repo) | AI analysis pipeline. Consumes scanner signals, runs multi-agent LLM analysis, executes stock trades via Alpaca. | v1.0.2 (20 tasks complete) |
+| **Stock Trader Engine** | `trifecta-trader-poc` (this repo) | AI analysis pipeline. Consumes scanner signals, runs multi-agent LLM analysis, executes stock trades via Alpaca. | v2.0.1; on TradingAgents v0.3.0 (TRI-66 in QA) |
 | **Stock Trader UI** | `tt-curser` | React + Fastify frontend for stock trading. Auth, portfolio, backtesting, real-time prices. | Active dev (Phase 5, UI Tasks 1–5) |
 | **Crypto Trader Engine** | `trifecta-crypto-trader` | LangGraph-based crypto analysis + Kraken execution. 8-layer safety gates. | M6 complete, M7 in progress |
 | **Crypto Trader UI** | TBD | Not started. Technology decision deferred. | Not started |
@@ -103,7 +103,7 @@ Each task has a spec (`docs/CURSOR_TASK_NNN_*.md`) and a report (`docs/TASK_NNN_
 
 ---
 
-## Current State (as of v1.0.2)
+## Current State (as of 2026-07-01 — v2.0.1, TRI-66 in QA)
 
 **What works:**
 - Full analysis pipeline: scanner signal → AI analysis → trade execution → Supabase publishing
@@ -114,14 +114,14 @@ Each task has a spec (`docs/CURSOR_TASK_NNN_*.md`) and a report (`docs/TASK_NNN_
 - 44+ task-specific tests + existing admin/accuracy/daemon tests
 - Clean TypeScript build (0 errors)
 
-**Engine-first MVP priorities (June 30):**
-- **TRI-66 (Urgent)** — upgrade vendored TradingAgents v0.2.0 → v0.3.0; reconcile the 4-file local mod; restore zero-mod; update model strings (deep Risk-Judge = `claude-opus-4-8`, tools = `claude-haiku-4-5`); pin LangGraph. **First MVP action.**
-- **TRI-70** — Step 0: re-benchmark current local models on the M3 Max (blocked by TRI-66; feeds TRI-69).
+**Engine-first MVP status (July 1):**
+- **TRI-66 — DEVELOP-complete, in QA.** Vendored TradingAgents upgraded v0.2.0 → **v0.3.0**, **true zero-mod restored** (verified: empty diff vs tag), LangGraph stack pinned, engine runs end-to-end on both cloud and local paths (cloud BUY 8.5/10; local SELL 5.1/10). Scope was the **pure vendor upgrade** — no model-string changes, no new configs (those are TRI-70). Now in Codex QA → paper-smoke UAT → Arbiter.
+- **TRI-32 (Urgent)** — push `main` + the TRI-66 branch to origin. The whole MVP history is on one laptop; do this before QA.
+- **TRI-70** — Step 0: benchmark **current** local models (Qwen 3.6+, not qwen2.5) on the M3 Max; owns model selection, honest config economics, the `hybrid_graph.py` pricing refresh, and robust (structured) decision extraction. Blocked by TRI-66; feeds TRI-69.
 - **TRI-69** — define the "prove-it-before-real-money" out-of-sample edge gate (Ecosystem).
-- **TRI-32** — push the 13 local-only commits to origin.
-- Deferred: live trading (TRI-31), admin-UI polish / Task 021 (TRI-30). Separate: LangGraph 1.x (TRI-67), lockfiles (TRI-65).
+- Deferred: live trading (TRI-31), admin-UI polish / Task 021 (TRI-30). Separate: LangGraph 1.x lock (TRI-67), lockfiles (TRI-65). Post-upgrade follow-ups: TRI-71 (accuracy test time-bomb), TRI-72/75/76/77.
 
-**Known correction:** the vendor submodule is **NOT zero-mod** — pin `5de91bc` carries our Task-020 commit touching 4 files; TRI-66 restores it.
+**Zero-mod:** RESTORED by TRI-66 (verified). It had been broken — pin `5de91bc` carried our Task-020 commit touching 4 vendor files; the v0.3.0 tag checkout dropped them, and `git diff v0.3.0` is now empty.
 
 **Not in scope for this repo:**
 - Crypto trading (separate repo: `trifecta-crypto-trader`)
