@@ -30,11 +30,13 @@ def extract_decision(full_signal: str) -> str:
         return "UNKNOWN"
 
     # Method 0 (TradingAgents v0.3.0): the Portfolio Manager emits a 5-level
-    # PortfolioDecision rating on a header line — "**Recommendation**: <rating>"
-    # (structured render) or "**Rating**: <rating>" (free-text fallback) — where
-    # <rating> is one of Buy / Overweight / Hold / Underweight / Sell. Anchor to
-    # the header label so we don't pick up a rating word from the reasoning prose.
-    # Collapse the 5-level scale onto our 3-level decision the standard way:
+    # PortfolioDecision rating (Buy / Overweight / Hold / Underweight / Sell) on a
+    # header line. Different LLMs label that line differently — the structured
+    # render uses "**Recommendation**:", cloud models (Haiku/Sonnet) tend to write
+    # "**Rating**:", and local qwen writes "**Action**:" and
+    # "**Final Transaction Proposal: <rating>**". We anchor to one of those header
+    # labels (so a rating word buried in reasoning prose does NOT match) and
+    # collapse the 5-level scale onto our 3-level decision the standard way:
     #   Overweight -> BUY (favorable, increase exposure)
     #   Underweight -> SELL (reduce exposure, take partial profits)
     pm_rating_map = {
@@ -43,7 +45,8 @@ def extract_decision(full_signal: str) -> str:
         "UNDERWEIGHT": "SELL", "SELL": "SELL",
     }
     pm_pattern = (
-        r'\*{0,2}(?:Recommendation|Rating)\*{0,2}[:\s]*\*{0,2}'
+        r'\*{0,2}(?:Recommendation|Rating|Action|Final\s+Transaction\s+Proposal)'
+        r'\*{0,2}[:\s]*\*{0,2}'
         r'(Buy|Overweight|Hold|Underweight|Sell)\*{0,2}'
     )
     pm_matches = re.findall(pm_pattern, full_signal, re.IGNORECASE)

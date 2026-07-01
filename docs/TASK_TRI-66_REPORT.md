@@ -48,7 +48,9 @@ Changes in `HybridGraphSetup` / `HybridTradingGraph`:
 Diff size: `src/hybrid_graph.py` 114 lines (+62 / −67 — net reduction from removing the memory plumbing). Topology otherwise unchanged (same edges, same `ConditionalLogic` methods/signature).
 
 ### 2.5 `src/signal_processing.py` (decision-vocabulary mapping — folded in per Jeff, 2026-07-01)
-v0.3.0's Portfolio Manager emits a **5-level `PortfolioDecision` rating** (`Buy / Overweight / Hold / Underweight / Sell`) on a header line (`**Recommendation**: <rating>` structured, or `**Rating**: <rating>` free-text fallback), replacing the old Risk Manager's 3-level `FINAL TRANSACTION PROPOSAL: BUY/SELL/HOLD`. `extract_decision()` only recognized BUY/HOLD/SELL, so the first smoke returned `decision=UNKNOWN` for a valid `Overweight` analysis. Added a highest-priority, header-anchored mapping method: **Overweight→BUY, Underweight→SELL** (Buy/Hold/Sell unchanged). Reasoning-prose mentions of the rating words are **not** matched (anchored to the header label). Added 4 regression tests in `tests/test_signal_processing.py` (25/25 pass). This was **surfaced and approved before committing** (the standard financial mapping; collapses v0.3.0's 5-level scale onto the engine's existing 3-level decision).
+v0.3.0's Portfolio Manager emits a **5-level `PortfolioDecision` rating** (`Buy / Overweight / Hold / Underweight / Sell`), replacing the old Risk Manager's 3-level `FINAL TRANSACTION PROPOSAL: BUY/SELL/HOLD`. `extract_decision()` only recognized BUY/HOLD/SELL, so smokes returned `decision=UNKNOWN` for valid `Overweight`/`Underweight` analyses. Added a highest-priority, **header-anchored** mapping method: **Overweight→BUY, Underweight→SELL** (Buy/Hold/Sell unchanged). Reasoning-prose mentions of the rating words are **not** matched (anchored to the header label, so e.g. "an underweighted position" → UNKNOWN, not SELL).
+
+**Different LLMs label the decision line differently** — this only became visible by running both smokes: cloud Haiku/Sonnet write `**Rating**: Overweight`; the structured render uses `**Recommendation**:`; local `qwen2.5:14b` writes `**Action**: Underweight` and `**Final Transaction Proposal: Underweight**`. The matcher accepts all of these labels. Verified against **both** real saved outputs (cloud `Overweight→BUY`, local `Underweight→SELL`). Added **7** regression tests in `tests/test_signal_processing.py` (28/28 pass), including the local-qwen label formats and the prose-safety cases. **Surfaced and approved before committing** (standard financial mapping collapsing v0.3.0's 5-level scale onto the engine's 3-level decision).
 
 Files changed: `pyproject.toml`, `src/hybrid_graph.py`, `src/signal_processing.py`, `tests/test_signal_processing.py` (+4 mapping tests), `tests/test_pipeline.py` (2 assertions updated for the "Risk Judge"→"Portfolio Manager" vendor rename), and the `vendor/TradingAgents` gitlink — no other source touched.
 
@@ -111,9 +113,13 @@ v0.3.0 `agents/utils/memory.py` (`TradingMemoryLog`) has **no** embeddings/OpenA
 
 ## 9. Paper smokes (exit-5 / exit-6)
 
-- **Cloud (`hybrid_haiku_tools`) — ✅ PASSED.** `python -m src.run_batch --tickers AAPL --hybrid hybrid_haiku_tools --dry-run` ran the **full pipeline end-to-end on v0.3.0** (all 4 analysts → 2 researchers → research manager → trader → 3 risk debators → Portfolio Manager), **quality 8.2/10, cost $0.027**, dry-run completed (no order). PM emitted `Overweight` → with the §2.5 fix maps to **BUY** (verified against the saved `final_trade_decision_text`). This run is exit-5's evidence.
-  - _(Path to green: the first attempt caught `KeyError 'Msg Clear Sentiment'` (spec-node fix, §2.4) and `decision=UNKNOWN` (vocab fix, §2.5). A confirmation re-run then hit `400 credit balance too low` — an **environmental** Anthropic-billing stop mid-run, not a code issue; the completed first run already proves the path.)_
-- **Local/Ollama (`hybrid_aggressive_qwen`, `qwen2.5:14b`) — ⛔ BLOCKED on Anthropic billing.** This config's **tool slot is `anthropic` (`claude-sonnet-4-5`)** — only quick+deep are Ollama — so its 4 tool-calling analysts need Anthropic credits, which are exhausted (`400 credit balance too low`). **Partial evidence:** the graph **constructs + compiles** for this config (Portfolio Manager + Sentiment Analyst nodes present) — the Ollama routing survived the upgrade — but a full `--dry-run` decision is blocked until credits are topped up. (A truly all-local config that avoids Anthropic doesn't exist — that's the TRI-70 item scoped out of TRI-66.)
+- **Cloud (`hybrid_haiku_tools`) — ✅ PASSED (fresh live run, credits topped up).**
+  `python -m src.run_batch --tickers AAPL --hybrid hybrid_haiku_tools --dry-run`
+  → **`DECISION: BUY`**, **quality 8.5/10**, **cost $0.080**, elapsed ~1001s; dry-run completed (no order). Full pipeline on v0.3.0 (4 analysts → 2 researchers → research manager → trader → 3 risk debators → Portfolio Manager). The PM's 5-level rating maps cleanly to a valid 3-level decision (not UNKNOWN) — confirms the §2.5 mapping live.
+- **Local/Ollama (`hybrid_aggressive_qwen`, `qwen2.5:14b`) — ✅ PASSED (fresh live run).**
+  `python -m src.run_batch --tickers AAPL --hybrid hybrid_aggressive_qwen --dry-run`
+  → **`DECISION: SELL`** (PM emitted `Underweight` → maps to SELL), **quality 5.1/10**, **cost $0.945**, elapsed ~1402s; dry-run completed (no order), no errors. Proves the **local/Ollama routing survived the upgrade** and agent memory works offline (file journal, no embeddings API).
+  - _(A first local run returned `UNKNOWN` because qwen labels the decision `**Action**:` / `**Final Transaction Proposal:**` rather than cloud's `**Rating**:`/`**Recommendation**:` — the §2.5 matcher was broadened to all four header labels and re-verified against both saved outputs. Per the App Manager: multi-label regex is correct for TRI-66; structured-output extraction is flagged on TRI-70 as a benchmark-integrity requirement.)_
 
 ---
 
@@ -125,17 +131,17 @@ v0.3.0 `agents/utils/memory.py` (`TradingMemoryLog`) has **no** embeddings/OpenA
 | 2 | 4 shims dropped, zero-mod restored, 3 deps installed + in `pyproject` | ✅ |
 | 3 | `import src.run_analysis` succeeds + a paper analysis runs | ✅ (cloud smoke ran full pipeline) |
 | 4 | `pytest` no new failures vs the 8-failure baseline | ✅ (confirm re-run: `8 failed, 593 passed` — exactly the 8 baseline; 2 fallout failures fixed) |
-| 5 | `run_batch --dry-run` valid decision on `hybrid_haiku_tools` (cloud) | ✅ (8.2/10, → BUY) |
-| 6 | `run_batch --dry-run` valid decision on `hybrid_aggressive_qwen` (local) + offline memory | ⛔ **BLOCKED — Anthropic credits exhausted** (config's tool slot is Anthropic). Graph construct/compile verified; runtime decision pending credit top-up. |
+| 5 | `run_batch --dry-run` valid decision on `hybrid_haiku_tools` (cloud) | ✅ fresh live run: **BUY**, 8.5/10, $0.080 |
+| 6 | `run_batch --dry-run` valid decision on `hybrid_aggressive_qwen` (local) + offline memory | ✅ fresh live run: **SELL** (`Underweight`→SELL), 5.1/10, $0.945; memory = offline file journal |
 | 7 | LangGraph stack pinned to tested/resolved (no downgrade) | ✅ (`1.0.10 / 1.2.16 / 4.1.1 / 3.1.0`) |
 | 8 | Report written; work-order docs committed | Report ✅; commit pending |
 
 **Pending to close:**
-- [x] Confirmation full-suite pytest → exactly the 8 baseline failures (`8 failed, 593 passed, 2 skipped`). ✅
-- [ ] **exit-6 local smoke** — needs Anthropic credit top-up (environmental), then run `hybrid_aggressive_qwen --dry-run`.
-- [ ] Commit changes + work-order docs (fold docs into TRI-32).
+- [x] Confirmation full-suite pytest → exactly the 8 baseline failures (`8 failed, 593 passed, 2 skipped`); re-confirmed after the broadened §2.5 matcher. ✅
+- [x] **exit-6 local smoke** — credits topped up; fresh run → **SELL**, 5.1/10, $0.945. ✅
+- [x] Commit changes + work-order docs. ✅
 
-**Net for the gate:** 7 of 8 exit criteria met; exit-6 blocked solely on Anthropic billing (not code). The vendor upgrade itself is complete, zero-mod, and the engine runs end-to-end on the cloud path with valid decisions.
+**Net for the gate: 8 of 8 exit criteria met.** The vendor upgrade is complete, zero-mod, and the engine runs end-to-end with valid decisions on **both** the cloud and local paths. → Hand to Codex QA (`docs/CODEX_TRIFECTA_ENGINE_HANDOFF.md`); then paper-smoke UAT; then Engine App Manager + Arbiter re-verify. **DEVELOP does not declare Done.**
 
 ## 11. Known limitations / follow-ups (out of TRI-66 scope)
 - Model-string currency (`claude-sonnet-4-5`/`haiku-4-5` not in v0.3.0 catalog — advisory warnings): **TRI-70/73**.

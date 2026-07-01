@@ -78,6 +78,20 @@ class TestExtractDecision:
         text = "We weighed an Overweight thesis but the Underweight risks won out."
         assert extract_decision(text) == "UNKNOWN"
 
+    def test_pm_action_label_local_qwen(self):
+        """Local qwen labels the PM decision '**Action**: <rating>'."""
+        assert extract_decision("**Action**: Underweight") == "SELL"
+        assert extract_decision("**Action**: Overweight") == "BUY"
+
+    def test_pm_final_transaction_proposal_5level(self):
+        """Local qwen also writes '**Final Transaction Proposal: <5-level rating>**'."""
+        assert extract_decision("**Final Transaction Proposal: Underweight**") == "SELL"
+        assert extract_decision("Final Transaction Proposal: Overweight") == "BUY"
+
+    def test_pm_ignores_underweighted_prose(self):
+        """'underweighted position' in prose must not map to SELL."""
+        assert extract_decision("an underweighted position might be prudent") == "UNKNOWN"
+
     def test_no_markdown_bold(self):
         text = "FINAL TRANSACTION PROPOSAL: HOLD"
         assert extract_decision(text) == "HOLD"
