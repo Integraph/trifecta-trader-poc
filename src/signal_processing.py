@@ -31,12 +31,21 @@ def extract_decision(full_signal: str) -> str:
 
     # Method 0 (TradingAgents v0.3.0): the Portfolio Manager emits a 5-level
     # PortfolioDecision rating (Buy / Overweight / Hold / Underweight / Sell) on a
-    # header line. Different LLMs label that line differently — the structured
-    # render uses "**Recommendation**:", cloud models (Haiku/Sonnet) tend to write
-    # "**Rating**:", and local qwen writes "**Action**:" and
-    # "**Final Transaction Proposal: <rating>**". We anchor to one of those header
-    # labels (so a rating word buried in reasoning prose does NOT match) and
-    # collapse the 5-level scale onto our 3-level decision the standard way:
+    # decision header line. Different LLMs label that line differently — the
+    # structured render uses "**Recommendation**:", cloud models (Haiku/Sonnet)
+    # tend to write "**Rating**:", and local qwen writes "**Action**:" and
+    # "**Final Transaction Proposal: <rating>**".
+    #
+    # The label must START a line (allowing markdown heading/list/bold prefixes)
+    # and the colon is mandatory — so label-shaped prose mid-sentence ("a prior
+    # note wrote Rating: Underweight") or quoted stale decisions cannot override
+    # the real decision header (Codex QA P1, TRI-66). If a model repeats the
+    # header while looping, the last decision line wins. Residual ceiling: a
+    # prose line that itself BEGINS with "<Label>: <rating>" still matches —
+    # regex scraping can't fully disambiguate that; structured PortfolioDecision
+    # extraction (TRI-70) is the durable fix.
+    #
+    # 5-level -> 3-level mapping (standard):
     #   Overweight -> BUY (favorable, increase exposure)
     #   Underweight -> SELL (reduce exposure, take partial profits)
     pm_rating_map = {
@@ -44,12 +53,19 @@ def extract_decision(full_signal: str) -> str:
         "HOLD": "HOLD",
         "UNDERWEIGHT": "SELL", "SELL": "SELL",
     }
+    # Core labels observed so far: Recommendation / Rating / Action /
+    # Transaction Proposal — optionally prefixed by ONE qualifier from a tight
+    # allowlist (local qwen wrote "**Investment Recommendation: Underweight**"
+    # in one run and "**Action**: ..." in the next — the label varies per RUN,
+    # not just per model).
     pm_pattern = (
-        r'\*{0,2}(?:Recommendation|Rating|Action|Final\s+Transaction\s+Proposal)'
-        r'\*{0,2}[:\s]*\*{0,2}'
-        r'(Buy|Overweight|Hold|Underweight|Sell)\*{0,2}'
+        r'^[\s#>*-]{0,12}'
+        r'(?:(?:Investment|Final|Overall|Portfolio|Trading|Recommended)\s+)?'
+        r'(?:Recommendation|Rating|Action|Transaction\s+Proposal)'
+        r'\*{0,2}\s*:\s*\*{0,2}'
+        r'(Buy|Overweight|Hold|Underweight|Sell)\b'
     )
-    pm_matches = re.findall(pm_pattern, full_signal, re.IGNORECASE)
+    pm_matches = re.findall(pm_pattern, full_signal, re.IGNORECASE | re.MULTILINE)
     if pm_matches:
         return pm_rating_map[pm_matches[-1].upper()]
 

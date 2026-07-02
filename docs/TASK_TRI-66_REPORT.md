@@ -50,7 +50,13 @@ Diff size: `src/hybrid_graph.py` 114 lines (+62 / −67 — net reduction from r
 ### 2.5 `src/signal_processing.py` (decision-vocabulary mapping — folded in per Jeff, 2026-07-01)
 v0.3.0's Portfolio Manager emits a **5-level `PortfolioDecision` rating** (`Buy / Overweight / Hold / Underweight / Sell`), replacing the old Risk Manager's 3-level `FINAL TRANSACTION PROPOSAL: BUY/SELL/HOLD`. `extract_decision()` only recognized BUY/HOLD/SELL, so smokes returned `decision=UNKNOWN` for valid `Overweight`/`Underweight` analyses. Added a highest-priority, **header-anchored** mapping method: **Overweight→BUY, Underweight→SELL** (Buy/Hold/Sell unchanged). Reasoning-prose mentions of the rating words are **not** matched (anchored to the header label, so e.g. "an underweighted position" → UNKNOWN, not SELL).
 
-**Different LLMs label the decision line differently** — this only became visible by running both smokes: cloud Haiku/Sonnet write `**Rating**: Overweight`; the structured render uses `**Recommendation**:`; local `qwen2.5:14b` writes `**Action**: Underweight` and `**Final Transaction Proposal: Underweight**`. The matcher accepts all of these labels. Verified against **both** real saved outputs (cloud `Overweight→BUY`, local `Underweight→SELL`). Added **7** regression tests in `tests/test_signal_processing.py` (28/28 pass), including the local-qwen label formats and the prose-safety cases. **Surfaced and approved before committing** (standard financial mapping collapsing v0.3.0's 5-level scale onto the engine's 3-level decision).
+**Different LLMs label the decision line differently** — this only became visible by running both smokes: cloud Haiku/Sonnet write `**Rating**: Overweight`; the structured render uses `**Recommendation**:`; local `qwen2.5:14b` writes `**Action**: Underweight` and `**Final Transaction Proposal: Underweight**`. The matcher accepts all of these labels. **Surfaced and approved before committing** (standard financial mapping collapsing v0.3.0's 5-level scale onto the engine's 3-level decision).
+
+**Codex QA P1 (CHANGES-REQUESTED, 2026-07-01) — accepted and fixed.** As committed in `c035adc`, this report claimed the matcher was "header-anchored"; **that claim was false**. The regex had no line anchor and did not require the colon, and because method 0 takes the last match, label-shaped *prose* (e.g. `Rationale: prior note wrote Rating: Underweight.`) could override a real `**Rating**: Hold` header → SELL. All four of QA's repro cases reproduced. My original prose-safety tests only covered rating words *without* label words — exactly the missed failure mode.
+
+**Fix (final form):** the label must start a line (markdown heading/list/bold prefixes allowed: `^[\s#>*-]{0,12}` + MULTILINE), the colon separator is **mandatory**, the core label is one of `Recommendation / Rating / Action / Transaction Proposal` with at most one qualifier from a tight allowlist (`Investment / Final / Overall / Portfolio / Trading / Recommended` — added after a post-fix local run emitted `**Investment Recommendation: Underweight**`), and the last *decision line* wins for looping output. All 4 QA repro cases pass, plus adversarial tests for mid-line bold labels, looping headers, markdown decorations, qualified labels, and unlisted-qualifier prose — **37/37 signal tests pass**, and all four preserved real outputs (two cloud, two local) extract correctly. Both smokes were **re-run post-fix and recorded valid decisions live** (§9), per QA's P2.
+
+**Documented residual ceiling:** a prose line that itself *begins* with `<Label>: <rating>` still matches — regex scraping cannot fully disambiguate that, and the local model **changes its label format run to run**, so the allowlist can only chase. The durable fix is structured `PortfolioDecision` extraction, owned by **TRI-70**. (Methods 1–3, the pre-TRI-66 legacy patterns, retain their historical unanchored behavior — unchanged by this task and likewise superseded by TRI-70.)
 
 Files changed: `pyproject.toml`, `src/hybrid_graph.py`, `src/signal_processing.py`, `tests/test_signal_processing.py` (+4 mapping tests), `tests/test_pipeline.py` (2 assertions updated for the "Risk Judge"→"Portfolio Manager" vendor rename), and the `vendor/TradingAgents` gitlink — no other source touched.
 
@@ -113,13 +119,15 @@ v0.3.0 `agents/utils/memory.py` (`TradingMemoryLog`) has **no** embeddings/OpenA
 
 ## 9. Paper smokes (exit-5 / exit-6)
 
-- **Cloud (`hybrid_haiku_tools`) — ✅ PASSED (fresh live run, credits topped up).**
+- **Cloud (`hybrid_haiku_tools`) — ✅ PASSED (re-run after the QA P1 fix, on the anchored matcher).**
   `python -m src.run_batch --tickers AAPL --hybrid hybrid_haiku_tools --dry-run`
-  → **`DECISION: BUY`**, **quality 8.5/10**, **cost $0.080**, elapsed ~1001s; dry-run completed (no order). Full pipeline on v0.3.0 (4 analysts → 2 researchers → research manager → trader → 3 risk debators → Portfolio Manager). The PM's 5-level rating maps cleanly to a valid 3-level decision (not UNKNOWN) — confirms the §2.5 mapping live.
-- **Local/Ollama (`hybrid_aggressive_qwen`, `qwen2.5:14b`) — ✅ PASSED (fresh live run).**
+  → **`DECISION: SELL`** (PM emitted `Underweight` → SELL), **quality 8.5/10**, **cost $0.074**, target $273, elapsed ~967s; dry-run completed (no order), no errors. Full pipeline on v0.3.0 (4 analysts → 2 researchers → research manager → trader → 3 risk debators → Portfolio Manager); valid 3-level decision (not UNKNOWN).
+  _Earlier DEVELOP runs of this config: `Overweight`→BUY (8.5/10, $0.080, ~1001s) and `Overweight` (8.2/10, $0.027, first run). Same config/ticker/day produced `Overweight` and `Underweight` across runs — see §11 run-to-run variance note._
+- **Local/Ollama (`hybrid_aggressive_qwen`, `qwen2.5:14b`) — ✅ PASSED (re-run after the QA P1 fix, on the anchored matcher).**
   `python -m src.run_batch --tickers AAPL --hybrid hybrid_aggressive_qwen --dry-run`
-  → **`DECISION: SELL`** (PM emitted `Underweight` → maps to SELL), **quality 5.1/10**, **cost $0.945**, elapsed ~1402s; dry-run completed (no order), no errors. Proves the **local/Ollama routing survived the upgrade** and agent memory works offline (file journal, no embeddings API).
-  - _(A first local run returned `UNKNOWN` because qwen labels the decision `**Action**:` / `**Final Transaction Proposal:**` rather than cloud's `**Rating**:`/`**Recommendation**:` — the §2.5 matcher was broadened to all four header labels and re-verified against both saved outputs. Per the App Manager: multi-label regex is correct for TRI-66; structured-output extraction is flagged on TRI-70 as a benchmark-integrity requirement.)_
+  → **`DECISION: SELL`** (PM emitted `Underweight` → SELL), **quality 3.6/10**, **cost $1.036**, elapsed ~1432s; dry-run completed (no order), no errors. Proves the **local/Ollama routing survived the upgrade** and agent memory works offline (file journal, no embeddings API).
+  - _Local-format history (why three runs): run 1 → `UNKNOWN` (qwen labeled the decision `**Action**:` / `**Final Transaction Proposal:**`; matcher broadened). Run 2 (post-anchoring) → `UNKNOWN` again — **the same model changed its label to `**Investment Recommendation: Underweight**`**; matcher given a tight qualifier allowlist. Run 3 → valid `SELL` recorded live. **The label varies per RUN, not just per model** — regex can chase this but never close it; structured `PortfolioDecision` extraction (TRI-70) is the durable fix._
+  - _Local quality varied 5.1 → 3.6 across runs (cost $0.49–$1.04) — run-to-run variance data for TRI-70's benchmark design._
 
 ---
 
@@ -131,8 +139,8 @@ v0.3.0 `agents/utils/memory.py` (`TradingMemoryLog`) has **no** embeddings/OpenA
 | 2 | 4 shims dropped, zero-mod restored, 3 deps installed + in `pyproject` | ✅ |
 | 3 | `import src.run_analysis` succeeds + a paper analysis runs | ✅ (cloud smoke ran full pipeline) |
 | 4 | `pytest` no new failures vs the 8-failure baseline | ✅ (confirm re-run: `8 failed, 593 passed` — exactly the 8 baseline; 2 fallout failures fixed) |
-| 5 | `run_batch --dry-run` valid decision on `hybrid_haiku_tools` (cloud) | ✅ fresh live run: **BUY**, 8.5/10, $0.080 |
-| 6 | `run_batch --dry-run` valid decision on `hybrid_aggressive_qwen` (local) + offline memory | ✅ fresh live run: **SELL** (`Underweight`→SELL), 5.1/10, $0.945; memory = offline file journal |
+| 5 | `run_batch --dry-run` valid decision on `hybrid_haiku_tools` (cloud) | ✅ post-QA-fix live run: **SELL** (`Underweight`→SELL), 8.5/10, $0.074 |
+| 6 | `run_batch --dry-run` valid decision on `hybrid_aggressive_qwen` (local) + offline memory | ✅ post-QA-fix live run: **SELL** (`Underweight`→SELL), 3.6/10, $1.036; memory = offline file journal |
 | 7 | LangGraph stack pinned to tested/resolved (no downgrade) | ✅ (`1.0.10 / 1.2.16 / 4.1.1 / 3.1.0`) |
 | 8 | Report written; work-order docs committed | Report ✅; commit pending |
 
@@ -148,6 +156,8 @@ v0.3.0 `agents/utils/memory.py` (`TradingMemoryLog`) has **no** embeddings/OpenA
 - Cache report-key for social: our `make_cached_analyst` keys by `spec.key="social"`; v0.3.0's report key is `sentiment_report`. Affects *cache-hit* effectiveness for the sentiment analyst only (correctness unaffected on cache miss); flag for a follow-up if cache hit-rate matters.
 - `import src.hybrid_graph` standalone still fails (vendor sys.path only wired by entrypoints): **TRI-72**.
 - Accuracy stale-date test time-bomb: **TRI-71**. Full dependency lockfile: **TRI-65**.
+- **Result files clobber each other** — `results/<TICKER>/analysis_<date>_<config>.json` has no run timestamp, so any re-run (including QA's independent verification) **overwrites the prior run's evidence**. Discovered when QA's re-run replaced the DEVELOP cloud-smoke evidence file. Gate-integrity nuisance; suggest a ticket to add a run timestamp (or run-id) to result filenames.
+- **Run-to-run decision variance observed:** same ticker, same day, same config produced `Overweight` (one run) and `Underweight` (a later run) on the cloud path. Not a bug — LLM non-determinism — but TRI-70's benchmark must account for it (repeat runs / variance bars, not single-shot decisions).
 
 ---
 *Next: Codex QA (`docs/TASK_TRI-66_CODEX_REVIEW.md`) → paper-smoke UAT → Engine App Manager + Arbiter re-verify.*

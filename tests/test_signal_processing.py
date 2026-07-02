@@ -92,6 +92,57 @@ class TestExtractDecision:
         """'underweighted position' in prose must not map to SELL."""
         assert extract_decision("an underweighted position might be prudent") == "UNKNOWN"
 
+    # --- Codex QA P1 adversarial set (TRI-66): label-shaped prose must NOT
+    # --- override the real decision header. Exact repro cases from the review.
+
+    def test_pm_header_not_overridden_by_prose_rating(self):
+        text = "**Rating**: Hold\n\nRationale: prior note wrote Rating: Underweight."
+        assert extract_decision(text) == "HOLD"
+
+    def test_pm_header_not_overridden_by_prose_action(self):
+        text = "**Recommendation**: Buy\n\nRationale: prior playbook said Action: Sell."
+        assert extract_decision(text) == "BUY"
+
+    def test_pm_header_not_overridden_by_prose_proposal(self):
+        text = (
+            "**Action**: Hold\n\n"
+            "Rationale: stale memo labeled Final Transaction Proposal: Sell."
+        )
+        assert extract_decision(text) == "HOLD"
+
+    def test_pm_label_in_prose_only_is_unknown(self):
+        text = (
+            "The analyst wrote Rating: Underweight in the bearish argument; "
+            "we have not decided yet."
+        )
+        assert extract_decision(text) == "UNKNOWN"
+
+    def test_pm_midline_bold_label_is_not_a_header(self):
+        """Even a bold label mid-sentence is not a decision line."""
+        assert extract_decision("We keep **Rating**: Overweight in place.") == "UNKNOWN"
+
+    def test_pm_looping_output_last_decision_line_wins(self):
+        text = "**Rating**: Buy\n...model loops...\n**Rating**: Hold"
+        assert extract_decision(text) == "HOLD"
+
+    def test_pm_markdown_heading_and_list_decorations(self):
+        assert extract_decision("### Recommendation: Overweight") == "BUY"
+        assert extract_decision("- **Action**: Underweight") == "SELL"
+
+    def test_pm_qualified_label_investment_recommendation(self):
+        """qwen also emits '**Investment Recommendation: <rating>**' (varies per run)."""
+        assert extract_decision("**Investment Recommendation: Underweight**") == "SELL"
+        assert extract_decision("**Final Recommendation**: Hold") == "HOLD"
+
+    def test_pm_unlisted_qualifier_does_not_match(self):
+        """Random words before the label are not decision headers.
+
+        Uses 'Underweight' (5-level-only) so the legacy method-3 standalone
+        BUY/HOLD/SELL fallback can't mask the method-0 behavior under test.
+        """
+        text = "Yesterday Recommendation: Underweight was the desk chatter."
+        assert extract_decision(text) == "UNKNOWN"
+
     def test_no_markdown_bold(self):
         text = "FINAL TRANSACTION PROPOSAL: HOLD"
         assert extract_decision(text) == "HOLD"
