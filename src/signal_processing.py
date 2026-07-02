@@ -58,14 +58,23 @@ def extract_decision(full_signal: str) -> str:
     # allowlist (local qwen wrote "**Investment Recommendation: Underweight**"
     # in one run and "**Action**: ..." in the next — the label varies per RUN,
     # not just per model).
+    #
+    # Quoted/stale decisions must not count (Codex QA round 2): blockquote
+    # lines are excluded ('>' is deliberately NOT in the decoration class —
+    # v0.3.0 injects prior decisions as past_context, so the PM plausibly
+    # quotes an old decision), and fenced code blocks are stripped before
+    # matching. An unterminated fence strips to end-of-text: losing a real
+    # decision to UNKNOWN (loud, gets investigated) beats silently adopting
+    # a stale one.
+    pm_text = re.sub(r'```.*?(?:```|\Z)', '', full_signal, flags=re.DOTALL)
     pm_pattern = (
-        r'^[\s#>*-]{0,12}'
+        r'^[\s#*-]{0,12}'
         r'(?:(?:Investment|Final|Overall|Portfolio|Trading|Recommended)\s+)?'
         r'(?:Recommendation|Rating|Action|Transaction\s+Proposal)'
         r'\*{0,2}\s*:\s*\*{0,2}'
         r'(Buy|Overweight|Hold|Underweight|Sell)\b'
     )
-    pm_matches = re.findall(pm_pattern, full_signal, re.IGNORECASE | re.MULTILINE)
+    pm_matches = re.findall(pm_pattern, pm_text, re.IGNORECASE | re.MULTILINE)
     if pm_matches:
         return pm_rating_map[pm_matches[-1].upper()]
 

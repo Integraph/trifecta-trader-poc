@@ -143,6 +143,37 @@ class TestExtractDecision:
         text = "Yesterday Recommendation: Underweight was the desk chatter."
         assert extract_decision(text) == "UNKNOWN"
 
+    # --- Codex QA round 2 (TRI-66): quoted/stale decisions must not count ---
+
+    def test_pm_blockquote_stale_decision_does_not_override(self):
+        """A blockquoted (stale/quoted) decision line after the real one loses."""
+        text = "**Rating**: Hold\n\n> Recommendation: Underweight"
+        assert extract_decision(text) == "HOLD"
+
+    def test_pm_fenced_code_stale_decision_does_not_override(self):
+        """A decision line inside a fenced code block after the real one loses."""
+        text = "**Rating**: Hold\n\n```\nRecommendation: Underweight\n```"
+        assert extract_decision(text) == "HOLD"
+
+    def test_pm_stale_quote_before_real_decision(self):
+        """A quoted stale decision above the real header does not interfere."""
+        text = "> old memo — Rating: Underweight\n\n**Rating**: Hold"
+        assert extract_decision(text) == "HOLD"
+
+    def test_pm_fenced_only_decision_is_unknown(self):
+        """A decision that ONLY appears inside a code fence is not extracted.
+
+        Uses 'Overweight' (5-level-only) so legacy methods can't mask it.
+        """
+        text = "```\n**Rating**: Overweight\n```"
+        assert extract_decision(text) == "UNKNOWN"
+
+    def test_pm_unterminated_fence_strips_to_end(self):
+        """An unclosed fence swallows everything after it (fail-loud beats
+        silently adopting a stale decision); the real header before it wins."""
+        text = "**Rating**: Hold\n\n```\nRecommendation: Underweight"
+        assert extract_decision(text) == "HOLD"
+
     def test_no_markdown_bold(self):
         text = "FINAL TRANSACTION PROPOSAL: HOLD"
         assert extract_decision(text) == "HOLD"
