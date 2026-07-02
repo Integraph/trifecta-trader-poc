@@ -92,3 +92,93 @@ This may be runtime latency rather than a source regression; the report's elapse
 
 - Current HEAD includes an extra docs-only TRI-32 commit (`PROJECT_BRIEF.md`, `docs/TRI-66_QA_KICKOFF.md`) after the two TRI-66 implementation commits. I did not treat that as app-code scope creep.
 - The developer report's "header-anchored" statement is the main discrepancy. The tests prove rating words without labels are ignored, but they do not cover label-shaped prose or stale quoted decisions, which is the real failure mode.
+
+---
+
+# TRI-66 - Codex QA Review Round 2
+
+**Date:** 2026-07-02
+**Commits reviewed:** `2a57026` plus `2cffe43`
+**Verdict:** CHANGES-REQUESTED
+
+## Round-2 Finding
+
+### P1 - PM matcher still lets quoted or fenced stale decisions override the real decision
+
+The four round-1 repro cases are fixed. These now return the intended values:
+
+```text
+r1_valid_rating_then_prose_rating: HOLD
+r1_valid_recommendation_then_prose_action: BUY
+r1_valid_action_then_prose_final: HOLD
+r1_no_decision_prose_label: UNKNOWN
+```
+
+The new tests in `tests/test_signal_processing.py:95-144` are real line-anchoring tests, not tautological. They cover mid-line prose labels, looping decision headers, markdown heading/list prefixes, qualified labels, and unlisted-qualifier prose.
+
+The P1 is still not closed, though. `src/signal_processing.py:61-68` allows `>` in the line prefix and does not ignore fenced code blocks:
+
+```python
+pm_pattern = (
+    r'^[\s#>*-]{0,12}'
+    r'(?:(?:Investment|Final|Overall|Portfolio|Trading|Recommended)\s+)?'
+    r'(?:Recommendation|Rating|Action|Transaction\s+Proposal)'
+    r'\*{0,2}\s*:\s*\*{0,2}'
+    r'(Buy|Overweight|Hold|Underweight|Sell)\b'
+)
+```
+
+Because the last matching line wins, a stale quoted/code-block decision below the real decision still overrides it:
+
+```text
+blockquote_stale_below_real_should_keep_real: actual=SELL expected=HOLD pass=False
+fenced_code_stale_below_real_should_keep_real: actual=SELL expected=HOLD pass=False
+literal_label_start_residual: actual=SELL expected=HOLD pass=False
+```
+
+Repro inputs:
+
+```python
+extract_decision("**Rating**: Hold\n\n> Rating: Underweight\n> from yesterday\n\nRationale rejects it.")
+extract_decision("**Rating**: Hold\n\n```\nRating: Underweight\n```\n\nRationale rejects it.")
+extract_decision("**Rating**: Hold\n\nRecommendation: Sell was the prior memo, not the current call.")
+```
+
+The first two are not acceptable residuals. A blockquote or fenced code block is exactly how stale prior output is likely to be embedded, so counting those as current PM decision lines can still silently flip BUY/HOLD/SELL. This is the same measurement-integrity class as round 1.
+
+Requested fix:
+- Do not allow blockquote prefixes (`>`) as live decision headers.
+- Strip or ignore fenced code blocks before applying the PM decision-line matcher.
+- Add tests where blockquoted and fenced stale decisions appear both above and below the real decision.
+- Keep "last genuine decision line wins" for repeated live PM output.
+
+Judgment call: structured `PortfolioDecision` extraction does not need to be forced into TRI-66. A bounded regex fallback is acceptable for this upgrade if it ignores obvious quoted/code stale text. The documented residual of a prose line literally beginning `Recommendation: Sell` is tolerable as a known ceiling until TRI-70, but the current implementation goes beyond that ceiling.
+
+## Round-2 Verification
+
+- `pytest tests/test_signal_processing.py -q` -> `37 passed`.
+- `pytest --ignore=tests/test_alpaca_connection.py --ignore=tests/test_prompt_engineering.py --ignore=tests/test_structured_output.py -q` -> `8 failed, 605 passed, 3 skipped`; failures are the known baseline set:
+  - 5x `tests/test_accuracy_reporter.py::TestSummary`
+  - 1x `tests/test_admin_scheduler.py::TestSchedulerHistory::test_history_returns_runs`
+  - 2x `tests/test_local_tool_calling.py` for `mistral-small:22b`
+- Submodule still zero-mod: `vendor/TradingAgents` HEAD is `85946c2f60768ab2dae23a5a36cd927662feef94`, matching `v0.3.0^{}`; diff vs tag is empty.
+- Deps/import gate still clean:
+  - `langgraph==1.0.10`
+  - `langchain-core==1.2.16`
+  - `langgraph-checkpoint==4.1.1`
+  - `langgraph-checkpoint-sqlite==3.1.0`
+  - `yfinance==1.5.1`
+  - `stockstats==0.6.8`
+  - `import src.run_analysis` succeeds.
+- No config/model-string diff in `config/hybrid_llm.yaml`, `src/hybrid_llm.py`, or `admin-ui/src/components/config/ConfigPage.tsx`.
+- Real PM styles still parse:
+  - `**Rating**: Overweight` -> `BUY`
+  - `**Action**: Underweight` -> `SELL`
+  - `**Investment Recommendation: Underweight**` -> `SELL`
+  - legacy `FINAL TRANSACTION PROPOSAL: **HOLD**` -> `HOLD`
+  - `an underweighted position might be prudent` -> `UNKNOWN`
+
+## Scope Notes
+
+- I did not rerun full smokes in round 2. The requested code-level P1 is still open, and re-running smokes would also clobber result files per the already-known result-evidence issue.
+- Linear confirms TRI-78 exists in Backlog and owns run-to-run signal non-determinism for TRI-69/TRI-70 benchmark design. That variance is out of TRI-66 scope as long as TRI-66 uses smokes only to prove "pipeline runs and returns a valid decision," not to claim stable edge or signal quality.
