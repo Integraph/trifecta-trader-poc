@@ -39,7 +39,7 @@ does not gate the recommendation.)_
 
 | Step | What | State |
 |------|------|-------|
-| 1 | Structured extraction + run-ids wired into results | ✅ code done, tests green (50) — committing |
+| 1 | Structured extraction + run-ids wired into results | ✅ committed, tests green (50) |
 | 2 | Tool-calling gate (Q4_K_M) | ✅ DONE — all 5 candidates PASS (exit criterion 3) |
 | 3 | Pricing triad (local $0, opus-4-8 row, normalize, Haiku) | ✅ done, verified, committed |
 | 4 | Cache-off (`--no-cache`) verification | ✅ verified end-to-end, both entrypoints |
@@ -48,10 +48,10 @@ does not gate the recommendation.)_
 | 7 | Cloud-reference yardstick (`test-only`) | ✅ DONE — sonnet 8.7 / opus-4-8 7.3, both stable 1.00 |
 | 8 | Report + recommendation | ✅ DONE — evidenced "no all-local config clears the gate" |
 
-**Model pulls (background, healthy — do NOT interrupt):** Wave-1 pull script running from setup session.
-Done so far: `qwen3.6:27b`, `qwen3-coder:30b`, `deepseek-r1:8b`, `deepseek-r1:14b`. In progress: `qwen3.6:35b`.
-Queue: gpt-oss:20b, deepseek-r1:32b, gemma-4 (tag TBD), qwen3.7 (expected FAIL), llama3.3:70b, deepseek-r1:70b, gpt-oss:120b.
-Already present: qwen3.5:9b/27b/35b-a3b, qwen2.5:14b/32b, mistral-small:22b, llama3.1:8b, mistral:7b.
+**Model pulls: ALL DONE.** Wave-1 pulled: qwen3.6:27b/35b, qwen3-coder:30b, deepseek-r1:8b/14b/32b/70b,
+gpt-oss:20b/120b, **gemma4:latest** (the working Gemma-4 tag), llama3.3:70b. `qwen3.7` failed as expected (no such
+tag). Blocked/not-pulled per work order: GLM-5.1 (cloud-only), deepseek-v4-flash (no V4 runtime). Already present:
+qwen3.5:9b/27b/35b-a3b, qwen2.5:14b/32b, mistral-small:22b, llama3.1:8b, mistral:7b.
 
 ### 🚩 Checkpoint flags (surfaced, not blocking)
 
