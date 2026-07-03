@@ -8,11 +8,11 @@
 
 ## ⏱️ RUNNING STATUS (updated live — check here first)
 
-**Last updated:** 2026-07-03 ~00:25 — deep-slot screen batch 1 COMPLETE; screen winner = `deepseek-r1:8b` (Q 9.1, stable HOLD)
+**Last updated:** 2026-07-03 ~03:30 — full deep-slot head-to-head DONE (7 candidates); **only `deepseek-r1:8b` clears 8.0** (Q 9.1, stable HOLD, grounding 10). Finalist round (AAPL/NVDA/TSLA × N=5) running; then cloud refs.
 
-**Steps 1, 3, 4, 5 = DONE & committed.** Step 2 = 3/5 tool candidates PASSED (2 left, pulls now done). Step 6 =
-batch-1 screen complete (5 deep candidates × N=3); winner `deepseek-r1:8b` clears 8.0. Next: batch-2 screen
-(r1:70b, gpt-oss:120b), finalists N=5, cloud refs (Step 7).
+**Steps 1–5 = DONE & committed. Step 2 tool gate = DONE (all 5 PASS, exit criterion 3).** Step 6 = both screen
+batches complete → `deepseek-r1:8b` is the sole gate-clearing deep model; finalist round in flight (`bmrw2u3sh`).
+Remaining: Step 7 cloud-reference ceiling, Step 8 recommendation.
 
 | Step | What | State |
 |------|------|-------|
@@ -135,17 +135,42 @@ stop levels) — not a regex/UNKNOWN artifact. Extractability 1.0, zero UNKNOWNs
    credits verbose CoT — flagged for QA. **Not a blocker.**
 
 - ✅ **All Wave-1 pulls DONE** (incl. deepseek-r1:70b, gpt-oss:120b) → wall-times clean from here.
-### Screen batch 2 — IN PROGRESS (bg job `biymofli3`): deep = `deepseek-r1:70b`, `gpt-oss:120b` (N=3, AAPL @ 2026-06-27)
-Wall-times clean (no concurrent pulls). Aggregate → `results/tri70_screen2_agg.json`. r1:70b/gpt-oss:120b are the
-two large deep candidates; if either clears 8.0 it joins the finalist round.
+### Screen batch 2 — COMPLETE (deep = `deepseek-r1:70b`, `gpt-oss:120b`; N=3, AAPL @ 2026-06-27, clean wall-times)
 
-### Finalist plan (after batch 2)
-- **Finalist configs:** the deep-slot winner(s) clearing/closest to 8.0 — `deepseek-r1:8b` is the confirmed
-  batch-1 winner (as `benchmark_local_b` with deep repinned to r1:8b); add any batch-2 model that clears 8.0.
-- **Small fixed watchlist:** **AAPL, NVDA, TSLA** (large-cap / semis / high-vol) × **N=5** — confirms
-  decision-stability + quality hold across tickers, not just AAPL.
-- Then **cloud references** (`benchmark_opus_a`, `hybrid_haiku_tools`) ~3 repeats each as the ceiling (Step 7),
-  and the final table + recommendation vs the 8.0 gate (Step 8).
+| deep model | decisions | modal | agreement | extractability | method | Q mean | Q σ | data-grounding | wall/run |
+|------------|-----------|-------|-----------|----------------|--------|--------|-----|----------------|----------|
+| gpt-oss:120b | BUY,BUY,BUY | BUY | 1.00 | 1.0 | rendered_structured_parse×3 | 6.57 | 0.64 | 4 (all) | ~14.8 min |
+| deepseek-r1:70b | HOLD,HOLD,HOLD | HOLD | 1.00 | 1.0 | regex×3 | 5.17 | 0.42 | **~0** (0/1/0) | ~22.8 min |
+
+Neither clears 8.0. **gpt-oss:120b** is notably stable (BUY×3) and engages the structured render, and is fast for
+its size (MoE), but grounding is mediocre (4/10) → 6.57. **r1:70b** (older llama3.3-based distill) is essentially
+**ungrounded** (data_grounding ≈0) — a clear "not current" casualty.
+
+### Deep-slot head-to-head — FINAL RANKING (all 7 candidates, N=3, AAPL @ 2026-06-27)
+
+| rank | deep model | Q mean | stability (agreement) | data-grounding | structured? | verdict vs 8.0 |
+|------|-----------|--------|-----------------------|----------------|-------------|----------------|
+| **1** | **deepseek-r1:8b** (R1-0528) | **9.1** | **HOLD×3 = 1.00** | **10** | no (regex) | ✅ **CLEARS** |
+| 2 | gpt-oss:120b | 6.57 | BUY×3 = 1.00 | 4 | yes | ✗ |
+| 3 | qwen3.6:27b | 6.4 | 0.33 (HOLD/SELL/BUY) | — | yes | ✗ |
+| 4 | qwen3.6:35b MoE | 6.33 | 0.67 | — | yes | ✗ |
+| 5 | deepseek-r1:14b | 5.27 | 1.00 | — | no | ✗ |
+| 6 | deepseek-r1:70b | 5.17 | 1.00 | ~0 | no | ✗ |
+| 7 | deepseek-r1:32b | 5.13 | 0.67 | — | no | ✗ |
+
+**➡️ Only `deepseek-r1:8b` clears the 8.0 gate** (and does so by a wide margin with intact data-grounding and a
+stable decision). It is the sole deep-slot finalist. gpt-oss:120b is the best-of-the-rest (stable + structured) but
+sub-gate.
+
+### Finalist round — IN PROGRESS (bg job `bmrw2u3sh`)
+- **`benchmark_local_b` repinned to deep=`deepseek-r1:8b`** (tool=qwen3-coder:30b, quick=qwen3.5:9b) — the shipped
+  all-local candidate handed to TRI-73. Config written to `config/hybrid_llm.yaml`.
+- Running **AAPL, NVDA, TSLA × N=5** (15 runs, clean wall-times) → `results/tri70_finalist_agg.json`. This confirms
+  quality/stability hold across tickers **and** checks that r1:8b's decision varies by ticker (not a degenerate
+  always-HOLD). Only r1:8b clears 8.0, so it's the sole finalist; gpt-oss:120b's sub-gate screen numbers stand as
+  the runner-up reference.
+- **Next (Step 7):** cloud references (`benchmark_opus_a` = Haiku tools / local quick / **opus-4-8** deep;
+  `hybrid_haiku_tools`) ~3 repeats each as the ceiling; then final recommendation (Step 8).
 - ⚠️ Note: runs launched while Wave-1 pulls are still downloading may have **inflated wall-times** (concurrent
   disk/mem I/O). Decision/extractability/quality are unaffected; finalist wall-times will be re-measured clean
   after pulls complete (and via the Step-5 speed harness).

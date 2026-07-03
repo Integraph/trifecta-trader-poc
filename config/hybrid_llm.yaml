@@ -151,7 +151,7 @@ configs:
     reasoning_quick_provider: ollama
     reasoning_quick_model: qwen3.5:9b
     reasoning_deep_provider: ollama
-    reasoning_deep_model: qwen3.6:27b
+    reasoning_deep_model: deepseek-r1:8b
     enhance_local: false
     enhance_style: financial_analysis
     enhance_deep: false
