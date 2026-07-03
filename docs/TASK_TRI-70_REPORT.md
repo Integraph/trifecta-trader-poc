@@ -8,10 +8,11 @@
 
 ## ⏱️ RUNNING STATUS (updated live — check here first)
 
-**Last updated:** 2026-07-02 ~23:40 (DEVELOP continuation session) — deep-slot screen grinding in background
+**Last updated:** 2026-07-03 ~00:25 — deep-slot screen batch 1 COMPLETE; screen winner = `deepseek-r1:8b` (Q 9.1, stable HOLD)
 
-**Steps 1, 3, 4, 5 = DONE & committed.** Step 2 = 3/5 tool candidates PASSED. Step 6 = validation done (exit
-criterion 2 met), N=3 deep-slot screen running (bg job `bmcfd45kv`, ~5–7h). Live progress: `results/tri70_screen_agg.json`.
+**Steps 1, 3, 4, 5 = DONE & committed.** Step 2 = 3/5 tool candidates PASSED (2 left, pulls now done). Step 6 =
+batch-1 screen complete (5 deep candidates × N=3); winner `deepseek-r1:8b` clears 8.0. Next: batch-2 screen
+(r1:70b, gpt-oss:120b), finalists N=5, cloud refs (Step 7).
 
 | Step | What | State |
 |------|------|-------|
@@ -104,12 +105,38 @@ verdicts recorded here).
   (inflated — a pull was concurrent). AAPL @ 2026-06-27.
 - **Reporting fix (TRI-70):** the result JSON logged `deep_model`/`quick_model` as the *base* sonnet default for
   hybrid runs; now records the real per-slot routing + a `hybrid_routing` field (so benchmark rows aren't mislabeled).
-- 🟢 **Deep-slot N=3 screen LAUNCHED (background)** — AAPL @ 2026-06-27, 5 ready candidates in fast-first order:
-  `qwen3.6:35b` (MoE), `deepseek-r1:8b`, `qwen3.6:27b`, `deepseek-r1:14b`, `deepseek-r1:32b`. Pending pull:
-  `deepseek-r1:70b`, `gpt-oss:120b` (added to a second screen batch when they land). Incremental aggregate →
-  `results/tri70_screen_agg.json`. Expect ~5–7h wall-clock (15 runs × ~20–27 min; wall-times pull-inflated).
-- **After the screen:** pick finalists (deep-slot winner(s) clearing/closest to 8.0) → N=5 at the watchlist;
-  then cloud refs (`benchmark_opus_a`, `hybrid_haiku_tools`) ~3 repeats each as the ceiling.
+### Deep-slot N=3 screen — COMPLETE (batch 1: AAPL @ 2026-06-27, tool=qwen3-coder:30b, quick=qwen3.5:9b)
+
+| deep model | decisions (N=3) | modal | agreement | extractability | method | **Q mean** | Q σ | wall/run |
+|------------|-----------------|-------|-----------|----------------|--------|-----------|-----|----------|
+| **deepseek-r1:8b** (R1-0528) | HOLD,HOLD,HOLD | **HOLD** | **1.00** | 1.0 | regex×3 | **9.1** | 0.6 | ~16.4 min |
+| deepseek-r1:14b | HOLD,HOLD,HOLD | HOLD | 1.00 | 1.0 | regex×3 | 5.27 | 0.45 | ~16.9 min |
+| deepseek-r1:32b | SELL,HOLD,HOLD | HOLD | 0.67 | 1.0 | regex×3 | 5.13 | 1.34 | ~19.8 min |
+| qwen3.6:35b (MoE) | SELL,HOLD,HOLD | HOLD | 0.67 | 1.0 | rendered_structured_parse×3 | 6.33 | 1.19 | ~20.5 min |
+| qwen3.6:27b (=`benchmark_local_b`) | HOLD,SELL,BUY | HOLD | **0.33** | 1.0 | rendered_structured_parse×3 | 6.4 | 0.3 | ~25.9 min |
+
+**Screen winner (batch 1): `deepseek-r1:8b`** — clears the 8.0 gate with margin (9.1; individual runs 9.1/9.7/8.5),
+**perfectly stable HOLD×3**, fastest, and **data_grounding=10 on every run** (gate's key requirement intact).
+The HOLD is a genuine, data-grounded recommendation (text cites P/E 37.32, FCF $101.09B, D/E 79.55%, specific
+stop levels) — not a regex/UNKNOWN artifact. Extractability 1.0, zero UNKNOWNs across the whole screen.
+
+**Findings from the screen:**
+1. **Structured-output engagement is model-dependent, and it does NOT correlate with quality.** qwen3.6 (35b/27b)
+   emit v0.3.0's structured render (`rendered_structured_parse`) but score lower (6.3–6.4) and are decision-UNSTABLE
+   (27b gave HOLD/SELL/BUY — agreement 0.33). DeepSeek-R1 does **not** emit the render (falls back to `regex`) yet
+   r1:8b is the most stable and highest-quality. So the regex fallback is not a liability for R1 — extractability
+   was 1.0 across all 15 runs.
+2. **Newer beats bigger for R1:** r1:8b (the R1-0528 refresh) **9.1** ≫ r1:14b **5.27** / r1:32b **5.13** (older
+   2025 distills on qwen2.5 bases). The dark horse won.
+3. **The default `benchmark_local_b` deep (qwen3.6:27b) is the worst choice on stability (0.33).** → repin its deep
+   slot to the screen winner (`deepseek-r1:8b`) for the finalist round.
+4. ⚠️ r1:8b's 9.1 sits **above** the stated cloud ceiling (~8.0–8.5). The scorer rewards R1's explicit,
+   data-grounded chain-of-thought. The cloud-reference runs (Step 7) will contextualize whether the scorer over-
+   credits verbose CoT — flagged for QA. **Not a blocker.**
+
+- ✅ **All Wave-1 pulls DONE** (incl. deepseek-r1:70b, gpt-oss:120b) → wall-times clean from here.
+- **Next:** gate llama3.3:70b + gpt-oss:120b (tool); screen batch 2 (deep = r1:70b, gpt-oss:120b) N=3; then
+  finalists N=5 (repin `benchmark_local_b` deep=r1:8b + runner-up) at the watchlist; then cloud refs.
 - ⚠️ Note: runs launched while Wave-1 pulls are still downloading may have **inflated wall-times** (concurrent
   disk/mem I/O). Decision/extractability/quality are unaffected; finalist wall-times will be re-measured clean
   after pulls complete (and via the Step-5 speed harness).
