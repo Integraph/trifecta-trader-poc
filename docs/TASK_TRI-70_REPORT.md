@@ -135,8 +135,17 @@ stop levels) — not a regex/UNKNOWN artifact. Extractability 1.0, zero UNKNOWNs
    credits verbose CoT — flagged for QA. **Not a blocker.**
 
 - ✅ **All Wave-1 pulls DONE** (incl. deepseek-r1:70b, gpt-oss:120b) → wall-times clean from here.
-- **Next:** gate llama3.3:70b + gpt-oss:120b (tool); screen batch 2 (deep = r1:70b, gpt-oss:120b) N=3; then
-  finalists N=5 (repin `benchmark_local_b` deep=r1:8b + runner-up) at the watchlist; then cloud refs.
+### Screen batch 2 — IN PROGRESS (bg job `biymofli3`): deep = `deepseek-r1:70b`, `gpt-oss:120b` (N=3, AAPL @ 2026-06-27)
+Wall-times clean (no concurrent pulls). Aggregate → `results/tri70_screen2_agg.json`. r1:70b/gpt-oss:120b are the
+two large deep candidates; if either clears 8.0 it joins the finalist round.
+
+### Finalist plan (after batch 2)
+- **Finalist configs:** the deep-slot winner(s) clearing/closest to 8.0 — `deepseek-r1:8b` is the confirmed
+  batch-1 winner (as `benchmark_local_b` with deep repinned to r1:8b); add any batch-2 model that clears 8.0.
+- **Small fixed watchlist:** **AAPL, NVDA, TSLA** (large-cap / semis / high-vol) × **N=5** — confirms
+  decision-stability + quality hold across tickers, not just AAPL.
+- Then **cloud references** (`benchmark_opus_a`, `hybrid_haiku_tools`) ~3 repeats each as the ceiling (Step 7),
+  and the final table + recommendation vs the 8.0 gate (Step 8).
 - ⚠️ Note: runs launched while Wave-1 pulls are still downloading may have **inflated wall-times** (concurrent
   disk/mem I/O). Decision/extractability/quality are unaffected; finalist wall-times will be re-measured clean
   after pulls complete (and via the Step-5 speed harness).
