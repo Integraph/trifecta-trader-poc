@@ -13,11 +13,11 @@
 | Step | What | State |
 |------|------|-------|
 | 1 | Structured extraction + run-ids wired into results | ✅ code done, tests green (50) — committing |
-| 2 | Tool-calling gate (Q4_K_M) | ⏳ pending model pulls |
+| 2 | Tool-calling gate (Q4_K_M) | 🟡 `qwen3-coder:30b` PASSED; rest gated as pulls land |
 | 3 | Pricing triad (local $0, opus-4-8 row, normalize, Haiku) | ✅ done, verified, committed |
 | 4 | Cache-off (`--no-cache`) verification | ✅ verified end-to-end, both entrypoints |
 | 5 | `measure_ollama_speed.py` candidate-driven | ✅ done; old results marked superseded |
-| 6 | Staged benchmark (N=3 screen @1 ticker → N=5 finalists) | ⏸️ not started |
+| 6 | Staged benchmark (N=3 screen @1 ticker → N=5 finalists) | 🟡 configs+runner built; `benchmark_local_b` validation run in flight |
 | 7–8 | Cloud-reference yardstick + report + recommendation | ⏸️ not started |
 
 **Model pulls (background, healthy — do NOT interrupt):** Wave-1 pull script running from setup session.
@@ -51,7 +51,45 @@ _None yet._ (Will record here prominently if: no local config clears 8.0 / struc
 ---
 
 ## Step 2 — Tool-calling gate
-_Pending pulls._
+
+**Status: IN PROGRESS.** Gate = `scripts/tool_calling_gate.py` (ChatOpenAI → Ollama OpenAI endpoint,
+`bind_tools`; basic single-tool call over N trials + multi-tool selection; PASS = basic-rate ≥ threshold AND
+multi-tool correct). Reuses the methodology of `tests/test_local_tool_calling.py`.
+
+| Tool candidate | Basic (N=3) | Multi-tool | Gate | Notes |
+|----------------|-------------|-----------|------|-------|
+| **qwen3-coder:30b** | 3/3 (100%) | ✅ | **PASS** | primary; 7.8s — used as the tool slot for `benchmark_local_b` |
+| gpt-oss:20b | — | — | pending pull | in queue |
+| gpt-oss:120b | — | — | pending pull | in queue (last) |
+| llama3.3:70b | — | — | pending pull | in queue |
+| gemma-4:27b | — | — | pending pull | tag TBD; include only if it passes |
+| mistral-small:22b | — | — | (control) | known FAIL (prior finding) |
+
+Remaining candidates are gated as each pull lands. Result JSON: `results/tri70_tool_gate.json` (gitignored;
+verdicts recorded here).
+
+## Step 6 — Staged benchmark runs
+
+**Status: IN PROGRESS.** Harness + configs built; validation run in flight.
+
+- **Configs built** (`scripts/build_tri70_configs.py` → `config/hybrid_llm.yaml`):
+  - `benchmark_local_b` — **genuinely all-local** (exit criterion 2): tool=`qwen3-coder:30b` (gate-passed),
+    quick=`qwen3.5:9b`, deep=`qwen3.6:27b` (default; final deep = head-to-head winner). Enhancements OFF
+    (measure the raw model).
+  - `benchmark_opus_a` — **TEST-ONLY** cloud ceiling: Haiku tools / local quick / **`claude-opus-4-8`** deep;
+    mirrors `hybrid_haiku_tools` enhancement settings. Never shipped.
+  - `bench_deep_*` — deep-slot head-to-head variants (tool+quick fixed all-local, deep varied):
+    qwen3.6:35b/27b, deepseek-r1:8b/14b/32b/70b, gpt-oss:120b.
+- **Runner** (`scripts/run_tri70_benchmark.py`): subprocess per run, **cache OFF**, unique **run-id** per repeat,
+  **analysis-only** (no `--execute`/`--dry-run` → no order path). Aggregates decision-stability (modal + agreement),
+  extractability (+ `decision_extraction_method` breakdown; **UNKNOWN surfaced, never counted HOLD**), quality
+  mean/σ, wall-time. Skips configs whose Ollama models aren't pulled yet.
+- **Benchmark ticker/date:** AAPL @ 2026-06-27 (finalized data, known-good).
+- **Now running:** `benchmark_local_b` N=1 validation (proves the all-local pipeline runs on v0.3.0 →
+  exit criterion 2). Then: N=3 deep-slot screen @1 ticker → N=5 finalists.
+- ⚠️ Note: runs launched while Wave-1 pulls are still downloading may have **inflated wall-times** (concurrent
+  disk/mem I/O). Decision/extractability/quality are unaffected; finalist wall-times will be re-measured clean
+  after pulls complete (and via the Step-5 speed harness).
 
 ## Step 3 — Pricing triad
 
