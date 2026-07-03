@@ -8,11 +8,11 @@
 
 ## ⏱️ RUNNING STATUS (updated live — check here first)
 
-**Last updated:** 2026-07-03 ~03:30 — full deep-slot head-to-head DONE (7 candidates); **only `deepseek-r1:8b` clears 8.0** (Q 9.1, stable HOLD, grounding 10). Finalist round (AAPL/NVDA/TSLA × N=5) running; then cloud refs.
+**Last updated:** 2026-07-03 ~07:30 — finalist round DONE. 🔴 **Headline: no local config clears the gate ("8.0 WITH a stable decision").** `benchmark_local_b`(r1:8b) at N=5 = Q 8.13 mean but unstable decision (0.60 agreement) + NVDA<8. Cloud-reference ceiling now running to frame the recommendation.
 
-**Steps 1–5 = DONE & committed. Step 2 tool gate = DONE (all 5 PASS, exit criterion 3).** Step 6 = both screen
-batches complete → `deepseek-r1:8b` is the sole gate-clearing deep model; finalist round in flight (`bmrw2u3sh`).
-Remaining: Step 7 cloud-reference ceiling, Step 8 recommendation.
+**Steps 1–5 = DONE & committed. Step 2 = DONE (all 5 tool candidates PASS, exit criterion 3).** Step 6 screen +
+finalist = DONE. **Finding: the best local deep model (deepseek-r1:8b) is borderline-quality and decision-UNSTABLE
+at N=5 → gate not met.** Step 7 cloud refs in flight (`b5nu00d9s`); Step 8 recommendation pending that ceiling.
 
 | Step | What | State |
 |------|------|-------|
@@ -43,10 +43,20 @@ Already present: qwen3.5:9b/27b/35b-a3b, qwen2.5:14b/32b, mistral-small:22b, lla
   doesn't set it, and `create_hybrid_llms` builds the Anthropic deep client without a temperature kwarg — so
   `benchmark_opus_a` calls opus-4-8 cleanly. **Caveat for the future:** setting `TRADINGAGENTS_TEMPERATURE` would
   make opus-4-8 (and other newer models) 400. Not a blocker for TRI-70; flagged for awareness.
-- ⚠️ **Preliminary (single run — not conclusive):** `benchmark_local_b` @ deep=`qwen3.6:27b` scored **7.8**,
-  just **under** the 8.0 gate (reasoning_depth=4 is the drag; data_grounding=8, risk_awareness=10, all trade-param
-  flags True, decision consistent). N=3 screen + the stronger deep candidates (qwen3.6:35b MoE, gpt-oss:120b,
-  R1 variants) still to run before any "no local config clears 8.0" conclusion. **Not a blocker — screen continues.**
+- 🔴 **CHECKPOINT (headline finding): no local config clears the gate as specified ("≥8.0 WITH a stable decision").**
+  The screen winner `deepseek-r1:8b` looked excellent at N=3 (9.1, HOLD×3) but that was **small-sample luck**. At the
+  finalist N=5 across AAPL/NVDA/TSLA, `benchmark_local_b` (deep=r1:8b) shows:
+  - **Decision NOT stable — 0.60 agreement on every ticker** (identical inputs → BUY/HOLD/SELL swing).
+  - **Quality straddles the gate:** overall mean **8.13** (σ 1.23), but **NVDA 7.66 (< 8.0)** and only **10/15 runs
+    ≥ 8.0**; data-grounding is inconsistent (mean 7.2, **range 2–10** — sometimes ungrounded).
+  The gate requires 8.0 *with a stable decision*; the decision is unstable, so **the gate is not met.** This is the
+  honest "local isn't good enough for the deep slot yet" outcome the work order anticipated as a legitimate finding.
+  **Continuing** to the cloud-reference ceiling to determine whether the instability is engine-inherent (would cloud
+  swing too?) or local-specific — that framing drives the recommendation.
+- ℹ️ **Likely mechanism:** the pipeline runs at the engine default `temperature=None` (→ provider/model default,
+  non-zero), so repeats sample stochastically. Stability here is a *production-relevant* property (measured under the
+  real sampling), but it also means a decision-aggregation layer or `temperature=0` deep slot may be needed — a
+  TRI-73/follow-up lever, flagged.
 
 ---
 
@@ -168,15 +178,32 @@ its size (MoE), but grounding is mediocre (4/10) → 6.57. **r1:70b** (older lla
 stable decision). It is the sole deep-slot finalist. gpt-oss:120b is the best-of-the-rest (stable + structured) but
 sub-gate.
 
-### Finalist round — IN PROGRESS (bg job `bmrw2u3sh`)
-- **`benchmark_local_b` repinned to deep=`deepseek-r1:8b`** (tool=qwen3-coder:30b, quick=qwen3.5:9b) — the shipped
-  all-local candidate handed to TRI-73. Config written to `config/hybrid_llm.yaml`.
-- Running **AAPL, NVDA, TSLA × N=5** (15 runs, clean wall-times) → `results/tri70_finalist_agg.json`. This confirms
-  quality/stability hold across tickers **and** checks that r1:8b's decision varies by ticker (not a degenerate
-  always-HOLD). Only r1:8b clears 8.0, so it's the sole finalist; gpt-oss:120b's sub-gate screen numbers stand as
-  the runner-up reference.
-- **Next (Step 7):** cloud references (`benchmark_opus_a` = Haiku tools / local quick / **opus-4-8** deep;
-  `hybrid_haiku_tools`) ~3 repeats each as the ceiling; then final recommendation (Step 8).
+### Finalist round — COMPLETE (`benchmark_local_b`, deep=`deepseek-r1:8b`; AAPL/NVDA/TSLA × N=5, clean wall-times)
+
+| ticker | decisions (N=5) | modal | **agreement** | extractability | Q mean | Q σ | grounding (mean/range) | clears 8.0? |
+|--------|-----------------|-------|--------------|----------------|--------|-----|------------------------|-------------|
+| AAPL | BUY,BUY,HOLD,HOLD,HOLD | HOLD | 0.60 | 1.0 (0 UNK) | 8.44 | 1.13 | 8.8 / 6–10 | mean yes |
+| NVDA | SELL,HOLD,HOLD,HOLD,SELL | HOLD | 0.60 | 1.0 (0 UNK) | **7.66** | 1.32 | 4.8 / 2–9 | **no** |
+| TSLA | HOLD,BUY,SELL,HOLD,HOLD | HOLD | 0.60 | 1.0 (0 UNK) | 8.28 | 1.09 | 8.0 / 2–10 | mean yes |
+| **all 15** | — | HOLD | **0.60** | **1.0 (0 UNKNOWN)** | **8.13** | 1.23 | 7.2 / 2–10 | **10/15 runs ≥ 8.0** |
+
+**Verdict:** `benchmark_local_b` (r1:8b) is **borderline on quality and unstable on decision.** It extracts cleanly
+every time (extractability 1.0, zero UNKNOWNs — the Step-1 extraction + regex fallback works), and its *average*
+quality (8.13) grazes the bar, but it misses on NVDA, has wide run-to-run variance (grounding 2→10), and — the
+disqualifier — its **decision is not stable (0.60 agreement)**. The N=3 screen's 9.1/HOLD×3 did not generalize.
+It **does** vary decisions by ticker (not degenerate always-HOLD), so it is genuinely analyzing; it just isn't
+*consistent*. Per the gate ("≥8.0 with a stable decision"), **it does not pass.**
+
+*(Extractability note per work order: every one of the 15 finalist runs + 21 screen runs yielded a parseable
+decision — 36/36, zero UNKNOWNs to investigate. Method was `regex` for all r1:8b runs; the structured render does
+not engage for DeepSeek-R1, but the regex fallback recovered a clean decision every time.)*
+
+### Cloud-reference ceiling — IN PROGRESS (bg job `b5nu00d9s`, Step 7)
+Running `benchmark_opus_a` (Haiku tools / qwen3.5:9b quick / **opus-4-8** deep) ×3 and `hybrid_haiku_tools`
+(Haiku tools / qwen2.5:14b quick / sonnet deep) ×3 on AAPL @ 2026-06-27 (~6 cloud runs = the credit budget).
+**Purpose:** establish the quality ceiling AND test whether the deep-slot decision instability seen locally also
+appears with a frontier cloud reasoner — i.e. is 0.60 agreement an *engine/task* property or a *local-model*
+weakness? This determines the recommendation framing.
 - ⚠️ Note: runs launched while Wave-1 pulls are still downloading may have **inflated wall-times** (concurrent
   disk/mem I/O). Decision/extractability/quality are unaffected; finalist wall-times will be re-measured clean
   after pulls complete (and via the Step-5 speed harness).
