@@ -13,7 +13,7 @@
 | Step | What | State |
 |------|------|-------|
 | 1 | Structured extraction + run-ids wired into results | ✅ code done, tests green (50) — committing |
-| 2 | Tool-calling gate (Q4_K_M) | 🟡 `qwen3-coder:30b` PASSED; rest gated as pulls land |
+| 2 | Tool-calling gate (Q4_K_M) | 🟡 PASS: qwen3-coder:30b, gpt-oss:20b, gemma4; llama3.3:70b/gpt-oss:120b pending pull |
 | 3 | Pricing triad (local $0, opus-4-8 row, normalize, Haiku) | ✅ done, verified, committed |
 | 4 | Cache-off (`--no-cache`) verification | ✅ verified end-to-end, both entrypoints |
 | 5 | `measure_ollama_speed.py` candidate-driven | ✅ done; old results marked superseded |
@@ -68,11 +68,11 @@ multi-tool correct). Reuses the methodology of `tests/test_local_tool_calling.py
 
 | Tool candidate | Basic (N=3) | Multi-tool | Gate | Notes |
 |----------------|-------------|-----------|------|-------|
-| **qwen3-coder:30b** | 3/3 (100%) | ✅ | **PASS** | primary; 7.8s — used as the tool slot for `benchmark_local_b` |
-| gpt-oss:20b | — | — | pending pull | in queue |
+| **qwen3-coder:30b** | 3/3 (100%) | ✅ | **PASS** | primary; 7.8s — tool slot for `benchmark_local_b` |
+| **gpt-oss:20b** | 3/3 (100%) | ✅ | **PASS** | 8.3s |
+| **gemma4:latest** | 3/3 (100%) | ✅ | **PASS** | 19.5s — Gemma-4 DOES carry tool support (gemma3 did not) |
+| llama3.3:70b | — | — | pending pull | pulling now; gate when it lands |
 | gpt-oss:120b | — | — | pending pull | in queue (last) |
-| llama3.3:70b | — | — | pending pull | in queue |
-| gemma-4:27b | — | — | pending pull | tag TBD; include only if it passes |
 | mistral-small:22b | — | — | (control) | known FAIL (prior finding) |
 
 Remaining candidates are gated as each pull lands. Result JSON: `results/tri70_tool_gate.json` (gitignored;
@@ -101,7 +101,12 @@ verdicts recorded here).
   (inflated — a pull was concurrent). AAPL @ 2026-06-27.
 - **Reporting fix (TRI-70):** the result JSON logged `deep_model`/`quick_model` as the *base* sonnet default for
   hybrid runs; now records the real per-slot routing + a `hybrid_routing` field (so benchmark rows aren't mislabeled).
-- **Next:** N=3 deep-slot screen @1 ticker for ready candidates → N=5 finalists.
+- 🟢 **Deep-slot N=3 screen LAUNCHED (background)** — AAPL @ 2026-06-27, 5 ready candidates in fast-first order:
+  `qwen3.6:35b` (MoE), `deepseek-r1:8b`, `qwen3.6:27b`, `deepseek-r1:14b`, `deepseek-r1:32b`. Pending pull:
+  `deepseek-r1:70b`, `gpt-oss:120b` (added to a second screen batch when they land). Incremental aggregate →
+  `results/tri70_screen_agg.json`. Expect ~5–7h wall-clock (15 runs × ~20–27 min; wall-times pull-inflated).
+- **After the screen:** pick finalists (deep-slot winner(s) clearing/closest to 8.0) → N=5 at the watchlist;
+  then cloud refs (`benchmark_opus_a`, `hybrid_haiku_tools`) ~3 repeats each as the ceiling.
 - ⚠️ Note: runs launched while Wave-1 pulls are still downloading may have **inflated wall-times** (concurrent
   disk/mem I/O). Decision/extractability/quality are unaffected; finalist wall-times will be re-measured clean
   after pulls complete (and via the Step-5 speed harness).
