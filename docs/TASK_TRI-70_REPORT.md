@@ -17,7 +17,7 @@ batch-1 screen complete (5 deep candidates × N=3); winner `deepseek-r1:8b` clea
 | Step | What | State |
 |------|------|-------|
 | 1 | Structured extraction + run-ids wired into results | ✅ code done, tests green (50) — committing |
-| 2 | Tool-calling gate (Q4_K_M) | 🟡 PASS: qwen3-coder:30b, gpt-oss:20b, gemma4; llama3.3:70b/gpt-oss:120b pending pull |
+| 2 | Tool-calling gate (Q4_K_M) | ✅ DONE — all 5 candidates PASS (exit criterion 3) |
 | 3 | Pricing triad (local $0, opus-4-8 row, normalize, Haiku) | ✅ done, verified, committed |
 | 4 | Cache-off (`--no-cache`) verification | ✅ verified end-to-end, both entrypoints |
 | 5 | `measure_ollama_speed.py` candidate-driven | ✅ done; old results marked superseded |
@@ -75,12 +75,12 @@ multi-tool correct). Reuses the methodology of `tests/test_local_tool_calling.py
 | **qwen3-coder:30b** | 3/3 (100%) | ✅ | **PASS** | primary; 7.8s — tool slot for `benchmark_local_b` |
 | **gpt-oss:20b** | 3/3 (100%) | ✅ | **PASS** | 8.3s |
 | **gemma4:latest** | 3/3 (100%) | ✅ | **PASS** | 19.5s — Gemma-4 DOES carry tool support (gemma3 did not) |
-| llama3.3:70b | — | — | pending pull | pulling now; gate when it lands |
-| gpt-oss:120b | — | — | pending pull | in queue (last) |
+| **llama3.3:70b** | 3/3 (100%) | ✅ | **PASS** | 37.6s |
+| **gpt-oss:120b** | 3/3 (100%) | ✅ | **PASS** | 21.4s |
 | mistral-small:22b | — | — | (control) | known FAIL (prior finding) |
 
-Remaining candidates are gated as each pull lands. Result JSON: `results/tri70_tool_gate.json` (gitignored;
-verdicts recorded here).
+**Exit criterion 3 MET:** all 5 tool-slot candidates pass at Q4_K_M. Result JSON:
+`results/tri70_tool_gate*.json` (gitignored; verdicts recorded here).
 
 ## Step 6 — Staged benchmark runs
 
