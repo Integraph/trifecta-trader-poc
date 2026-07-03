@@ -1,6 +1,84 @@
 """Tests for improved signal processing."""
 
-from src.signal_processing import extract_decision, deduplicate_repeated_blocks
+import pytest
+
+from src.signal_processing import (
+    extract_decision,
+    extract_decision_detailed,
+    deduplicate_repeated_blocks,
+)
+
+PM_RENDER = (
+    "**Rating**: Overweight\n\n"
+    "**Executive Summary**: Initiate/add to AAPL at current levels.\n\n"
+    "**Investment Thesis**: Strong fundamentals with improving margins.\n\n"
+    "**Strategic Actions**: Enter near support; stop at $275."
+)
+
+
+class TestExtractDecisionDetailed:
+    """TRI-70 Step 1: structured-decision extraction with method tracking.
+
+    The v0.3.0 PM renders a typed PortfolioDecision via render_pm_decision()
+    using the exact headers '**Rating**:' + '**Executive Summary**:' +
+    '**Investment Thesis**:'. A template-fingerprint parse recovers the typed
+    5-level rating deterministically (method=rendered_structured_parse)
+    without vendor modification; free-text falls to the regex (method=regex);
+    no decision -> method=unknown.
+    """
+
+    def test_pm_render_parses_as_rendered_structured(self):
+        d = extract_decision_detailed(PM_RENDER)
+        assert d["decision"] == "BUY"
+        assert d["rating_5"] == "Overweight"
+        assert d["method"] == "rendered_structured_parse"
+
+    def test_pm_render_all_five_ratings(self):
+        for rating, want in [("Buy", "BUY"), ("Overweight", "BUY"), ("Hold", "HOLD"),
+                             ("Underweight", "SELL"), ("Sell", "SELL")]:
+            text = PM_RENDER.replace("Overweight", rating, 1)
+            d = extract_decision_detailed(text)
+            assert (d["decision"], d["rating_5"], d["method"]) == (
+                want, rating, "rendered_structured_parse")
+
+    def test_rating_without_template_fingerprint_is_regex_method(self):
+        """A bare '**Rating**:' line without the render's other headers is
+        free-text-shaped -> regex method (still extracted, lower confidence)."""
+        d = extract_decision_detailed("**Rating**: Overweight\n\nsome prose")
+        assert d["decision"] == "BUY"
+        assert d["rating_5"] == "Overweight"
+        assert d["method"] == "regex"
+
+    def test_qwen_freetext_label_is_regex_method(self):
+        d = extract_decision_detailed("**Investment Recommendation: Underweight**")
+        assert d["decision"] == "SELL"
+        assert d["rating_5"] == "Underweight"
+        assert d["method"] == "regex"
+
+    def test_legacy_proposal_is_regex_method_with_3level_rating(self):
+        d = extract_decision_detailed("FINAL TRANSACTION PROPOSAL: **HOLD**")
+        assert d["decision"] == "HOLD"
+        assert d["rating_5"] == "Hold"
+        assert d["method"] == "regex"
+
+    def test_no_decision_is_unknown_method(self):
+        d = extract_decision_detailed("The market is uncertain; no clear call.")
+        assert d["decision"] == "UNKNOWN"
+        assert d["rating_5"] is None
+        assert d["method"] == "unknown"
+
+    def test_backcompat_extract_decision_agrees(self):
+        for text in [PM_RENDER, "**Action**: Underweight",
+                     "FINAL TRANSACTION PROPOSAL: SELL", "no call here"]:
+            assert extract_decision(text) == extract_decision_detailed(text)["decision"]
+
+    def test_stale_quote_does_not_upgrade_method(self):
+        """QA round-2 protections carry over: a fenced stale render must not
+        make the method look structured."""
+        text = "**Action**: Hold\n\n```\n" + PM_RENDER + "\n```"
+        d = extract_decision_detailed(text)
+        assert d["decision"] == "HOLD"
+        assert d["method"] == "regex"
 
 
 class TestExtractDecision:

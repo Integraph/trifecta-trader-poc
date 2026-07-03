@@ -13,6 +13,7 @@ import json
 import sys
 import os
 import time
+import uuid
 from pathlib import Path
 from datetime import date, datetime
 from typing import Optional
@@ -26,7 +27,7 @@ load_dotenv()
 
 from tradingagents.graph.trading_graph import TradingAgentsGraph
 from tradingagents.default_config import DEFAULT_CONFIG
-from src.signal_processing import extract_decision
+from src.signal_processing import extract_decision, extract_decision_detailed
 
 # Safety constant imported so pre-filter can use it
 from src.execution.position_manager import MAX_POSITION_PCT
@@ -224,7 +225,8 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
                  debug: bool = True, hybrid: str = None,
                  use_cache: bool = True, cost_breakdown: bool = True,
                  portfolio_context: Optional[dict] = None,
-                 batch_mode: bool = False) -> dict:
+                 batch_mode: bool = False,
+                 run_id: Optional[str] = None) -> dict:
     """Run the full trading agents analysis pipeline.
 
     Args:
@@ -246,6 +248,18 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
         Dictionary with analysis results and decision.
     """
     config = get_config(provider, deep_model, quick_model)
+
+    # ── Run-id (TRI-79) ────────────────────────────────────────────────────
+    # A benchmark repeats the same (ticker, date, config) many times; without a
+    # run-id every repeat writes analysis_<date>_<config>.json and clobbers the
+    # prior run. Precedence: explicit arg > TRIFECTA_RUN_ID env > generated
+    # timestamp+suffix. The base result file is still written (back-compat); an
+    # env-gated (TRIFECTA_RUN_ID_FILES=1) run-id-suffixed copy is written too so
+    # repeats never clobber.
+    if run_id is None:
+        run_id = os.environ.get("TRIFECTA_RUN_ID")
+    if run_id is None:
+        run_id = f"{datetime.now().strftime('%Y%m%dT%H%M%S')}_{uuid.uuid4().hex[:6]}"
 
     # ── Portfolio context ──────────────────────────────────────────────────
     if portfolio_context is None:
@@ -292,9 +306,16 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
     if hybrid and hasattr(ta, "cost_breakdown"):
         cost_info = ta.cost_breakdown()
 
-    # Override upstream signal processing with our improved version
+    # Override upstream signal processing with our improved version.
+    # extract_decision_detailed also returns the raw 5-level PortfolioDecision
+    # rating (TRI-74) and the extraction method, so a benchmark run records
+    # whether v0.3.0's structured render engaged or the pipeline fell back to
+    # free-text regex (TRI-70 Step 1).
     final_trade_text = final_state.get("final_trade_decision", "")
-    decision = extract_decision(final_trade_text)
+    _decision_detail = extract_decision_detailed(final_trade_text)
+    decision = _decision_detail["decision"]
+    pm_rating_5 = _decision_detail["rating_5"]
+    decision_extraction_method = _decision_detail["method"]
 
     decision_corrected = decision != upstream_decision
     if decision_corrected:
@@ -338,6 +359,9 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
         "deep_model":               config["deep_think_llm"],
         "quick_model":              config["quick_think_llm"],
         "decision":                 decision,
+        "pm_rating_5":              pm_rating_5,
+        "decision_extraction_method": decision_extraction_method,
+        "run_id":                   run_id,
         "upstream_decision":        upstream_decision,
         "decision_corrected":       decision_corrected,
         "final_trade_decision_text": final_trade_text,
@@ -361,6 +385,13 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
 
     with open(result_file, "w") as f:
         json.dump(result, f, indent=2)
+
+    # TRI-79: env-gated run-id-suffixed copy so benchmark repeats never clobber.
+    if os.environ.get("TRIFECTA_RUN_ID_FILES") == "1":
+        run_result_file = results_dir / f"analysis_{trade_date}_{config_label}_{run_id}.json"
+        with open(run_result_file, "w") as f:
+            json.dump(result, f, indent=2)
+        print(f"[TRI-79] run-id result copy: {run_result_file}")
 
     print(f"\n{'='*60}")
     print(f"DECISION: {decision}")
@@ -701,6 +732,10 @@ def main():
                         help="Use hybrid LLM routing config")
     parser.add_argument("--no-cache",          action="store_true")
     parser.add_argument("--no-cost-breakdown", action="store_true")
+    parser.add_argument("--run-id", type=str, default=None,
+                        help="Run-id stamped into the result (TRI-79); set "
+                             "TRIFECTA_RUN_ID_FILES=1 to also write a run-id-"
+                             "suffixed result copy so benchmark repeats never clobber")
     parser.add_argument("--execute",   action="store_true",
                         help="Execute trade on Alpaca paper trading")
     parser.add_argument("--dry-run",   action="store_true",
@@ -730,6 +765,7 @@ def main():
         hybrid=args.hybrid,
         use_cache=not args.no_cache,
         cost_breakdown=not args.no_cost_breakdown,
+        run_id=args.run_id,
     )
 
     # Trade params are always extracted inside run_analysis() and stored in

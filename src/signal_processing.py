@@ -8,26 +8,42 @@ from reasoning context rather than the actual decision line.
 import re
 from typing import Optional
 
+# 5-level PortfolioDecision rating -> our 3-level decision (standard mapping:
+# Overweight -> BUY = increase exposure; Underweight -> SELL = reduce exposure).
+PM_RATING_MAP = {
+    "BUY": "BUY", "OVERWEIGHT": "BUY",
+    "HOLD": "HOLD",
+    "UNDERWEIGHT": "SELL", "SELL": "SELL",
+}
 
-def extract_decision(full_signal: str) -> str:
-    """Extract the trade decision from the full signal text.
+# v0.3.0 render_pm_decision() template fingerprint (vendor schemas.py): the
+# structured path always renders '**Rating**: <rating>' plus the exact
+# '**Executive Summary**:' / '**Investment Thesis**:' headers. Matching this
+# template is a deterministic inverse of the vendor render — it recovers the
+# typed rating without modifying the vendor (zero-mod).
+_PM_RENDER_RATING = re.compile(
+    r'^\*\*Rating\*\*:\s*(Buy|Overweight|Hold|Underweight|Sell)\b',
+    re.IGNORECASE | re.MULTILINE,
+)
+_PM_RENDER_HEADERS = re.compile(
+    r'^\*\*(?:Executive Summary|Investment Thesis)\*\*:', re.MULTILINE
+)
+_FENCED_CODE = re.compile(r'```.*?(?:```|\Z)', re.DOTALL)
+
+
+def _regex_decision_detailed(full_signal: str) -> tuple:
+    """Regex-based extraction. Returns (decision, matched_rating_token_or_None).
 
     Uses a priority-based extraction:
-    0. Look for the v0.3.0 Portfolio Manager rating line
-       ('**Recommendation**: <Buy|Overweight|Hold|Underweight|Sell>')
+    0. Look for a PM decision-header line
+       ('**<Label>**: <Buy|Overweight|Hold|Underweight|Sell>')
     1. Look for 'FINAL TRANSACTION PROPOSAL: <DECISION>'
     2. Look for 'MY RECOMMENDATION: <DECISION>'
     3. Look for the last standalone BUY/HOLD/SELL not in a negation context
-    4. Return 'UNKNOWN' if no clear decision found
-
-    Args:
-        full_signal: The complete text output from the trading pipeline
-
-    Returns:
-        One of: 'BUY', 'HOLD', 'SELL', or 'UNKNOWN'
+    4. ('UNKNOWN', None) if no clear decision found
     """
     if not full_signal or not isinstance(full_signal, str):
-        return "UNKNOWN"
+        return "UNKNOWN", None
 
     # Method 0 (TradingAgents v0.3.0): the Portfolio Manager emits a 5-level
     # PortfolioDecision rating (Buy / Overweight / Hold / Underweight / Sell) on a
@@ -48,11 +64,6 @@ def extract_decision(full_signal: str) -> str:
     # 5-level -> 3-level mapping (standard):
     #   Overweight -> BUY (favorable, increase exposure)
     #   Underweight -> SELL (reduce exposure, take partial profits)
-    pm_rating_map = {
-        "BUY": "BUY", "OVERWEIGHT": "BUY",
-        "HOLD": "HOLD",
-        "UNDERWEIGHT": "SELL", "SELL": "SELL",
-    }
     # Core labels observed so far: Recommendation / Rating / Action /
     # Transaction Proposal — optionally prefixed by ONE qualifier from a tight
     # allowlist (local qwen wrote "**Investment Recommendation: Underweight**"
@@ -76,7 +87,8 @@ def extract_decision(full_signal: str) -> str:
     )
     pm_matches = re.findall(pm_pattern, pm_text, re.IGNORECASE | re.MULTILINE)
     if pm_matches:
-        return pm_rating_map[pm_matches[-1].upper()]
+        token = pm_matches[-1].title()
+        return PM_RATING_MAP[token.upper()], token
 
     # Method 1: Look for FINAL TRANSACTION PROPOSAL line
     # Handles formats like:
@@ -88,14 +100,16 @@ def extract_decision(full_signal: str) -> str:
     proposals = re.findall(proposal_pattern, full_signal, re.IGNORECASE)
 
     if proposals:
-        return proposals[-1].upper()
+        word = proposals[-1].upper()
+        return word, word.title()
 
     # Method 2: Look for "MY RECOMMENDATION: <DECISION>" pattern
     recommendation_pattern = r'MY\s+RECOMMENDATION[:\s]*\*{0,2}(BUY|HOLD|SELL)\*{0,2}'
     recommendations = re.findall(recommendation_pattern, full_signal, re.IGNORECASE)
 
     if recommendations:
-        return recommendations[-1].upper()
+        word = recommendations[-1].upper()
+        return word, word.title()
 
     # Method 3: Look for standalone decision words, excluding negation contexts
     cleaned = full_signal
@@ -112,9 +126,55 @@ def extract_decision(full_signal: str) -> str:
     decisions = re.findall(standalone_pattern, cleaned, re.IGNORECASE)
 
     if decisions:
-        return decisions[-1].upper()
+        word = decisions[-1].upper()
+        return word, word.title()
 
-    return "UNKNOWN"
+    return "UNKNOWN", None
+
+
+def extract_decision_detailed(full_signal: str) -> dict:
+    """Extract the decision with the 5-level rating and extraction method.
+
+    Returns:
+        {"decision": BUY|HOLD|SELL|UNKNOWN,
+         "rating_5": Buy|Overweight|Hold|Underweight|Sell|None,
+         "method": rendered_structured_parse|regex|unknown}
+
+    Method meanings (TRI-70):
+      - rendered_structured_parse: the text matches v0.3.0's deterministic
+        render_pm_decision() template -> the typed PortfolioDecision engaged
+        (structured output worked) and its rating is recovered exactly.
+      - regex: a free-text decision header was scraped (structured output
+        did NOT produce the render — fallback path).
+      - unknown: no decision found (loud; investigate, never count as HOLD).
+    """
+    if not full_signal or not isinstance(full_signal, str):
+        return {"decision": "UNKNOWN", "rating_5": None, "method": "unknown"}
+
+    # Fenced code (quoted/stale content) never counts — same rule as the regex path.
+    stripped = _FENCED_CODE.sub("", full_signal)
+    render_ratings = _PM_RENDER_RATING.findall(stripped)
+    if render_ratings and _PM_RENDER_HEADERS.search(stripped):
+        token = render_ratings[-1].title()
+        return {
+            "decision": PM_RATING_MAP[token.upper()],
+            "rating_5": token,
+            "method": "rendered_structured_parse",
+        }
+
+    decision, token = _regex_decision_detailed(full_signal)
+    if decision == "UNKNOWN":
+        return {"decision": "UNKNOWN", "rating_5": None, "method": "unknown"}
+    return {"decision": decision, "rating_5": token, "method": "regex"}
+
+
+def extract_decision(full_signal: str) -> str:
+    """Extract the trade decision (BUY/HOLD/SELL/UNKNOWN) from pipeline text.
+
+    Thin wrapper over extract_decision_detailed() — kept for backward
+    compatibility with all existing callers and tests.
+    """
+    return extract_decision_detailed(full_signal)["decision"]
 
 
 def deduplicate_repeated_blocks(text: str, min_block_length: int = 200) -> str:
