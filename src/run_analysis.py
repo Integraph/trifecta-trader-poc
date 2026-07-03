@@ -351,13 +351,26 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
 
     result_file = results_dir / f"analysis_{trade_date}_{config_label}.json"
 
+    # For hybrid configs the per-slot routing (provider/model) — not the base
+    # TradingAgentsGraph config default — is what actually ran. Record it so
+    # benchmark rows show the real models, not the mislabeled sonnet default (TRI-70).
+    if hybrid:
+        reported_deep_model  = f"{hybrid_config.reasoning_deep_provider}/{hybrid_config.reasoning_deep_model}"
+        reported_quick_model = f"{hybrid_config.reasoning_quick_provider}/{hybrid_config.reasoning_quick_model}"
+        hybrid_routing = hybrid_config.to_dict()
+    else:
+        reported_deep_model  = config["deep_think_llm"]
+        reported_quick_model = config["quick_think_llm"]
+        hybrid_routing = None
+
     result = {
         "ticker":                   ticker,
         "trade_date":               trade_date,
         "provider":                 provider,
         "hybrid_config":            hybrid,
-        "deep_model":               config["deep_think_llm"],
-        "quick_model":              config["quick_think_llm"],
+        "deep_model":               reported_deep_model,
+        "quick_model":              reported_quick_model,
+        "hybrid_routing":           hybrid_routing,
         "decision":                 decision,
         "pm_rating_5":              pm_rating_5,
         "decision_extraction_method": decision_extraction_method,

@@ -26,7 +26,17 @@ Queue: gpt-oss:20b, deepseek-r1:32b, gemma-4 (tag TBD), qwen3.7 (expected FAIL),
 Already present: qwen3.5:9b/27b/35b-a3b, qwen2.5:14b/32b, mistral-small:22b, llama3.1:8b, mistral:7b.
 
 ### 🚩 Checkpoint flags (surfaced, not blocking)
-_None yet._ (Will record here prominently if: no local config clears 8.0 / structured output doesn't engage on Ollama / any material v0.3.0 behavior.)
+
+- ✅ **Structured output ENGAGES on the local path (positive finding).** The all-local `benchmark_local_b`
+  (deep=`qwen3.6:27b`) produced v0.3.0's exact structured render (`**Rating**: Buy` + `**Executive Summary**:` +
+  `**Investment Thesis**:`) → `decision_extraction_method = rendered_structured_parse`. Contrary to the TRI-66
+  expectation (qwen2.5 fell back to free text), the **current-gen** local reasoner emits the typed
+  `PortfolioDecision` render. So extraction is NOT regex-fragile for current-gen local models — to be confirmed
+  across the deep-slot screen.
+- ⚠️ **Preliminary (single run — not conclusive):** `benchmark_local_b` @ deep=`qwen3.6:27b` scored **7.8**,
+  just **under** the 8.0 gate (reasoning_depth=4 is the drag; data_grounding=8, risk_awareness=10, all trade-param
+  flags True, decision consistent). N=3 screen + the stronger deep candidates (qwen3.6:35b MoE, gpt-oss:120b,
+  R1 variants) still to run before any "no local config clears 8.0" conclusion. **Not a blocker — screen continues.**
 
 ---
 
@@ -85,8 +95,13 @@ verdicts recorded here).
   extractability (+ `decision_extraction_method` breakdown; **UNKNOWN surfaced, never counted HOLD**), quality
   mean/σ, wall-time. Skips configs whose Ollama models aren't pulled yet.
 - **Benchmark ticker/date:** AAPL @ 2026-06-27 (finalized data, known-good).
-- **Now running:** `benchmark_local_b` N=1 validation (proves the all-local pipeline runs on v0.3.0 →
-  exit criterion 2). Then: N=3 deep-slot screen @1 ticker → N=5 finalists.
+- ✅ **`benchmark_local_b` validation run COMPLETE → exit criterion 2 MET.** Ran end-to-end on v0.3.0,
+  all three slots local (29 LLM calls, model reported `unknown`, **cost $0.0** confirming genuinely local).
+  Result: decision=**BUY**, rating_5=Buy, method=`rendered_structured_parse`, quality=**7.8**, ~26.6 min
+  (inflated — a pull was concurrent). AAPL @ 2026-06-27.
+- **Reporting fix (TRI-70):** the result JSON logged `deep_model`/`quick_model` as the *base* sonnet default for
+  hybrid runs; now records the real per-slot routing + a `hybrid_routing` field (so benchmark rows aren't mislabeled).
+- **Next:** N=3 deep-slot screen @1 ticker for ready candidates → N=5 finalists.
 - ⚠️ Note: runs launched while Wave-1 pulls are still downloading may have **inflated wall-times** (concurrent
   disk/mem I/O). Decision/extractability/quality are unaffected; finalist wall-times will be re-measured clean
   after pulls complete (and via the Step-5 speed harness).
