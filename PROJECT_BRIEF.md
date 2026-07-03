@@ -1,7 +1,7 @@
 # Trifecta Trading Platform — Project Brief
 
 **Last updated:** July 1, 2026
-**Version:** v2.0.1 · **TRI-66 (TradingAgents v0.3.0 upgrade) DEVELOP-complete, in QA** — engine runs end-to-end on v0.3.0, zero-mod restored
+**Version:** v2.0.1 · on **TradingAgents v0.3.0 — TRI-66 DONE** (Arbiter-signed 2026-07-02; zero-mod restored; full DEVELOP→QA→UAT→Arbiter gate passed). **Next runnable: TRI-70** (benchmark — the viability question).
 **Owner:** Jeff (jeff@integraphpro.com)
 **Purpose:** Single source of truth for any agent working on this project. Read this FIRST.
 
@@ -22,7 +22,7 @@ The system has five components. For full integration architecture, see **`ECOSYS
 | Component | Repo | What It Does | Status |
 |-----------|------|-------------|--------|
 | **Market Scanner** | `trifecta-market-scanner` | Rule-based scanner using TA-Lib indicators. Produces signal candidates. Zero LLMs. | S7 complete (511 tests) |
-| **Stock Trader Engine** | `trifecta-trader-poc` (this repo) | AI analysis pipeline. Consumes scanner signals, runs multi-agent LLM analysis, executes stock trades via Alpaca. | v2.0.1; on TradingAgents v0.3.0 (TRI-66 in QA) |
+| **Stock Trader Engine** | `trifecta-trader-poc` (this repo) | AI analysis pipeline. Consumes scanner signals, runs multi-agent LLM analysis, executes stock trades via Alpaca. | v2.0.1; on TradingAgents v0.3.0 (TRI-66 Done) |
 | **Stock Trader UI** | `tt-curser` | React + Fastify frontend for stock trading. Auth, portfolio, backtesting, real-time prices. | Active dev (Phase 5, UI Tasks 1–5) |
 | **Crypto Trader Engine** | `trifecta-crypto-trader` | LangGraph-based crypto analysis + Kraken execution. 8-layer safety gates. | M6 complete, M7 in progress |
 | **Crypto Trader UI** | TBD | Not started. Technology decision deferred. | Not started |
@@ -103,7 +103,7 @@ Each task has a spec (`docs/CURSOR_TASK_NNN_*.md`) and a report (`docs/TASK_NNN_
 
 ---
 
-## Current State (as of 2026-07-01 — v2.0.1, TRI-66 in QA)
+## Current State (as of 2026-07-02 — v2.0.1, on TradingAgents v0.3.0; TRI-66 Done)
 
 **What works:**
 - Full analysis pipeline: scanner signal → AI analysis → trade execution → Supabase publishing
@@ -115,7 +115,7 @@ Each task has a spec (`docs/CURSOR_TASK_NNN_*.md`) and a report (`docs/TASK_NNN_
 - Clean TypeScript build (0 errors)
 
 **Engine-first MVP status (July 1):**
-- **TRI-66 — DEVELOP-complete, in QA.** Vendored TradingAgents upgraded v0.2.0 → **v0.3.0**, **true zero-mod restored** (verified: empty diff vs tag), LangGraph stack pinned, engine runs end-to-end on both cloud and local paths (cloud BUY 8.5/10; local SELL 5.1/10). Scope was the **pure vendor upgrade** — no model-string changes, no new configs (those are TRI-70). Now in Codex QA → paper-smoke UAT → Arbiter.
+- **TRI-66 — DONE (Arbiter-signed 2026-07-02).** Vendored TradingAgents upgraded v0.2.0 → **v0.3.0**, **true zero-mod restored** (verified: empty diff vs tag), LangGraph stack pinned; engine runs end-to-end on both cloud and local paths (cloud BUY 8.5/10; local ~5.1/10 — **below the 8.0 execution gate → TRI-70**). Full gate passed: DEVELOP → QA (2 real CHANGES-REQUESTED rounds) → UAT → Arbiter re-verify. Scope was the pure vendor upgrade — no model-string/config changes (those are TRI-70). Evidence: `docs/TASK_TRI-66_ARBITER_SIGNOFF.md`.
 - **TRI-32 (Urgent)** — push `main` + the TRI-66 branch to origin. The whole MVP history is on one laptop; do this before QA.
 - **TRI-70** — Step 0: benchmark **current** local models (Qwen 3.6+, not qwen2.5) on the M3 Max; owns model selection, honest config economics, the `hybrid_graph.py` pricing refresh, and robust (structured) decision extraction. Blocked by TRI-66; feeds TRI-69.
 - **TRI-69** — define the "prove-it-before-real-money" out-of-sample edge gate (Ecosystem).
