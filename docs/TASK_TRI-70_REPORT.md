@@ -8,7 +8,10 @@
 
 ## ⏱️ RUNNING STATUS (updated live — check here first)
 
-**Last updated:** 2026-07-02 (DEVELOP continuation session)
+**Last updated:** 2026-07-02 ~23:40 (DEVELOP continuation session) — deep-slot screen grinding in background
+
+**Steps 1, 3, 4, 5 = DONE & committed.** Step 2 = 3/5 tool candidates PASSED. Step 6 = validation done (exit
+criterion 2 met), N=3 deep-slot screen running (bg job `bmcfd45kv`, ~5–7h). Live progress: `results/tri70_screen_agg.json`.
 
 | Step | What | State |
 |------|------|-------|
