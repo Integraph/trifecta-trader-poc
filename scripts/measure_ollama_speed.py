@@ -1,13 +1,21 @@
 """Measure tokens/second for each Ollama model on a financial reasoning prompt.
 
 Usage:
-    python scripts/measure_ollama_speed.py
+    python scripts/measure_ollama_speed.py                 # TRI-70 candidate set
+    python scripts/measure_ollama_speed.py --all           # every installed Ollama model
+    python scripts/measure_ollama_speed.py --models qwen3.6:35b deepseek-r1:14b
 
-Tests all four models (baseline Qwen 2.5:14b + three Qwen 3.5 candidates)
-on a representative financial analysis prompt that matches the type of reasoning
-our pipeline agents perform.
+Candidate-driven (TRI-70 Step 5): the model list is no longer hardcoded to the
+qwen2.5/3.5 sweep. It defaults to the TRI-70 benchmark candidates (deep / tool /
+quick slots), accepts an explicit --models list, or --all to auto-discover every
+installed model from Ollama's registry. Not-installed candidates are skipped
+cleanly, so it's safe to run mid-pull.
+
+Supersedes the speed numbers in Tasks 005 / 010 / 011 (those measured the
+qwen2.5/3.5 generation on the pre-v0.3.0 engine).
 """
 
+import argparse
 import time
 import json
 import sys
@@ -15,11 +23,27 @@ import requests
 
 OLLAMA_URL = "http://localhost:11434"
 
-MODELS = [
-    ("qwen2.5:14b",    "Baseline (current production)"),
-    ("qwen3.5:9b",     "Qwen 3.5  9B dense"),
-    ("qwen3.5:27b",    "Qwen 3.5 27B dense"),
-    ("qwen3.5:35b-a3b","Qwen 3.5 35B MoE (3B active)"),
+# TRI-70 candidate set, by slot (verify every tag at pull time). Not-installed
+# entries are skipped automatically, so the whole set can be listed here even
+# while Wave-1 pulls are still in flight.
+CANDIDATE_MODELS = [
+    # Baseline / current production (for a like-for-like delta)
+    ("qwen2.5:14b",     "Baseline (prior production)"),
+    # Deep / Risk-Judge slot (quality-critical)
+    ("qwen3.6:35b",     "Deep — Qwen 3.6 35B MoE (~3B active)"),
+    ("qwen3.6:27b",     "Deep — Qwen 3.6 27B dense"),
+    ("gpt-oss:120b",    "Deep — gpt-oss 120B"),
+    ("deepseek-r1:8b",  "Deep — DeepSeek-R1 8B (R1-0528 refresh)"),
+    ("deepseek-r1:14b", "Deep — DeepSeek-R1 14B distill (qwen2.5 base)"),
+    ("deepseek-r1:32b", "Deep — DeepSeek-R1 32B distill (qwen2.5 base)"),
+    ("deepseek-r1:70b", "Deep — DeepSeek-R1 70B distill (llama3.3 base)"),
+    # Tool slot (function-calling; gated separately in Step 2)
+    ("qwen3-coder:30b", "Tool — Qwen3-Coder 30B"),
+    ("gpt-oss:20b",     "Tool/Quick — gpt-oss 20B"),
+    ("llama3.3:70b",    "Tool — Llama 3.3 70B"),
+    ("gemma-4:27b",     "Tool — Gemma-4 27B (tag TBD)"),
+    # Quick slot (already present)
+    ("qwen3.5:9b",      "Quick — Qwen 3.5 9B dense"),
 ]
 
 PROMPT = """Analyze the following financial data and provide a detailed risk assessment:
@@ -154,17 +178,53 @@ def measure_model(model_name: str, label: str) -> dict:
         }
 
 
+def _installed_models() -> list:
+    """Return every model name installed in Ollama (registry order)."""
+    try:
+        r = requests.get(f"{OLLAMA_URL}/api/tags", timeout=5)
+        if r.status_code != 200:
+            return []
+        return [m["name"] for m in r.json().get("models", [])]
+    except Exception:
+        return []
+
+
+def _resolve_models(args) -> list:
+    """Resolve the (model, label) list from CLI args.
+
+    Precedence: --models <list> > --all (every installed model) > TRI-70 default.
+    """
+    if args.models:
+        return [(m, "explicit") for m in args.models]
+    if args.all:
+        return [(m, "installed") for m in _installed_models()]
+    return list(CANDIDATE_MODELS)
+
+
 def main():
+    parser = argparse.ArgumentParser(
+        description="Ollama tokens/sec benchmark (candidate-driven; TRI-70 Step 5)"
+    )
+    parser.add_argument("--models", nargs="+", default=None,
+                        help="Explicit model tags to test (overrides the default candidate set)")
+    parser.add_argument("--all", action="store_true",
+                        help="Test every model currently installed in Ollama")
+    parser.add_argument("--output", type=str, default="results/tri70_speed_benchmark.json",
+                        help="Where to write the JSON results")
+    args = parser.parse_args()
+
     if not check_ollama_running():
         print("ERROR: Ollama server is not running at", OLLAMA_URL)
         print("Start it with: ollama serve")
         sys.exit(1)
 
-    print("Ollama Speed Benchmark — Qwen 2.5 vs Qwen 3.5")
+    models = _resolve_models(args)
+    print(f"Ollama Speed Benchmark — {len(models)} model(s) "
+          f"[{'--models' if args.models else '--all' if args.all else 'TRI-70 candidates'}]")
     print("=" * 60)
 
     results = []
-    for model_name, label in MODELS:
+    for model_name, label in models:
         result = measure_model(model_name, label)
         results.append(result)
 
@@ -180,10 +240,10 @@ def main():
         elapsed = f"{r['elapsed_s']:.1f}" if r["elapsed_s"] > 0 else "N/A"
         print(f"{r['model']:<25} {tps:>12} {elapsed:>10} {status:>12}")
 
-    # Save results to JSON
-    output_path = "results/task_011_speed_benchmark.json"
+    # Save results to JSON (default path supersedes task_011_speed_benchmark.json)
+    output_path = args.output
     import os
-    os.makedirs("results", exist_ok=True)
+    os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
     with open(output_path, "w") as f:
         json.dump(results, f, indent=2)
     print(f"\nResults saved to: {output_path}")

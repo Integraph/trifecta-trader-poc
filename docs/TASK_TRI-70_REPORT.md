@@ -15,8 +15,8 @@
 | 1 | Structured extraction + run-ids wired into results | ✅ code done, tests green (50) — committing |
 | 2 | Tool-calling gate (Q4_K_M) | ⏳ pending model pulls |
 | 3 | Pricing triad (local $0, opus-4-8 row, normalize, Haiku) | ✅ done, verified, committed |
-| 4 | Cache-off (`--no-cache`) verification | ⏸️ `--no-cache` present; verifying both entrypoints |
-| 5 | `measure_ollama_speed.py` candidate-driven | ⏸️ not started |
+| 4 | Cache-off (`--no-cache`) verification | ✅ verified end-to-end, both entrypoints |
+| 5 | `measure_ollama_speed.py` candidate-driven | ✅ done; old results marked superseded |
 | 6 | Staged benchmark (N=3 screen @1 ticker → N=5 finalists) | ⏸️ not started |
 | 7–8 | Cloud-reference yardstick + report + recommendation | ⏸️ not started |
 
@@ -69,10 +69,33 @@ Retired `claude-opus-4-5-20251101` row kept for reference but is now unreachable
 **Cost policy:** wall-time/ticker reported for all configs; **$ column only for the cloud references** (opus-4-8 / Haiku). Local = $0.
 
 ## Step 4 — Cache-off
-_Not started._
+
+**Status: DONE (verified — no code change needed, already correctly wired).**
+
+`--no-cache` flows end-to-end in **both** entrypoints:
+- `run_analysis.py`: `--no-cache` → `use_cache=not args.no_cache` → `HybridTradingGraph(use_cache=use_cache)`.
+- `run_batch.py`: `--no-cache` → `use_cache=not args.no_cache` → `run_analysis(use_cache=use_cache)`.
+- `hybrid_graph.py`: `self._cache = DataCache(...) if use_cache else None`; when `None`, the
+  `make_cached_analyst` wrapping at line ~277 is skipped (`if self.cache and …` is False) so analysts make
+  real LLM calls, and `cache_stats = self._cache.stats() if self._cache else {}`.
+
+→ Benchmark runs will pass **`--no-cache`** so repeat-run stability measures the model, not the DataCache.
 
 ## Step 5 — Speed harness
-_Not started._
+
+**Status: DONE.** `scripts/measure_ollama_speed.py` is now candidate-driven (was hardcoded to the
+qwen2.5/3.5 list at line 18):
+- Default = the TRI-70 candidate set (deep / tool / quick slots); not-installed tags are skipped cleanly
+  (safe to run mid-pull).
+- `--models <tags…>` for an explicit list; `--all` auto-discovers every installed model from `/api/tags`.
+- `--output` (default `results/tri70_speed_benchmark.json`), superseding `task_011_speed_benchmark.json`.
+- **Prior results marked SUPERSEDED (Tasks 005 / 010 / 011):** those files measured the qwen2.5/3.5
+  generation on the **pre-v0.3.0 engine** — `task_011_speed_benchmark.json` (speed) and `task_010_bench_*.txt`
+  (quality/wall-time) are superseded by this report's table + `results/tri70_speed_benchmark.json`. Do not cite
+  their numbers as current. (`results/` is gitignored, so a local `results/SUPERSEDED_BY_TRI-70.md` marker was also
+  written; this report is the tracked record.)
+- Actual speed numbers get collected in Step 6 once pulls finish (not run now, to avoid competing with the
+  in-flight Wave-1 pull).
 
 ## Step 6 — Staged benchmark runs
 _Not started._
