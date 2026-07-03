@@ -37,6 +37,12 @@ Already present: qwen3.5:9b/27b/35b-a3b, qwen2.5:14b/32b, mistral-small:22b, lla
   expectation (qwen2.5 fell back to free text), the **current-gen** local reasoner emits the typed
   `PortfolioDecision` render. So extraction is NOT regex-fragile for current-gen local models — to be confirmed
   across the deep-slot screen.
+- ℹ️ **Engine-compat note (opus-4-8 + `temperature`):** `claude-opus-4-8` is a valid, callable model id (API
+  smoke returned OK, credits live), but it **rejects the `temperature` parameter** (`400 temperature is
+  deprecated for this model`). The v0.3.0 engine is safe here: `DEFAULT_CONFIG["temperature"]=None`, `get_config`
+  doesn't set it, and `create_hybrid_llms` builds the Anthropic deep client without a temperature kwarg — so
+  `benchmark_opus_a` calls opus-4-8 cleanly. **Caveat for the future:** setting `TRADINGAGENTS_TEMPERATURE` would
+  make opus-4-8 (and other newer models) 400. Not a blocker for TRI-70; flagged for awareness.
 - ⚠️ **Preliminary (single run — not conclusive):** `benchmark_local_b` @ deep=`qwen3.6:27b` scored **7.8**,
   just **under** the 8.0 gate (reasoning_depth=4 is the drag; data_grounding=8, risk_awareness=10, all trade-param
   flags True, decision consistent). N=3 screen + the stronger deep candidates (qwen3.6:35b MoE, gpt-oss:120b,
