@@ -18,8 +18,8 @@ Recommendation: don't ship an all-local deep slot yet; pursue a **stability miti
 majority-vote aggregation on r1:8b) as the cheapest path — full analysis in **Step 8** below. See exit-criteria
 checklist ⬇️ and the 🚩 checkpoint section.
 
-_(Speed harness `results/tri70_speed_benchmark.json` finishing in background — t/s column folded in on completion;
-does not gate the recommendation.)_
+_(Speed evidence: `results/tri70_speed_benchmark.json` — shipped slots are fast (tool 41.8 / deep 37.9 / quick
+27.7 t/s); speed is not the blocker, stability is. Full t/s table in Step 5.)_
 
 ### Exit-criteria checklist (work order, 8/8)
 1. ✅ Structured decision persisted to results (`pm_rating_5`, `decision_extraction_method`) **and verified to engage
@@ -286,8 +286,24 @@ qwen2.5/3.5 list at line 18):
   (quality/wall-time) are superseded by this report's table + `results/tri70_speed_benchmark.json`. Do not cite
   their numbers as current. (`results/` is gitignored, so a local `results/SUPERSEDED_BY_TRI-70.md` marker was also
   written; this report is the tracked record.)
-- Actual speed numbers get collected in Step 6 once pulls finish (not run now, to avoid competing with the
-  in-flight Wave-1 pull).
+**Standalone t/s** (`results/tri70_speed_benchmark.json`, single financial-reasoning generation per model, clean —
+no concurrent pulls):
+
+| model (slot) | t/s | | model (slot) | t/s |
+|--------------|-----|--|--------------|-----|
+| gpt-oss:20b (tool/quick) | **46.1** | | deepseek-r1:14b | 20.8 |
+| qwen3-coder:30b (**tool**, shipped) | **41.8** | | deepseek-r1:32b | 9.7 |
+| deepseek-r1:8b (**deep**, shipped) | **37.9** | | deepseek-r1:70b | 4.5 |
+| qwen3.6:35b MoE | 35.4 | | llama3.3:70b | 4.5 |
+| qwen2.5:14b (baseline) | 31.6 | | qwen3.6:27b | timeout (>300s probe cap) |
+| qwen3.5:9b (**quick**, shipped) | 27.7 | | gemma4 | (installed tag `gemma4:latest`; probe used `gemma-4:27b` → skipped) |
+| gpt-oss:120b | 26.5 | | | |
+
+The **shipped-candidate slots are all fast** (tool 41.8 / deep 37.9 / quick 27.7 t/s) — speed is **not** the local
+blocker; decision-stability is. r1:8b being both the highest-quality deep model *and* fast (37.9 t/s, ~16 min/full
+run) makes the stability-mitigation path especially attractive. (qwen3.6:27b dense exceeded the 300s standalone
+probe cap — it still completes in-pipeline at ~26 min/run; gemma4's speed wasn't captured due to a tag-string
+mismatch in the probe default, immaterial since it's a tool-slot model that already passed the gate.)
 
 ## Step 8 — Master table + recommendation
 
