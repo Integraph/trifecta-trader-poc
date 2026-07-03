@@ -52,10 +52,19 @@ ANALYST_STATE_FIELD = {
     "fundamentals": "fundamentals_report",
 }
 
-# Anthropic pricing (USD per 1M tokens, as of early 2026)
+# Anthropic pricing (USD per 1M tokens). Cloud is BENCHMARK-REFERENCE only in
+# TRI-70 (never a shipped/production model — too expensive per Jeff). Local /
+# Ollama models cost $0 (see the provider-aware fallback in cost_breakdown()).
+# TRI-70 pricing triad (Jeff, 2026-07-02):
+#   - claude-opus-4-8 row added at $5/$25 (the chosen expensive deep reference)
+#   - Haiku refreshed $0.80/$4.00 -> $1.00/$5.00
+#   - _normalize_model "opus" now maps to claude-opus-4-8 (was the retired
+#     opus-4-5 at $15/$75, so the new row would never be reached)
 MODEL_PRICING = {
     "claude-sonnet-4-5-20250929": {"input": 3.00,  "output": 15.00},
-    "claude-haiku-4-5-20251001":  {"input": 0.80,  "output": 4.00},
+    "claude-haiku-4-5-20251001":  {"input": 1.00,  "output": 5.00},
+    "claude-opus-4-8":            {"input": 5.00,  "output": 25.00},
+    # Retired (kept for reference; no longer reached via _normalize_model):
     "claude-opus-4-5-20251101":   {"input": 15.00, "output": 75.00},
 }
 
@@ -111,7 +120,10 @@ class TokenUsageCallback(BaseCallbackHandler):
         breakdown = {"by_model": {}, "total_usd": 0.0}
 
         for model_key, usage in self.usage_by_model.items():
-            pricing = MODEL_PRICING.get(model_key, {"input": 3.00, "output": 15.00})
+            # Provider-aware: a model_key not in MODEL_PRICING is a local/Ollama
+            # model, which is free — cost $0. (Was a Sonnet $3/$15 fallback,
+            # which wrongly billed local runs as if they were cloud; TRI-70.)
+            pricing = MODEL_PRICING.get(model_key, {"input": 0.0, "output": 0.0})
             input_cost = usage["input_tokens"] / 1_000_000 * pricing["input"]
             output_cost = usage["output_tokens"] / 1_000_000 * pricing["output"]
             total_cost = input_cost + output_cost
@@ -142,7 +154,7 @@ class TokenUsageCallback(BaseCallbackHandler):
         if "sonnet" in model_lower:
             return "claude-sonnet-4-5-20250929"
         if "opus" in model_lower:
-            return "claude-opus-4-5-20251101"
+            return "claude-opus-4-8"
         return model
 
 

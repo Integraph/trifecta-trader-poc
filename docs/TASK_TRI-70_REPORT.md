@@ -14,7 +14,7 @@
 |------|------|-------|
 | 1 | Structured extraction + run-ids wired into results | ✅ code done, tests green (50) — committing |
 | 2 | Tool-calling gate (Q4_K_M) | ⏳ pending model pulls |
-| 3 | Pricing triad (local $0, opus-4-8 row, normalize, Haiku) | ⏸️ not started |
+| 3 | Pricing triad (local $0, opus-4-8 row, normalize, Haiku) | ✅ done, verified, committed |
 | 4 | Cache-off (`--no-cache`) verification | ⏸️ `--no-cache` present; verifying both entrypoints |
 | 5 | `measure_ollama_speed.py` candidate-driven | ⏸️ not started |
 | 6 | Staged benchmark (N=3 screen @1 ticker → N=5 finalists) | ⏸️ not started |
@@ -54,7 +54,19 @@ _None yet._ (Will record here prominently if: no local config clears 8.0 / struc
 _Pending pulls._
 
 ## Step 3 — Pricing triad
-_Not started._
+
+**Status: DONE (verified).** All in `src/hybrid_graph.py`.
+
+| Fix | Before | After | Verified |
+|-----|--------|-------|----------|
+| (a) Local/Ollama → $0 (kill Sonnet fallback) | `.get(key, {3.00, 15.00})` | `.get(key, {0.0, 0.0})` provider-aware | `qwen3-coder:30b` @1M/1M → **$0.0** |
+| (b) Add `claude-opus-4-8` row | absent | `{input: 5.0, output: 25.0}` | in `MODEL_PRICING` ✓ |
+| (c) Refresh Haiku | `$0.80/$4.00` | `$1.00/$5.00` | `{input:1.0, output:5.0}` ✓ |
+| (d) `_normalize_model` "opus" | → retired `opus-4-5` ($15/$75) | → `claude-opus-4-8` | `normalize('…opus…')='claude-opus-4-8'` ✓ |
+
+Retired `claude-opus-4-5-20251101` row kept for reference but is now unreachable via the normalizer.
+`tests/test_cost_optimization.py` = **35 passed** (tests read the table dynamically, so the refreshed numbers are consistent).
+**Cost policy:** wall-time/ticker reported for all configs; **$ column only for the cloud references** (opus-4-8 / Haiku). Local = $0.
 
 ## Step 4 — Cache-off
 _Not started._
