@@ -36,6 +36,11 @@ class HybridLLMConfig:
     - reasoning_deep: Pure reasoning agents on the deep path (judges)
     - enhance_local: Whether to wrap local models with data-citation prefix
     - enhance_style: Which prefix style to use (see src/enhanced_llm.py)
+    - temperature: Sampling temperature applied to ALL THREE slots when set
+      (None = each provider's own default). TRI-69: determinism requires
+      temperature=0 on every slot, not just the deep judge — the local
+      tool/quick slots otherwise sample at Ollama's ~0.7-0.8 default and
+      their narrative drift flips the judge even at judge-temp=0.
     """
 
     def __init__(
@@ -50,6 +55,7 @@ class HybridLLMConfig:
         enhance_style: str = "financial_analysis",
         enhance_deep: bool = False,
         enhance_deep_style: str = "execution_params_only",
+        temperature: Optional[float] = None,
     ):
         self.tool_provider = tool_provider
         self.tool_model = tool_model
@@ -61,6 +67,7 @@ class HybridLLMConfig:
         self.enhance_style = enhance_style
         self.enhance_deep = enhance_deep
         self.enhance_deep_style = enhance_deep_style
+        self.temperature = temperature
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a summary dict for logging/reporting."""
@@ -73,11 +80,17 @@ class HybridLLMConfig:
             d["enhance_style"] = self.enhance_style
         if self.enhance_deep:
             d["enhance_deep_style"] = self.enhance_deep_style
+        if self.temperature is not None:
+            d["temperature"] = self.temperature
         return d
 
     def to_flat_dict(self) -> Dict[str, Any]:
-        """Return all 10 fields as a flat dict (for YAML / API serialization)."""
-        return {
+        """Return all fields as a flat dict (for YAML / API serialization).
+
+        ``temperature`` is only emitted when set, so pre-existing configs
+        round-trip byte-identically and older readers never see the key.
+        """
+        d = {
             "tool_provider":             self.tool_provider,
             "tool_model":                self.tool_model,
             "reasoning_quick_provider":  self.reasoning_quick_provider,
@@ -89,6 +102,9 @@ class HybridLLMConfig:
             "enhance_deep":              self.enhance_deep,
             "enhance_deep_style":        self.enhance_deep_style,
         }
+        if self.temperature is not None:
+            d["temperature"] = self.temperature
+        return d
 
 
 # ── Python default configs (fallback when YAML is absent) ─────────────────────
@@ -283,6 +299,8 @@ def _yaml_entry_to_config(entry: dict) -> HybridLLMConfig:
         enhance_style            = entry.get("enhance_style",            "financial_analysis"),
         enhance_deep             = bool(entry.get("enhance_deep",        False)),
         enhance_deep_style       = entry.get("enhance_deep_style",       "execution_params_only"),
+        temperature              = (float(entry["temperature"])
+                                    if entry.get("temperature") is not None else None),
     )
 
 
@@ -379,15 +397,25 @@ def create_hybrid_llms(hybrid_config: HybridLLMConfig) -> Dict[str, Any]:
 
     llms = {}
 
+    # Slot-shared kwargs. temperature (when set) is threaded into ALL THREE
+    # create_llm_client calls; both the Anthropic and OpenAI-compatible/Ollama
+    # clients forward it to the underlying Chat model via _PASSTHROUGH_KWARGS
+    # (TRI-69: temp=0 on the judge alone does not make the arm deterministic).
+    slot_kwargs = {}
+    if hybrid_config.temperature is not None:
+        slot_kwargs["temperature"] = hybrid_config.temperature
+
     tool_client = create_llm_client(
         provider=hybrid_config.tool_provider,
         model=hybrid_config.tool_model,
+        **slot_kwargs,
     )
     llms["tool_calling_llm"] = tool_client.get_llm()
 
     reasoning_quick_client = create_llm_client(
         provider=hybrid_config.reasoning_quick_provider,
         model=hybrid_config.reasoning_quick_model,
+        **slot_kwargs,
     )
     reasoning_quick_llm = reasoning_quick_client.get_llm()
     if hybrid_config.enhance_local and hybrid_config.reasoning_quick_provider == "ollama":
@@ -399,6 +427,7 @@ def create_hybrid_llms(hybrid_config: HybridLLMConfig) -> Dict[str, Any]:
     reasoning_deep_client = create_llm_client(
         provider=hybrid_config.reasoning_deep_provider,
         model=hybrid_config.reasoning_deep_model,
+        **slot_kwargs,
     )
     reasoning_deep_llm = reasoning_deep_client.get_llm()
     if hybrid_config.enhance_local and hybrid_config.reasoning_deep_provider == "ollama":

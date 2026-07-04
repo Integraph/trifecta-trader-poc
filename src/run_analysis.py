@@ -249,6 +249,17 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
     """
     config = get_config(provider, deep_model, quick_model)
 
+    # ── Point-in-time / no-leak mode (TRI-69, TEST-ONLY) ──────────────────
+    # Env-gated so ordinary runs are untouched. Neutralizes the vendor's
+    # future-relative fundamentals overview, disables live Polymarket /
+    # insider / Reddit / StockTwits, clamps all tool date args to the trade
+    # date, and arms a leak guard. See src/point_in_time.py.
+    point_in_time = os.environ.get("TRIFECTA_POINT_IN_TIME") == "1"
+    if point_in_time:
+        from src.point_in_time import enable_point_in_time_mode
+        enable_point_in_time_mode(trade_date)
+        print(f"[TRI-69] point-in-time mode ENABLED (as-of {trade_date})")
+
     # ── Run-id (TRI-79) ────────────────────────────────────────────────────
     # A benchmark repeats the same (ticker, date, config) many times; without a
     # run-id every repeat writes analysis_<date>_<config>.json and clobbers the
@@ -393,8 +404,22 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
         },
         "cost_breakdown":    cost_info,
         "portfolio_context": portfolio_summary,
+        "point_in_time":     point_in_time,
         "result_file":       str(result_file),
     }
+
+    # ── Analyst-report snapshot (TRI-69, env-gated) ────────────────────────
+    # The TRI-70 Codex review flagged that saved results keep only the final
+    # PM text + trader plan, so input-level claims can't be audited. When
+    # TRIFECTA_SAVE_REPORTS=1, persist the four analyst reports (the judge's
+    # actual inputs) for leak-scanning and QA.
+    if os.environ.get("TRIFECTA_SAVE_REPORTS") == "1":
+        result["analyst_reports"] = {
+            "market_report":       final_state.get("market_report", ""),
+            "sentiment_report":    final_state.get("sentiment_report", ""),
+            "news_report":         final_state.get("news_report", ""),
+            "fundamentals_report": final_state.get("fundamentals_report", ""),
+        }
 
     with open(result_file, "w") as f:
         json.dump(result, f, indent=2)
