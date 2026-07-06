@@ -218,6 +218,41 @@ def _print_warnings(warnings: list, ticker: str, batch_mode: bool = False) -> No
         print()  # spacing before analysis begins
 
 
+def _format_run_header(ticker: str, trade_date: str, provider: str,
+                       config: dict, hybrid: str = None,
+                       hybrid_config=None) -> str:
+    """Build the analysis run header.
+
+    In HYBRID mode the header must report the per-slot models from the
+    hybrid config: config['deep_think_llm'] / config['quick_think_llm']
+    describe only the non-hybrid pipeline and do not reflect hybrid routing.
+    """
+    lines = [
+        "",
+        "=" * 60,
+        "Trifecta Trader POC - Analysis Run",
+        "=" * 60,
+        f"Ticker:    {ticker}",
+        f"Date:      {trade_date}",
+    ]
+    if hybrid:
+        routing = hybrid_config.to_dict()
+        lines += [
+            f"Mode:      HYBRID ({hybrid})",
+            f"Tool LLM:  {routing['tool_calling']}",
+            f"Quick LLM: {routing['reasoning_quick']}",
+            f"Deep LLM:  {routing['reasoning_deep']}",
+        ]
+    else:
+        lines += [
+            f"Provider:  {provider}",
+            f"Deep LLM:  {config['deep_think_llm']}",
+            f"Quick LLM: {config['quick_think_llm']}",
+        ]
+    lines += ["=" * 60, ""]
+    return "\n".join(lines)
+
+
 # ── Main analysis function ────────────────────────────────────────────────────
 
 def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
@@ -280,24 +315,16 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
     warnings = check_portfolio_warnings(ticker, portfolio_context, batch_mode)
     _print_warnings(warnings, ticker, batch_mode)
 
-    # ── Analysis header ────────────────────────────────────────────────────
-    print(f"\n{'='*60}")
-    print(f"Trifecta Trader POC - Analysis Run")
-    print(f"{'='*60}")
-    print(f"Ticker:    {ticker}")
-    print(f"Date:      {trade_date}")
-    if hybrid:
-        print(f"Mode:      HYBRID ({hybrid})")
-    else:
-        print(f"Provider:  {provider}")
-    print(f"Deep LLM:  {config['deep_think_llm']}")
-    print(f"Quick LLM: {config['quick_think_llm']}")
-    print(f"{'='*60}\n")
-
+    hybrid_config = None
     if hybrid:
         from src.hybrid_llm import CONFIGS
-        from src.hybrid_graph import HybridTradingGraph
         hybrid_config = CONFIGS[hybrid]
+
+    # ── Analysis header ────────────────────────────────────────────────────
+    print(_format_run_header(ticker, trade_date, provider, config, hybrid, hybrid_config))
+
+    if hybrid:
+        from src.hybrid_graph import HybridTradingGraph
         ta = HybridTradingGraph(
             hybrid_config=hybrid_config,
             debug=debug,
