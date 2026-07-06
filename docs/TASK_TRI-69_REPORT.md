@@ -12,7 +12,9 @@
 > | 6. Scoring | ⬜ pending |
 > | 7. Verdict | ⬜ pending |
 >
-> Checkpoint triggers fired: **ONE — RESOLVED inside the design window. 2026-07-06: temp=0-all-slots wedges the local thinking model (checkpoint 1). Root cause isolated by a controlled diagnostic (temp pin, not PIT content); Config A amended to seed-pinned model-default sampling on local slots + temp=0 deep. Determinism bar unchanged. Battery re-running under the amended config.**
+> Checkpoint triggers fired: **TWO.**
+> **Checkpoint 1 (RESOLVED in design window):** temp=0-all-slots wedges the local thinking model; amended to seed-pinned model-default sampling. Bar unchanged.
+> **Checkpoint 2 (🔴 OPEN — DETERMINISM FAILURE, eval track STOPPED, 2026-07-06):** after eliminating every fixable nondeterminism channel, the arm remains stochastically unstable at the decision level (AAPL burned point: SELL/HOLD/SELL/SELL across 4 post-fix runs, agreement 0.75). The instability is STACK-INHERENT (evidence below). The pre-registered battery bar (decision-identical N=3 ×3 tickers) is unattainable for this architecture; per the locked rule — "do not run the backtest with a non-deterministic arm; STOP and surface" — the eval is NOT being run. Decision options for the App Manager are written up below. **No eval data exists; the design window is still open.**
 
 **Issue:** TRI-69 · **Branch:** `jeff/tri-69-edge-check` (from TRI-70 tip 769be7d) · **Spec:** `docs/TASK_TRI-69_EDGE_CHECK.md` (v3, LOCKED) · **Integrity doc:** `docs/TRIFECTA_MVP_MEASUREMENT_INTEGRITY_TESTS.md` · **Paper only; --execute forbidden.**
 
@@ -157,6 +159,31 @@ Same live vendor call (`route_to_vendor("get_fundamentals", "MSFT", "2026-03-13"
 *(first battery attempt — decisions observed: AAPL r1 SELL [Jul 4]; all later runs wedged; NO flip observed.)*
 
 **Checkpoint 1 addendum — tri69b flip root-caused as an INPUT bug, fixed (2026-07-06, still pre-commit):** the amended-config battery (`tri69b`) opened AAPL SELL (887 s) then HOLD (773 s) — a flip. Saved analyst reports localized it precisely: **sentiment and news reports byte-identical** (seeded sampling reproduces perfectly when the context is identical); **market and fundamentals reports diverged from the first generated character** — the signature of a differing prompt token, not sampling. Root cause: the vendor stamps tool outputs with wall-clock retrieval time (`# Data retrieved on: <now>`, six sites in `y_finance.py`); runs minutes apart see different contexts and seeded generation diverges from that token onward. Verified live: two identical PIT calls 2 s apart differed only in that stamp; after adding stamp normalization to the point-in-time wrapper, the same double-call is byte-identical. The flip was therefore **not** model instability and **not** a sampling failure — it was a reproducibility bug in our measurement rig, now closed at the same layer as the leak guards (test added). Battery restarted clean as `tri69c`; `tri69b` runs excluded from identity adjudication (contaminated contexts) but retained as HOLD-basis observations.
+
+**tri69c result (2026-07-06): flip persists with fully deterministic upstream — divergence is DOWNSTREAM of the analysts.** AAPL r1 = SELL (813 s), r2 = HOLD (879 s), and this time **all four analyst reports are byte-identical** (the stamp fix held). The trader plans differ from the first token ("Sell" vs "Hold" reasoning), so divergence enters between the researchers and the trader. Everything before the Research Manager is local+seeded and has now been proven byte-reproducible twice; **the RM is the first cloud (Sonnet temp=0) call in the chain** — Anthropic does not guarantee bit-identical output at temp=0, and a single token of drift cascades through debate → trader → risk → judge into a different decision. Battery stopped (bar already failed for AAPL); two instrumented repeats (`tri69-diag2-r1/r2`, saving bull/bear histories, RM text, risk histories, judge text) were run to localize the first diverging stage with evidence rather than inference.
+
+### 🔴 CHECKPOINT 2 (2026-07-06) — determinism failure is stack-inherent; eval track STOPPED
+
+**Post-fix stability tally, AAPL @ 2026-06-27 (identical config, same day, all channels fixed):** `tri69c-r1` SELL · `tri69c-r2` HOLD · `diag2-r1` SELL · `diag2-r2` SELL → **agreement 0.75, decision-identical bar FAILED.**
+
+**Why this is not fixable at our layer — the elimination chain:**
+1. Temperature pathology: eliminated (checkpoint 1 — seed-pinned model-default sampling; healthy runs).
+2. Wall-clock context contamination: eliminated (stamp normalization; verified byte-identical double-calls; tri69c analyst reports byte-identical).
+3. Input-data drift: eliminated for the diverging pair (diag2 market reports share the same data — 11 common numerals, 1 unique each — different *prose*, not different *facts*).
+4. What remains: **the first diverging stage moves between repeats** — in the tri69c pair all four analyst reports were byte-identical and divergence entered in the debate chain; in the diag2 pair the market analyst itself diverged from early tokens while three other analysts were byte-identical. Identical requests are therefore not reliably bit-reproducible on this stack even with a fixed seed. This matches known llama.cpp/Ollama behavior (floating-point non-associativity across batch splits / kv-cache states makes logits state-dependent; seed determinism is only guaranteed for an identical server state), compounded by Anthropic temp=0 being explicitly best-effort. One drifted token anywhere cascades through the 10-stage agent chain into a different final decision ~25% of the time on this point.
+
+**Re-attribution of TRI-70's 0.60 (TRI-73 input, the mandated "freebie" observation):** TRI-70's local decision instability was attributed to unpinned sampling temperature. TRI-69's battery shows that even *seed-pinned* local slots at model-default sampling do not hold still on long multi-agent contexts — a material share of the 0.60 was likely never fixable by temperature pinning. Any future local arm (TRI-73) inherits this: **decision-level determinism is not achievable on the current Ollama stack; stability must be treated statistically (repeats), not assumed.**
+
+**Options (decision owner: App Manager — this changes protocol/budget/bar, not mechanics):**
+| # | Protocol | Cost/time | Trade-off |
+|---|---|---|---|
+| 1 | **Modal-of-3**: pre-register N=3 repeats per (ticker,date); decision = modal; 3-way split → NO-DECISION | 480 runs ≈ ~4.7 days serial, ~$35–55 | Statistically cleaner signal; ~3× budget/time; modal itself still ~15% unstable at per-run agreement 0.75 |
+| 2 | **Single-draw stochastic-policy framing**: keep 1 run/point; pre-register that each decision is ONE draw from a stochastic policy — exactly how production would run it (production never takes modal-of-3). The date-clustered directional test stays unbiased; sampling noise costs power, not validity | 160 runs ≈ ~1.5 days, ~$15–25 (unchanged) | Cheapest and most ecologically valid; measures "policy + sampling noise"; a weak edge is harder to detect (noise → INCONCLUSIVE more likely) |
+| 3 | **Stop TRI-69** pending an engine/stack change that restores determinism (vLLM deterministic mode, all-cloud arm, etc.) | — | Blocks the go/no-go on infrastructure work of unknown size |
+
+**DEVELOP recommendation: option 2.** The determinism requirement existed to *justify* 1-run-per-point; a pre-registered stochastic-policy framing achieves the same honesty without pretending the arm is something it is not, matches production semantics, and keeps the kill-switch on budget. Option 1 is the fallback if the App Manager wants decision-level stability inside the measurement itself.
+
+**Track state:** eval NOT started; no eval data drawn; pre-registration NOT committed; awaiting App Manager call on options 1/2/3.
 
 ---
 

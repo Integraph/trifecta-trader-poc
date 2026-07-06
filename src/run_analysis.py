@@ -420,6 +420,20 @@ def run_analysis(ticker: str, trade_date: str, provider: str = "anthropic",
             "news_report":         final_state.get("news_report", ""),
             "fundamentals_report": final_state.get("fundamentals_report", ""),
         }
+        # Debate intermediates (TRI-69 determinism localization): which stage
+        # first diverges between repeats tells local-seeded vs cloud drift.
+        inv = final_state.get("investment_debate_state") or {}
+        risk = final_state.get("risk_debate_state") or {}
+        result["debate_intermediates"] = {
+            "bull_history":       inv.get("bull_history", ""),
+            "bear_history":       inv.get("bear_history", ""),
+            "research_manager":   inv.get("judge_decision", ""),
+            "investment_plan":    final_state.get("investment_plan", ""),
+            "risk_aggressive":    risk.get("risky_history", ""),
+            "risk_conservative":  risk.get("safe_history", ""),
+            "risk_neutral":       risk.get("neutral_history", ""),
+            "risk_judge":         risk.get("judge_decision", ""),
+        }
 
     with open(result_file, "w") as f:
         json.dump(result, f, indent=2)
