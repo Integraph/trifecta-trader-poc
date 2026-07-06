@@ -156,6 +156,8 @@ Same live vendor call (`route_to_vendor("get_fundamentals", "MSFT", "2026-03-13"
 
 *(first battery attempt — decisions observed: AAPL r1 SELL [Jul 4]; all later runs wedged; NO flip observed.)*
 
+**Checkpoint 1 addendum — tri69b flip root-caused as an INPUT bug, fixed (2026-07-06, still pre-commit):** the amended-config battery (`tri69b`) opened AAPL SELL (887 s) then HOLD (773 s) — a flip. Saved analyst reports localized it precisely: **sentiment and news reports byte-identical** (seeded sampling reproduces perfectly when the context is identical); **market and fundamentals reports diverged from the first generated character** — the signature of a differing prompt token, not sampling. Root cause: the vendor stamps tool outputs with wall-clock retrieval time (`# Data retrieved on: <now>`, six sites in `y_finance.py`); runs minutes apart see different contexts and seeded generation diverges from that token onward. Verified live: two identical PIT calls 2 s apart differed only in that stamp; after adding stamp normalization to the point-in-time wrapper, the same double-call is byte-identical. The flip was therefore **not** model instability and **not** a sampling failure — it was a reproducibility bug in our measurement rig, now closed at the same layer as the leak guards (test added). Battery restarted clean as `tri69c`; `tri69b` runs excluded from identity adjudication (contaminated contexts) but retained as HOLD-basis observations.
+
 ---
 
 ## Results

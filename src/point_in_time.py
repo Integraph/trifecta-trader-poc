@@ -62,6 +62,19 @@ FORBIDDEN_FUNDAMENTALS_LABELS_RE = re.compile(
 
 _DATE_ARG_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
+# The vendor stamps tool outputs with the WALL-CLOCK retrieval time
+# (y_finance.py: "# Data retrieved on: <now>", six render sites). Two runs
+# minutes apart therefore see different analyst contexts, and seeded
+# generation diverges from that token onward — observed directly as the
+# tri69b battery SELL/HOLD flip (market/fundamentals reports diverged from
+# char ~1; sentiment/news, whose tools carry no stamp, were byte-identical).
+# Point-in-time mode normalizes the stamp so identical data yields an
+# identical context.
+_RETRIEVED_ON_RE = re.compile(
+    r"# Data retrieved on: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"
+)
+_RETRIEVED_ON_REPLACEMENT = "# Data retrieved on: (normalized: point-in-time mode)"
+
 # Vendor-routed methods that are fully disabled in point-in-time mode.
 _DISABLED_METHODS = {
     "get_prediction_markets": (
@@ -109,6 +122,7 @@ def _clamp_date_args(args: tuple, kwargs: dict, asof: str) -> tuple:
 def _scan_output(method: str, result, fundamentals_category: bool):
     if not isinstance(result, str):
         return result
+    result = _RETRIEVED_ON_RE.sub(_RETRIEVED_ON_REPLACEMENT, result)
     m = FORBIDDEN_INFO_KEYS_RE.search(result)
     if m is None and fundamentals_category:
         m = FORBIDDEN_FUNDAMENTALS_LABELS_RE.search(result)

@@ -204,6 +204,25 @@ class TestPointInTimeMode:
         wrapped_news = _wrap_vendor_impl("get_news", prose_impl, ASOF)
         assert "52-week high" in wrapped_news("AAPL", "2026-03-01", "2026-03-10")
 
+    def test_retrieval_timestamp_normalized(self, pit):
+        """Wall-clock 'Data retrieved on' stamps must be normalized: they
+        made same-day repeats diverge (tri69b SELL/HOLD flip)."""
+        from src.point_in_time import _wrap_vendor_impl
+
+        def stamped(*a, **k):
+            return ("# Prices for AAPL\n"
+                    "# Data retrieved on: 2026-07-06 03:21:01\n\nrows...")
+        def stamped2(*a, **k):
+            return ("# Prices for AAPL\n"
+                    "# Data retrieved on: 2026-07-06 03:21:03\n\nrows...")
+        w1 = _wrap_vendor_impl("get_stock_data", stamped, ASOF)
+        w2 = _wrap_vendor_impl("get_stock_data", stamped2, ASOF)
+        out1 = w1("AAPL", "2026-03-01", ASOF)
+        out2 = w2("AAPL", "2026-03-01", ASOF)
+        assert out1 == out2                    # stamps no longer diverge
+        assert "03:21:01" not in out1          # wall clock gone
+        assert "point-in-time mode" in out1
+
     def test_live_social_disabled_in_analyst_namespace(self, pit):
         """The sentiment analyst binds these at import — its namespace must
         hold the stubs, not just the source dataflow modules."""
