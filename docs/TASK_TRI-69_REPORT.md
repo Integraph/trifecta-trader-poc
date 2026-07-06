@@ -4,23 +4,78 @@
 >
 > | Step | Status |
 > |---|---|
-> | 1. Build Config A (temp=0 all three slots) | 🔄 IN PROGRESS — plumbing + tests done, live smoke running |
-> | 2. Point-in-time / no-leak mode | 🔄 IN PROGRESS — module + tests done, live leak proof pending |
-> | 3. Determinism battery (burned points) | ⬜ pending |
+> | 1. Build Config A (temp=0 all three slots) | ✅ DONE — plumbing + tests + live API-level identity checks |
+> | 2. Point-in-time / no-leak mode | ✅ DONE — module + 8 tests + live leak proof (PIT off = leak shown real) |
+> | 3. Determinism battery (burned points) | 🔄 RUNNING — N=3 × AAPL/NVDA/TSLA @ 2026-06-27 |
 > | 4. Pre-registration commit | ⬜ pending (BEFORE any eval run) |
 > | 5. Eval runs | ⬜ pending |
 > | 6. Scoring | ⬜ pending |
 > | 7. Verdict | ⬜ pending |
 >
-> Checkpoint triggers fired: **none**
+> Checkpoint triggers fired: **🔴 ONE (open) — 2026-07-06: Config A as pre-drafted (temp=0 all three slots) cannot complete runs reliably.** Battery halted at 4 consecutive wedged runs. Design window is still open (no pre-reg commit yet); root-cause isolation in progress. See "Checkpoint 1" below.
 
 **Issue:** TRI-69 · **Branch:** `jeff/tri-69-edge-check` (from TRI-70 tip 769be7d) · **Spec:** `docs/TASK_TRI-69_EDGE_CHECK.md` (v3, LOCKED) · **Integrity doc:** `docs/TRIFECTA_MVP_MEASUREMENT_INTEGRITY_TESTS.md` · **Paper only; --execute forbidden.**
 
 ---
 
-## Pre-registration
+## Pre-registration (LOCKED at the commit that introduces this section's final text — BEFORE any eval run)
 
-*(To be completed and committed as its own commit BEFORE any eval run — Step 4. Placeholder until then; nothing below this line in this section may change after that commit.)*
+**Nothing in this section may change after that commit. Deviations only via the checkpoint triggers, documented prominently.**
+
+### Signal arm — Config A (TEST-ONLY, never production)
+
+`tri69_config_a`: tool = `ollama/qwen3-coder:30b` · quick = `ollama/qwen3.5:9b` · deep = `anthropic/claude-sonnet-4-5-20250929` · **temperature = 0.0 on all three slots** · enhancements off · analyst cache off (`--no-cache`) · fresh memory log per run · point-in-time mode on (`TRIFECTA_POINT_IN_TIME=1`). One run per (ticker, date); decision extracted by the existing `extract_decision_detailed` (unchanged from TRI-70).
+
+### Universe (mechanical, as-of-date, no survivorship)
+
+- **Membership source (reproducible):** S&P 500 constituents as of the earliest decision date (2026-02-17), from `github.com/fja05680/sp500`, commit `b792557e915703398ef9a67e4b583a37c6ec80d5`, file `S&P 500 Historical Components & Changes (Updated).csv`, row with max(date ≤ 2026-02-17) = **2026-02-09**, 503 tickers. The dataset includes later-delisted names (point-in-time by construction).
+- **Subset rule (mechanical, seeded):** exclude {AAPL, NVDA, TSLA} (locked exclusions, all dates) → pool of 500 → sort lexicographically → **primary = `sorted(random.Random(69).sample(pool, 20))`** (CPython 3.13.11):
+  `ALB, APA, AZO, CF, ERIE, EXPD, GPC, HBAN, IBKR, LLY, MO, ORLY, SHW, SMCI, SO, SYK, TRMB, TT, VRSK, VRTX`
+- **Expansion set (run ONLY if the HOLD-dominance rule fires; drawn now so it can't be cherry-picked later):** `sorted(random.Random(6969).sample(pool_minus_primary, 10))`:
+  `APH, APO, BMY, DOW, EXR, FIX, INVH, KMB, SWKS, WBD`
+- No prior dev/benchmark run in this repo touched any of these 30 names (checked `results/`).
+- Delisting/data-gap handling: a run that fails (no data) is recorded as FAILED and dual-reported, never silently dropped or replaced; a name delisting mid-horizon resolves at its last available close.
+
+### Decision dates (8, non-overlapping T+10 windows, all realized, all post-training-cutoff 2026)
+
+`2026-02-17 · 2026-03-03 · 2026-03-17 · 2026-03-31 · 2026-04-15 · 2026-04-29 · 2026-05-13 · 2026-05-28` — every 10th trading day from the first trading day ≥ 2026-02-17 (mechanical rule; verified against the SPY calendar). T+10 windows are exactly adjacent and disjoint (each entry Open(t+1) falls the day after the previous exit Close(t+10)); last exit 2026-06-11, fully realized before 2026-07-03. Dates postdate the training cutoffs of all three models (integrity doc #10); the excluded burned point 2026-06-27 is not in the set. **8 dates (up from an earlier 5-date draft, changed inside the design window before this commit) because the exact sign-flip test's power floor is 2^-D: with D=5 the minimum p is 1/32 ≈ 0.031 and PROMISING would require near-perfect 5/5 cross-date consistency — nearly unreachable by construction; with D=8 the floor is 1/256 ≈ 0.0039 and a 7-of-8-positive pattern of comparable magnitudes clears α=0.05 (p = 9/256 ≈ 0.035, verified in the fixture tests).**
+
+**Primary sample: 20 tickers × 8 dates = 160 point-in-time decisions.**
+
+### Horizon, fill, benchmark, cost
+
+- **Primary horizon T+10** (accuracy tracker's completion horizon): entry at **Open(t+1)** (first trading day after decision date — integrity doc #3: never the decision bar), exit at **Close(t+10)** (10th trading day after t; frozen time-cap exit, no stop/target — integrity doc #11). T+5 (same entry, Close(t+5)) computed as descriptive secondary only.
+- Prices: yfinance **auto-adjusted** (dividends included — integrity doc #4) for both legs.
+- **Benchmark: SPY** over the identical window (the engine's own alpha benchmark — vendor `benchmark_map` default). Horizon-matched by construction. **Why SPY rather than same-ticker buy-and-hold:** a same-ticker comparator is vacuous for BUYs (a BUY *is* holding that ticker — excess would be identically −cost) — the signal's information content is name selection versus the investable market alternative; the integrity doc §4 pins horizon/dividends/cost/sizing of the benchmark, not the comparator asset, and SPY satisfies all four.
+- **Cost + slippage: 10 bps per side → 20 bps round trip at 1×**, charged to the signal leg (the benchmark's symmetric round trip cancels; charging the leg is conservative). **Sensitivity sweep 1×/2×/3× reported; portfolio-level mean must be monotonically non-increasing** (integrity doc #3). Liquidity guard satisfied by construction (S&P 500 membership on the decision date).
+
+### Statistic and test (cross-sectional dependence handled by DATE CLUSTERING)
+
+- HOLD = no-trade → **excluded** from the directional test (rate reported).
+- **Technical-failure rule (NO-DECISION):** a run that fails technically — decode loop, timeout (hard cap 3600 s/run), subprocess/API error, or decision extraction yielding UNKNOWN — is recorded as **NO-DECISION**: excluded from the directional test exactly like HOLD, **counted and dual-reported** (never silently dropped), and it feeds the expansion rule through the min directional-N gate. **No retries for model-behavior failures:** at temperature=0 those reproduce deterministically, so a retry is not an independent draw; the first result stands. **One mechanical exception — infrastructure connection failures:** a run whose stderr matches the frozen classifier `APIConnectionError|Connection error|Connection refused|ConnectError` (the local Ollama socket dropping — not a draw from any model, so retrying cannot bias the signal) gets exactly ONE retry under a `-retry` run-id; a second failure is NO-DECISION. Classifier and retry are code, not judgment (`scripts/run_tri69_edge_check.py`), frozen at this commit. *(Basis: the 2026-07-04 battery hit exactly this — `openai.APIConnectionError` mid-run from the quick slot while the model itself was healthy.)*
+- Per directional decision i (BUY sᵢ=+1, SELL sᵢ=−1): **eᵢ = sᵢ·(r_ticker − r_SPY) − c_roundtrip**. SELL is scored as a prediction of SPY-relative underperformance — a measurement of the signal's information. **Long-only consistency (integrity doc §5):** the MVP is long-only and a SELL on an unheld name is a P&L no-op — so SELLs enter the *directional test* but not the *return arm*; the long-only implementable portfolio view (BUY → long net of cost; SELL/HOLD/NO-DECISION → cash) vs equal-weight buy-and-hold of the same names is computed and reported **descriptively only** (`long_only_view` in the scorer, fixture-tested), with no verdict weight.
+- **Date-level statistic X_t = mean(eᵢ) over date t.** Effective N = number of dates.
+- **Primary test: exact one-sided sign-flip permutation over dates** on mean(X_t) (all 2^D sign assignments; p = fraction of permuted means ≥ observed). **α = 0.05, one-sided.** **Power floor, stated up front:** with D=8 dates the minimum attainable p is 1/256 ≈ 0.0039; significance at α=0.05 requires roughly ≥7 of 8 dates positive at comparable magnitudes. The test still has power only against consistent edges — a real but weak/patchy edge will read INCONCLUSIVE, not PROMISING.
+- **Secondary (vs chance):** directional hit rate (share of decisions with sᵢ·(r_ticker − r_SPY) > 0) against the **realized base rate p₀ = max(all-BUY accuracy, all-SELL accuracy)** on the same decisions — NOT 0.5. Reported with the same date-clustered machinery; no independent verdict weight.
+- Implementation: `scripts/score_tri69.py`, frozen at the pre-registration commit; 13 golden-fixture tests (hand-computed P&L, cost-application negative test, sweep monotonicity, exact permutation values incl. the D=8 floor, long-only no-op SELL).
+
+### Expected HOLD rate + power plan (basis stated, not a post-hoc knob)
+
+- **Basis:** TRI-70 cloud-deep runs were modal-HOLD (sonnet-deep HOLD×3, opus-deep HOLD×3 on AAPL@2026-06-27); the all-local finalist was 9/15 HOLD (60%) across AAPL/NVDA/TSLA; TRI-69's own determinism battery (9 runs, 3 tickers, same burned date, Config A exactly) observed the HOLD rate recorded in Step 3 below. **Expected HOLD (incl. NO-DECISION) 60–85%; planning value 70%.**
+- **Minimum directional N (pre-registered): ≥ 20 directional decisions AND ≥ 6 of 8 dates with ≥ 1 directional decision.** At 70% HOLD/NO-DECISION, 160 decisions → ~48 directional (meets comfortably); at 85% → ~24 (still meets); the gate protects against worse.
+- **If the gate fails: INCONCLUSIVE-BY-HOLD → run the pre-registered expansion set (10 more names × same 8 dates = +80 runs) — an expansion, not a verdict.** If it still fails after expansion, report INCONCLUSIVE with the directional N needed.
+
+### Decision rule (KILL-SWITCH — verbatim mapping)
+
+| Outcome | Verdict |
+|---|---|
+| p ≤ 0.05 AND mean(X_t) > 0 at 1× cost AND mean(X_t) > 0 at 2× cost | **PROMISING — run the larger out-of-sample test** (never "confirmed edge") |
+| mean(X_t) ≤ 0 AND hit rate ≤ p₀ AND min-N gate met | **STOP-PIVOT** (no edge / anti-predictive) |
+| anything else | **INCONCLUSIVE** (+ directional N needed for power) |
+
+### Guardrails
+
+Paper/analysis-only (`--execute` forbidden; runner cannot emit it). Checkpoint triggers: unclosable leak · determinism failure · non-out-of-sample sample · HOLD-dominance blocking min-N after expansion. On any trigger: stop that track, surface prominently here.
 
 ---
 
@@ -67,9 +122,35 @@ Same live vendor call (`route_to_vendor("get_fundamentals", "MSFT", "2026-03-13"
 - **PIT OFF** — output contains ALL six forbidden formatted labels, with values that are unambiguously today-relative for a 2026-03-13 decision date: `PE Ratio (TTM): 23.257294`, `EPS (TTM): 16.79`, `52 Week High: 555.45`, `52 Week Low: 349.2`, `50 Day Average: 407.5954`, `200 Day Average: 445.4361`. The leak is real; the guard tests are not tautological.
 - **PIT ON** — same call returns the neutralization message; zero forbidden info-keys, zero forbidden labels. `get_prediction_markets` and `get_insider_transactions` return their disabled-mode stubs.
 
+### Live temp=0 behavior checks (pre-battery, 2026-07-04)
+
+- **⚠️ Greedy-decoding loop risk found and characterized:** at temp=0 (greedy), `qwen3.5:9b` on a *creative* prompt ("one-sentence metaphor") never left the thinking channel — 1500-token cap hit with **empty content** (`finish_reason=length`); an uncapped invocation ran >15 min before being killed. This is the known qwen thinking-model greedy pathology. On a **realistic analytical prompt** (the engine's regime) it terminates normally (`finish_reason=stop`, 1170 tokens, 34 s). Judged NOT a design-window trigger: the engine's prompts are analytical; the determinism battery is the arbiter, and eval runs get a runaway watch (a looping call would show as an abnormal wall time). Recorded as a TRI-73 caveat: greedy decoding on qwen thinking models is prompt-fragile.
+- **Repeat-identity at temp=0 (direct Ollama /v1 API):** `qwen3.5:9b` analytical prompt ×2 → byte-identical; `qwen3-coder:30b` tool-style prompt ×2 → byte-identical.
+- Deep slot: `ChatAnthropic(temperature=0)` object confirmed; live Sonnet call OK (credits verified live at task start).
+
 ### Step 3 — Determinism battery
 
-*(pending)*
+**Incident log (2026-07-04 → 07-05, corrected per reviewer session):** first battery launch lost ~29 h. AAPL r1 completed (SELL, 695 s, zero leak hits, $0.048). AAPL r2 failed with `openai.APIConnectionError` from the quick slot mid-run. During r3, the Ollama runner for `qwen3.5:9b` wedged — stuck in "Stopping…" at 100% GPU from ~16:28 Jul 4 — and `run_analysis` blocked indefinitely on the socket (no read timeout at our layer). **The SIGTERM was the reviewer session's deliberate emergency recovery at ~22:13 Jul 5:** the machine had drained to 7% battery with the GPU pegged; they killed the blocked processes and quit Ollama.app. Both Ollama models pass a health check after restart.
+**Ops lessons (recorded for eval + future runs):** (1) `pkill ollama` is insufficient — the macOS app respawns the server; **quit Ollama.app** to actually stop it. (2) **Eval runs on AC power only** — a pegged GPU drains even an M3 Max in hours. (3) A wedged runner presents as an indefinitely-blocked client socket; the per-run hard timeout (below) is the guard at our layer.
+**Hardening applied before relaunch (pre-commit window):** per-run hard timeout 3600 s; battery mode made resumable (completed run-ids are reused, so r1's SELL is not re-run); the mechanical infra-retry rule (see pre-registration) added to both modes. Determinism-bar semantics unchanged: the bar compares the decisions of the three COMPLETED runs per ticker — an infra failure yields no decision to compare and is completed via the retry, never counted as agreement.
+
+### 🔴 CHECKPOINT 1 (2026-07-06, design window OPEN — no pre-reg commit yet): temp=0 Config A wedges on real inputs
+
+**Evidence (chronological):**
+1. Battery AAPL r1 (Jul 4, temp=0, PIT on): completed healthy — SELL, 695 s.
+2. AAPL r2 (Jul 5): `openai.APIConnectionError` at the Aggressive Analyst (quick slot) during the Ollama-wedge incident.
+3. AAPL r3, NVDA r1, NVDA r2 (Jul 5–6, post-recovery, on AC power): **all three hit the 3600 s hard timeout** — silent stall after the news-analyst stage (last stderr = benign FRED-key warning in every case).
+4. Ollama server log: one `/v1/chat/completions` request ran **47m07s → HTTP 500**; surrounding normal calls run 20 s–2.4 m.
+5. Direct-API probes: qwen3.5:9b thinking runs away on some prompts at temp=0 (empty content at token cap) — and probe evidence shows very long thinking at temp=0.7 too, so greedy-vs-sampling may not be the discriminating variable.
+6. Battery halted after 4 consecutive wedges (config diagnosed non-viable; TSLA never started). No decision flip was ever observed — every completed run pair agreed; the failure mode is non-completion, not instability.
+
+**Confound to resolve:** TRI-69 changed TWO things vs TRI-70's healthy 15-run qwen3.5:9b baseline (~16–26 min/run, zero wedges): (a) the temperature=0 pin, (b) point-in-time mode content (neutralized fundamentals, disabled social, clamped windows). A diagnostic engine run (AAPL @ 2026-06-27, **provider-default temperature — TRI-70 conditions — with PIT ON**, run-id `tri69-diag-default-temp`) is in flight to discriminate:
+- Diag completes healthy → the temp=0 pin is the trigger → amend Config A to **seed-pinned sampling on the local slots** (repeat-identity at temp=0.7+seed verified by direct probe ×3 prompt classes) + deep Sonnet temp=0, determinism bar unchanged, verified by a fresh same-day battery.
+- Diag also wedges → PIT content (or current news content) is the trigger → investigate content path before any amendment.
+
+**Also fixed regardless:** a generation-length guard (max_tokens) on the local slots so a runaway fails in minutes, not hours; per-run 3600 s timeout already in place.
+
+*(first battery attempt — decisions observed: AAPL r1 SELL [Jul 4]; all later runs wedged; NO flip observed. Battery will be re-run in full, same-day, under the amended config once the diagnostic discriminates.)*
 
 ---
 

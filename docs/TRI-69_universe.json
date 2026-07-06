@@ -1,0 +1,48 @@
+{
+  "membership_source": "github.com/fja05680/sp500 @ b792557e915703398ef9a67e4b583a37c6ec80d5, file: S&P 500 Historical Components & Changes (Updated).csv, row max(date<=2026-02-17) = 2026-02-09, 503 tickers",
+  "subset_rule": "exclude AAPL/NVDA/TSLA; sort pool lexicographically; primary = sorted(random.Random(69).sample(pool, 20)); expansion (only if HOLD-dominance rule fires) = sorted(random.Random(6969).sample(pool_minus_primary, 10)); Python 3.13.11",
+  "dates": [
+    "2026-02-17",
+    "2026-03-03",
+    "2026-03-17",
+    "2026-03-31",
+    "2026-04-15",
+    "2026-04-29",
+    "2026-05-13",
+    "2026-05-28"
+  ],
+  "tickers": [
+    "ALB",
+    "APA",
+    "AZO",
+    "CF",
+    "ERIE",
+    "EXPD",
+    "GPC",
+    "HBAN",
+    "IBKR",
+    "LLY",
+    "MO",
+    "ORLY",
+    "SHW",
+    "SMCI",
+    "SO",
+    "SYK",
+    "TRMB",
+    "TT",
+    "VRSK",
+    "VRTX"
+  ],
+  "expansion_tickers": [
+    "APH",
+    "APO",
+    "BMY",
+    "DOW",
+    "EXR",
+    "FIX",
+    "INVH",
+    "KMB",
+    "SWKS",
+    "WBD"
+  ]
+}

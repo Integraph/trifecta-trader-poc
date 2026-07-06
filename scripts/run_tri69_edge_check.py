@@ -20,7 +20,7 @@ Battery mode (Step 4 of the pre-reg — burned points, excluded from eval):
   A single flip = FAIL (checkpoint; do not run the eval).
 
 Eval mode (Step 5 — one deterministic run per (ticker,date)):
-  python scripts/run_tri69_edge_check.py --eval --universe results/tri69/universe.json
+  python scripts/run_tri69_edge_check.py --eval --universe docs/TRI-69_universe.json
   The universe file is the PRE-REGISTERED {"dates": [...], "tickers": [...]}
   committed before any eval run. Resumable: existing result files are kept.
 
@@ -30,6 +30,7 @@ SAFETY: analysis-only (never --execute / --dry-run); Config A is TEST-ONLY.
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -40,9 +41,20 @@ REPO = Path(__file__).resolve().parent.parent
 CONFIG_NAME = "tri69_config_a"
 OUT_DIR = REPO / "results" / "tri69"
 
+# Per-run hard timeout. Observed healthy Config A runs take ~12 min; a run
+# past this is wedged (decode loop or dead Ollama socket) — kill and record.
+# The 2026-07-04 battery lost ~29h to exactly this failure mode.
+RUN_TIMEOUT_S = 3600
+
+# Mechanical infra-failure classifier (pre-registered): ONLY a connection
+# error to the local Ollama server earns one retry — it is not a draw from
+# the model, so retrying cannot bias the signal. Everything else (decode
+# loop, timeout, extraction UNKNOWN, other exceptions) is NO-DECISION with
+# NO retry: at temp=0 those reproduce deterministically.
+INFRA_RE = re.compile(r"APIConnectionError|Connection error|Connection refused|ConnectError")
+
 # Leak audit on saved analyst reports (defense-in-depth on top of the
 # in-process guard in src/point_in_time.py).
-import re
 INFO_KEYS_RE = re.compile(
     r"fiftyTwoWeek\w*|fiftyDayAverage|twoHundredDayAverage"
     r"|trailingPE\b|trailingEps\b|trailingPegRatio\b|trailingAnnualDividend\w*"
@@ -87,7 +99,25 @@ def _run_once(ticker: str, date: str, run_id: str, memdir: Path) -> dict:
         "--run-id", run_id,
     ]
     t0 = time.time()
-    proc = subprocess.run(cmd, cwd=REPO, env=env, capture_output=True, text=True)
+    try:
+        proc = subprocess.run(cmd, cwd=REPO, env=env, capture_output=True,
+                              text=True, timeout=RUN_TIMEOUT_S)
+    except subprocess.TimeoutExpired as te:
+        def _tail(stream, n):
+            if stream is None:
+                return ""
+            if isinstance(stream, bytes):
+                return stream[-n:].decode(errors="replace")
+            return stream[-n:]
+        # Keep a generous stdout tail: with --debug on, the last graph-node
+        # line localizes WHERE a wedged run stalled.
+        return {
+            "_error": True, "_timeout": True, "ticker": ticker,
+            "trade_date": date, "run_id": run_id, "_returncode": None,
+            "_wall_s_subprocess": round(time.time() - t0, 1),
+            "_stderr_tail": _tail(te.stderr, 1200),
+            "_stdout_tail": _tail(te.stdout, 4000),
+        }
     elapsed = time.time() - t0
 
     result_file = REPO / "results" / ticker / f"analysis_{date}_{CONFIG_NAME}_{run_id}.json"
@@ -107,6 +137,31 @@ def _run_once(ticker: str, date: str, run_id: str, memdir: Path) -> dict:
     }
 
 
+def _existing_result(ticker: str, date: str, run_id: str):
+    """Load a prior result for run_id (or its -retry) if one exists (resume)."""
+    for rid in (run_id, f"{run_id}-retry"):
+        f = REPO / "results" / ticker / f"analysis_{date}_{CONFIG_NAME}_{rid}.json"
+        if f.exists():
+            with open(f) as fh:
+                data = json.load(fh)
+            data["_resumed"] = True
+            data["_leak_audit_hits"] = _leak_audit(data)
+            return data
+    return None
+
+
+def _run_with_infra_retry(ticker: str, date: str, run_id: str, memdir: Path) -> dict:
+    """One run; a single retry ONLY on the mechanical infra signature."""
+    r = _run_once(ticker, date, run_id, memdir)
+    if (r.get("_error") and not r.get("_timeout")
+            and INFRA_RE.search(r.get("_stderr_tail") or "")):
+        print(f"    INFRA failure (connection) — one pre-registered retry", flush=True)
+        r2 = _run_once(ticker, date, f"{run_id}-retry", memdir)
+        r2["_infra_retry_of"] = run_id
+        return r2
+    return r
+
+
 def _dump(path: Path, obj) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w") as f:
@@ -115,6 +170,19 @@ def _dump(path: Path, obj) -> None:
 
 def _cost_of(r: dict) -> float:
     return (r.get("cost_breakdown") or {}).get("total_usd") or 0.0
+
+
+def _battery_ticker_agg(runs: list) -> dict:
+    decisions = [x.get("decision", "ERROR") if not x.get("_error") else "ERROR"
+                 for x in runs]
+    return {
+        "decisions": decisions,
+        "identical": len(set(decisions)) == 1 and "ERROR" not in decisions,
+        "leak_hits": sum(len(x.get("_leak_audit_hits") or []) for x in runs),
+        "run_ids": [x.get("run_id") for x in runs],
+        "walls_s": [x.get("elapsed_seconds") for x in runs],
+        "infra_retries": sum(1 for x in runs if x.get("_infra_retry_of")),
+    }
 
 
 def run_battery(tickers, date, n, tag):
@@ -127,8 +195,16 @@ def run_battery(tickers, date, n, tag):
         runs = []
         for i in range(n):
             run_id = f"{tag}-{ticker}-r{i+1}"
+            prior = _existing_result(ticker, date, run_id)
+            if prior is not None:
+                print(f"\n>>> BATTERY {ticker} repeat {i+1}/{n} RESUMED "
+                      f"decision={prior.get('decision')}", flush=True)
+                runs.append(prior)
+                summary["tickers"][ticker] = _battery_ticker_agg(runs)
+                _dump(out_file, summary)
+                continue
             print(f"\n>>> BATTERY {ticker} repeat {i+1}/{n} run_id={run_id}", flush=True)
-            r = _run_once(ticker, date, run_id, memdir)
+            r = _run_with_infra_retry(ticker, date, run_id, memdir)
             if r.get("_error"):
                 print(f"    ERROR rc={r['_returncode']}: {r['_stderr_tail'][-300:]}", flush=True)
             else:
@@ -136,14 +212,7 @@ def run_battery(tickers, date, n, tag):
                       f"leaks={r['_leak_audit_hits'] or 'none'}", flush=True)
             runs.append(r)
             summary["total_usd"] = round(summary["total_usd"] + _cost_of(r), 4)
-            decisions = [x.get("decision", "ERROR") for x in runs]
-            summary["tickers"][ticker] = {
-                "decisions": decisions,
-                "identical": len(set(decisions)) == 1 and "ERROR" not in decisions,
-                "leak_hits": sum(len(x.get("_leak_audit_hits") or []) for x in runs),
-                "run_ids": [x.get("run_id") for x in runs],
-                "walls_s": [x.get("elapsed_seconds") for x in runs],
-            }
+            summary["tickers"][ticker] = _battery_ticker_agg(runs)
             _dump(out_file, summary)
         if not summary["tickers"][ticker]["identical"]:
             all_identical = False
@@ -176,17 +245,12 @@ def run_eval(universe_file, tag):
         for ticker in tickers:
             done += 1
             run_id = f"{tag}-{ticker}-{date}"
-            result_file = (REPO / "results" / ticker /
-                           f"analysis_{date}_{CONFIG_NAME}_{run_id}.json")
-            if result_file.exists():
-                with open(result_file) as f:
-                    r = json.load(f)
-                r["_leak_audit_hits"] = _leak_audit(r)
-                r["_resumed"] = True
+            r = _existing_result(ticker, date, run_id)
+            if r is not None:
                 print(f"[{done}/{total}] SKIP (exists) {ticker}@{date}", flush=True)
             else:
                 print(f"\n[{done}/{total}] >>> {ticker}@{date} run_id={run_id}", flush=True)
-                r = _run_once(ticker, date, run_id, memdir)
+                r = _run_with_infra_retry(ticker, date, run_id, memdir)
                 if r.get("_error"):
                     print(f"    ERROR rc={r['_returncode']}: "
                           f"{r['_stderr_tail'][-300:]}", flush=True)
@@ -228,7 +292,7 @@ def main():
     p.add_argument("--tickers", nargs="+", default=["AAPL", "NVDA", "TSLA"])
     p.add_argument("--date", type=str, default="2026-06-27")
     p.add_argument("--n", type=int, default=3)
-    p.add_argument("--universe", type=str, default="results/tri69/universe.json")
+    p.add_argument("--universe", type=str, default="docs/TRI-69_universe.json")
     p.add_argument("--tag", type=str, default="tri69")
     args = p.parse_args()
 
