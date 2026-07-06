@@ -8,12 +8,20 @@
 
 ## ⏱️ RUNNING STATUS (updated live — check here first)
 
-**Last updated:** 2026-07-03 ~08:30 — **ALL 8 STEPS COMPLETE. Ready for Codex QA handoff (DEVELOP does not declare Done).**
+**Last updated:** 2026-07-06 — **ALL 8 STEPS COMPLETE; QA CHANGES-REQUESTED revisions applied (below). Back to Codex QA for re-verdict (DEVELOP does not declare Done).**
+
+### 📝 QA-revision note (2026-07-06, per `docs/TASK_TRI-70_CODEX_REVIEW.md` — verdict CHANGES-REQUESTED)
+
+All three required changes from the QA review are applied in this revision:
+1. **[P1] Input-identity overclaim withdrawn.** The saved finalist artifacts preserve only the final PM text and trader plan — not analyst reports or raw fetched inputs — so earlier claims of "identical inputs → BUY/HOLD/SELL swing" and "local-specific, not an engine/task property" are **softened throughout** to what the artifacts prove: output-level decision instability under the same ticker/date benchmark setup. Input-drift-vs-model-noise attribution required TRI-69's point-in-time input controls. **TRI-69 postscript (commit `3d17f05`):** with inputs fully controlled and byte-identical analyst reports, decisions still flipped — the instability is materially **stack/sampling-inherent** (Ollama fp/kv-cache state effects + best-effort cloud temp=0), not purely a local-model property. TRI-70's mechanism guesses are superseded by that evidence.
+2. **[P2] Cloud-stability language downgraded.** "Decisive"/"decision-STABLE" claims are reduced to: cloud references were **stable in the observed N=3 smoke runs** (3/3; 95% Wilson ≈ [0.44, 1.00]) while the local finalist was unstable at N=15 (0.60; Wilson ≈ [0.36, 0.80]) — **directional support for the recommendation, not a reliability proof.** Tool gates at 3/3 read the same way (screen PASS evidence).
+3. **[P2] Independent N=5 repro status disclosed.** The QA sandbox could not complete the prescribed independent N=5 repro (memory-log path perms → 5/5 errors; the workspace-memory retry completed only 1 repeat — BUY, Q 8.5 — before the review window closed). **The 0.60 finalist agreement is therefore NOT independently reproduced**; it rests on the committed finalist artifacts (15 run-id'd JSONs). The QA-recommended `TRADINGAGENTS_MEMORY_LOG_PATH` workspace-safe guidance is now standard in the TRI-69 runner and applies to any future repro.
 
 🔴 **Headline finding: NO all-local config clears the gate ("`quality_scorer` ≥ 8.0 WITH a stable decision").**
 The best local deep model, `deepseek-r1:8b`, reaches Q 8.13 *mean* at N=5 but is **decision-unstable (0.60
-agreement)** and quality-inconsistent (NVDA 7.66). Cloud reference proves the bar is reachable and stable
-(`hybrid_haiku_tools`/sonnet = 8.7 @ agreement 1.00), so **the deep-slot gap is real and local-specific.**
+agreement)** and quality-inconsistent (NVDA 7.66). The cloud reference was **stable in the observed N=3 smoke runs**
+(`hybrid_haiku_tools`/sonnet = 8.7 @ 3/3; 95% Wilson ≈ [0.44, 1.00]), which **directionally supports** a deep-slot
+gap — screen-level evidence, not a reliability proof (see the QA-revision note below).
 Recommendation: don't ship an all-local deep slot yet; pursue a **stability mitigation** (temperature=0 /
 majority-vote aggregation on r1:8b) as the cheapest path — full analysis in **Step 8** below. See exit-criteria
 checklist ⬇️ and the 🚩 checkpoint section.
@@ -70,7 +78,9 @@ qwen3.5:9b/27b/35b-a3b, qwen2.5:14b/32b, mistral-small:22b, llama3.1:8b, mistral
 - 🔴 **CHECKPOINT (headline finding): no local config clears the gate as specified ("≥8.0 WITH a stable decision").**
   The screen winner `deepseek-r1:8b` looked excellent at N=3 (9.1, HOLD×3) but that was **small-sample luck**. At the
   finalist N=5 across AAPL/NVDA/TSLA, `benchmark_local_b` (deep=r1:8b) shows:
-  - **Decision NOT stable — 0.60 agreement on every ticker** (identical inputs → BUY/HOLD/SELL swing).
+  - **Decision NOT stable — 0.60 agreement on every ticker** (BUY/HOLD/SELL swing across repeats of the same
+    ticker/date benchmark setup; the saved finalist artifacts keep only the final PM text + trader plan, so
+    raw-input identity across repeats is **not proven** — the claim is output instability, per QA review).
   - **Quality straddles the gate:** overall mean **8.13** (σ 1.23), but **NVDA 7.66 (< 8.0)** and only **10/15 runs
     ≥ 8.0**; data-grounding is inconsistent (mean 7.2, **range 2–10** — sometimes ungrounded).
   The gate requires 8.0 *with a stable decision*; the decision is unstable, so **the gate is not met.** This is the
@@ -231,10 +241,14 @@ AAPL @ 2026-06-27, N=3 each (6 cloud runs = the credit budget). $ is real (prici
 | `hybrid_haiku_tools` (**sonnet** deep) | HOLD×3 | **1.00** | 1.0 | rendered_structured_parse×3 | **8.7** | 0.17 | 10 | ~$0.15 | ~17.3 min |
 | `benchmark_opus_a` (**opus-4-8** deep) | HOLD×3 | **1.00** | 1.0 | rendered_structured_parse×3 | **7.3** | 0.35 | 10 | ~$0.15 | ~30.0 min |
 
-**Two decisive findings:**
-1. **Cloud deep slots are decision-STABLE (agreement 1.00 vs local's 0.60).** So the deep-slot decision instability
-   is **local-specific, not an engine/task property** — a frontier reasoner gives the same decision on identical
-   inputs, current local reasoners do not. This is the core gap.
+**Two findings:**
+1. **Cloud deep slots were decision-stable in the observed N=3 smoke runs (3/3 each; 95% Wilson ≈ [0.44, 1.00])
+   while the local finalist was unstable at N=15 (0.60, Wilson ≈ [0.36, 0.80]).** That **directionally supports**
+   a local-vs-cloud deep-slot stability gap, but N=3 cannot prove cloud reliability, and the saved artifacts
+   cannot separate input drift from model sampling noise — definitive attribution needed TRI-69's point-in-time
+   input controls. *(TRI-69 postscript, commit `3d17f05`: under full input controls the stack itself proved
+   non-deterministic — decision flips arose even with byte-identical analyst inputs — so a material share of the
+   0.60 is stack/sampling-inherent rather than purely a local-model property.)*
 2. **Quality ceiling ≈ 8.7 (sonnet deep); opus-4-8 deep scores only 7.3** — *below* the cheaper sonnet on this
    scorer and below the 8.0 gate. (opus's more concise, extended-thinking output scores lower on the reasoning-
    depth/structure heuristics; grounding is 10 either way.) **This retro-validates the scorer:** local r1:8b's N=5
@@ -339,9 +353,11 @@ rating capture) is robust on both paths. No UNKNOWN needed investigation (none o
   BUY, HOLD, or SELL on the *same* input across repeats cannot be shipped as the quality-critical Risk-Judge.
 - Every other local candidate is **below 8.0** on quality; the only decision-*stable* locals (r1:14b/70b, gpt-oss:120b)
   are stable at a *low* quality/grounding, which is worse, not better.
-- The cloud reference proves the bar is achievable: **`hybrid_haiku_tools` (sonnet deep) = 8.7 at agreement 1.00**,
-  and stability is 1.00 for both cloud deep slots. So **the deep-slot gap is real and local-specific** — current
-  local reasoners on this M3 Max lack the decision consistency the deep slot needs.
+- The cloud reference indicates the quality bar is achievable: **`hybrid_haiku_tools` (sonnet deep) = 8.7 with 3/3
+  agreement in the observed N=3 smoke runs** (95% Wilson ≈ [0.44, 1.00] — screen evidence, not a reliability
+  proof). The observed pattern — cloud stable at N=3, local unstable at N=15 — **directionally supports** a
+  deep-slot gap; definitive input-drift-vs-model-noise attribution required TRI-69's point-in-time controls
+  (see the QA-revision note and the TRI-69 postscript above).
 
 **Therefore (honest, evidenced "none clears"):**
 1. **Do NOT ship an all-local deep slot yet.** `benchmark_local_b`(r1:8b) is the closest local config and is a
