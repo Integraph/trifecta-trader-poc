@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ollama ps)",
+      "Bash(ollama ps *)",
+      "Bash(ollama list)",
+      "Bash(ollama list *)",
+      "Bash(curl -s http://localhost:11434/api/tags)",
+      "Bash(curl -s -m 2 http://localhost:11434/api/tags)",
+      "Bash(curl -s -m 4 http://localhost:11434/api/tags)",
+      "Bash(git -C vendor/TradingAgents log *)",
+      "Bash(git -C vendor/TradingAgents show *)",
+      "Bash(git -C vendor/TradingAgents grep *)",
+      "Bash(git -C vendor/TradingAgents status *)",
+      "Bash(git -C vendor/TradingAgents rev-parse *)",
+      "Bash(git -C vendor/TradingAgents diff *)",
+      "Bash(git -C vendor/TradingAgents tag)",
+      "Bash(git -C vendor/TradingAgents remote -v)",
+      "Bash(git ls-tree *)",
+      "Bash(python -m pytest tests/ -q -p no:cacheprovider --tb=line -rf --ignore=tests/test_reasoning_comparison.py --ignore=tests/test_prompt_engineering.py --ignore=tests/test_local_tool_calling.py --ignore=tests/test_structured_output.py --ignore=tests/test_alpaca_connection.py -o addopts=)",
+      "Bash(python -m pytest tests/test_signal_processing.py -q -p no:cacheprovider -o addopts=\"\")",
+      "mcp__fff7a131-de5d-4e31-a830-ee91eb8fcc28__list_issues",
+      "mcp__fff7a131-de5d-4e31-a830-ee91eb8fcc28__get_issue",
+      "mcp__fff7a131-de5d-4e31-a830-ee91eb8fcc28__get_project",
+      "mcp__fff7a131-de5d-4e31-a830-ee91eb8fcc28__list_teams",
+      "mcp__fff7a131-de5d-4e31-a830-ee91eb8fcc28__list_projects"
+    ]
+  }
+}
