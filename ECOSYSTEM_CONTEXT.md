@@ -52,7 +52,7 @@ The Trifecta Trading Ecosystem is a multi-agent AI trading platform consisting o
 | Component | Repo | Stack | Status | Admin UI |
 |-----------|------|-------|--------|----------|
 | Market Scanner | `trifecta-market-scanner` | Python, Streamlit, APScheduler | S7 complete (511 tests, 51 modules). All Linear issues Done. | Streamlit dashboard (port 8501), 6-tab admin settings page |
-| Stock Trader Engine | `trifecta-trader-poc` | Python, FastAPI admin, Alpaca | v1.0.2, Tasks 001-020 complete (vendor zero-mod broken — TRI-66). **Engine-first MVP: TRI-66 upgrade is the active priority; live trading (TRI-31) is DEFERRED under the paper-only MVP.** | FastAPI admin API + React admin-ui/ |
+| Stock Trader Engine | `trifecta-trader-poc` | Python, FastAPI admin, Alpaca | **v0.3.0 vendor upgrade DONE (TRI-66, 2026-07-02): zero-mod restored, LangGraph 1.x pinned.** Engine-first MVP: **TRI-70 (local-model benchmark) is now the active priority**; live trading (TRI-31) DEFERRED under the paper-only MVP. | FastAPI admin API + React admin-ui/ |
 | Stock Trader UI | `tt-curser` | React 18, TypeScript, Vite, Fastify, Zustand | Tasks 001-004 complete; **Task 005 was never implemented — commit 3bc491d is mislabeled (TRI-21, reverted to Todo)**; backend build red (TRI-40). UI work is deferred under the engine-first MVP. | Settings page with API keys, notifications, preferences |
 | Crypto Trader Engine | `trifecta-crypto-trader` | Python, LangGraph, CCXT (Kraken) | M6 complete. M7 parent In Progress (TRI-7), sub-tasks in Backlog. | None — CLI only. Standalone UI deferred to Ecosystem agent |
 | Crypto Trader UI | TBD | TBD (Ecosystem agent decides) | Not started | N/A |
@@ -146,7 +146,7 @@ SUPABASE_SERVICE_ROLE_KEY=...  (backend only)
 ### 4.2 Vendor Submodules
 
 The two **engines** use vendor submodules as architectural references (the **Scanner does NOT** — it has no `vendor/` or `.gitmodules`; its third-party code is its pip libraries):
-- Stock Trader Engine: `vendor/TradingAgents` (`TauricResearch/TradingAgents`) — zero modifications is the **goal but currently VIOLATED**: the pin `5de91bc` is a local commit (Task 020) that modifies 4 vendor files. *(Currency: pinned ~v0.2.0; upstream v0.3.0. **TRI-66** upgrades to v0.3.0 and restores zero-mod.)*
+- Stock Trader Engine: `vendor/TradingAgents` (`TauricResearch/TradingAgents`) — **zero modifications RESTORED (TRI-66 Done, 2026-07-02): submodule at v0.3.0 `85946c2`, byte-identical to upstream (`diff v0.3.0` = 0).**
 - Crypto Trader Engine: `vendor/ai-hedge-fund-crypto` (`51bitquant/ai-hedge-fund-crypto`) — ZERO modifications enforced. *(Currency: pinned to a Sept-2025 `main` commit — see TRI-63.)*
 - Scanner: **no vendor submodule.**
 
