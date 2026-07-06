@@ -255,7 +255,9 @@ configs:
     enhance_style: financial_analysis
     enhance_deep: false
     enhance_deep_style: execution_params_only
-    temperature: 0.0
+    deep_temperature: 0.0
+    local_seed: 69
+    local_max_tokens: 16384
   tri69_diag_default:
     tool_provider: ollama
     tool_model: qwen3-coder:30b

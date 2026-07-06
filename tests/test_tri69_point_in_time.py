@@ -20,7 +20,7 @@ load_dotenv()
 # ── Temperature plumbing (Config A prerequisite) ──────────────────────────────
 
 class TestTemperaturePlumbing:
-    def _make_config(self, temperature):
+    def _make_config(self, temperature, **kw):
         from src.hybrid_llm import HybridLLMConfig
         return HybridLLMConfig(
             tool_provider="ollama", tool_model="qwen3-coder:30b",
@@ -28,7 +28,7 @@ class TestTemperaturePlumbing:
             reasoning_deep_provider="anthropic",
             reasoning_deep_model="claude-sonnet-4-5-20250929",
             enhance_local=False, enhance_deep=False,
-            temperature=temperature,
+            temperature=temperature, **kw,
         )
 
     def test_temperature_zero_reaches_all_three_slots(self):
@@ -46,6 +46,32 @@ class TestTemperaturePlumbing:
         for slot in ("tool_calling_llm", "reasoning_quick_llm"):
             temp = getattr(llms[slot], "temperature", None)
             assert temp != 0.0, f"{slot} got temp=0 without the config asking"
+
+    def test_amended_config_a_pins(self):
+        """Checkpoint-1 amendment: local slots get seed + max_tokens at
+        model-default sampling; deep slot alone gets temperature=0."""
+        from src.hybrid_llm import create_hybrid_llms
+        cfg = self._make_config(None, deep_temperature=0.0,
+                                local_seed=69, local_max_tokens=16384)
+        llms = create_hybrid_llms(cfg)
+        for slot in ("tool_calling_llm", "reasoning_quick_llm"):
+            assert getattr(llms[slot], "seed", None) == 69, slot
+            assert getattr(llms[slot], "max_tokens", None) == 16384, slot
+            assert getattr(llms[slot], "temperature", None) != 0.0, slot
+        deep = llms["reasoning_deep_llm"]
+        assert deep.temperature == 0.0
+        # the anthropic slot must NOT get the ollama pins
+        assert getattr(deep, "seed", None) != 69
+
+    def test_amended_yaml_round_trip(self):
+        from src.hybrid_llm import _yaml_entry_to_config
+        cfg = self._make_config(None, deep_temperature=0.0,
+                                local_seed=69, local_max_tokens=16384)
+        entry = cfg.to_flat_dict()
+        back = _yaml_entry_to_config(entry)
+        assert (back.deep_temperature, back.local_seed, back.local_max_tokens) \
+            == (0.0, 69, 16384)
+        assert "temperature" not in entry  # unset base temp stays absent
 
     def test_temperature_yaml_round_trip(self):
         from src.hybrid_llm import _yaml_entry_to_config

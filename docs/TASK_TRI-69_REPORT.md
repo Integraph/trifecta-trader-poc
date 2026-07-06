@@ -12,7 +12,7 @@
 > | 6. Scoring | ⬜ pending |
 > | 7. Verdict | ⬜ pending |
 >
-> Checkpoint triggers fired: **🔴 ONE (open) — 2026-07-06: Config A as pre-drafted (temp=0 all three slots) cannot complete runs reliably.** Battery halted at 4 consecutive wedged runs. Design window is still open (no pre-reg commit yet); root-cause isolation in progress. See "Checkpoint 1" below.
+> Checkpoint triggers fired: **ONE — RESOLVED inside the design window. 2026-07-06: temp=0-all-slots wedges the local thinking model (checkpoint 1). Root cause isolated by a controlled diagnostic (temp pin, not PIT content); Config A amended to seed-pinned model-default sampling on local slots + temp=0 deep. Determinism bar unchanged. Battery re-running under the amended config.**
 
 **Issue:** TRI-69 · **Branch:** `jeff/tri-69-edge-check` (from TRI-70 tip 769be7d) · **Spec:** `docs/TASK_TRI-69_EDGE_CHECK.md` (v3, LOCKED) · **Integrity doc:** `docs/TRIFECTA_MVP_MEASUREMENT_INTEGRITY_TESTS.md` · **Paper only; --execute forbidden.**
 
@@ -22,9 +22,11 @@
 
 **Nothing in this section may change after that commit. Deviations only via the checkpoint triggers, documented prominently.**
 
-### Signal arm — Config A (TEST-ONLY, never production)
+### Signal arm — Config A (TEST-ONLY, never production) — AS AMENDED under checkpoint 1
 
-`tri69_config_a`: tool = `ollama/qwen3-coder:30b` · quick = `ollama/qwen3.5:9b` · deep = `anthropic/claude-sonnet-4-5-20250929` · **temperature = 0.0 on all three slots** · enhancements off · analyst cache off (`--no-cache`) · fresh memory log per run · point-in-time mode on (`TRIFECTA_POINT_IN_TIME=1`). One run per (ticker, date); decision extracted by the existing `extract_decision_detailed` (unchanged from TRI-70).
+`tri69_config_a`: tool = `ollama/qwen3-coder:30b` · quick = `ollama/qwen3.5:9b` · deep = `anthropic/claude-sonnet-4-5-20250929` · **deep slot temperature = 0.0; LOCAL slots at model-default sampling with pinned `seed=69` and a `max_tokens=16384` runaway guard** · enhancements off · analyst cache off (`--no-cache`) · fresh memory log per run · point-in-time mode on (`TRIFECTA_POINT_IN_TIME=1`). One run per (ticker, date); decision extracted by the existing `extract_decision_detailed` (unchanged from TRI-70).
+
+**Design-window amendment (2026-07-06, BEFORE this pre-registration commit):** the v3 work order pinned temperature=0 on all three slots *as a means to* decision-level determinism. Empirically that means kills the arm: greedy decoding wedges the local thinking model on content-dependent inputs (checkpoint 1 — 4 consecutive 3600 s timeouts across two tickers, one 47-minute HTTP 500 in the Ollama server log), while an otherwise-identical run at model-default sampling completed healthy in 901 s under full point-in-time conditions (`tri69-diag-default-temp`, HOLD). The amendment keeps the *end* (decision-identical repeats, verified — not assumed — by the battery, same bar, no loosening) and swaps the *means*: a pinned sampling seed on the local slots (direct-probe verified byte-identical across repeats on three prompt classes), temp=0 retained on the cloud judge (Anthropic exposes no seed; Sonnet@temp=0 was stability 1.00 in TRI-70). The qwen model card itself warns against greedy decoding for thinking models. Residual risk — seed reproducibility is server/hardware-local (fine: one box) — is accepted and disclosed; the determinism battery remains the gate.
 
 ### Universe (mechanical, as-of-date, no survivorship)
 
@@ -150,7 +152,9 @@ Same live vendor call (`route_to_vendor("get_fundamentals", "MSFT", "2026-03-13"
 
 **Also fixed regardless:** a generation-length guard (max_tokens) on the local slots so a runaway fails in minutes, not hours; per-run 3600 s timeout already in place.
 
-*(first battery attempt — decisions observed: AAPL r1 SELL [Jul 4]; all later runs wedged; NO flip observed. Battery will be re-run in full, same-day, under the amended config once the diagnostic discriminates.)*
+**RESOLUTION (2026-07-06):** the diagnostic run **completed healthy — 901 s, decision HOLD, quality 7.4, data-grounding 10, zero leak hits** — at provider-default temperature with PIT ON (`tri69-diag-default-temp`). PIT content exonerated; **the temperature=0 pin is the wedge trigger.** Config A amended per the design-window write-up in the pre-registration section (seed-pinned model-default sampling on local slots + temp=0 deep + 16384-token runaway guard). Direct probes confirm default-sampling+seed is byte-identical across repeats and terminates (`finish=stop`) on prompts where pinned-temp generation blew the token cap. Battery re-launching in full (fresh same-day trios, tag `tri69b`); Jul-4 stale runs excluded from the identity comparison (cross-day news drift breaks the identical-inputs premise — recorded as TRI-73 input).
+
+*(first battery attempt — decisions observed: AAPL r1 SELL [Jul 4]; all later runs wedged; NO flip observed.)*
 
 ---
 

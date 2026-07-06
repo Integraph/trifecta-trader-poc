@@ -37,10 +37,16 @@ class HybridLLMConfig:
     - enhance_local: Whether to wrap local models with data-citation prefix
     - enhance_style: Which prefix style to use (see src/enhanced_llm.py)
     - temperature: Sampling temperature applied to ALL THREE slots when set
-      (None = each provider's own default). TRI-69: determinism requires
-      temperature=0 on every slot, not just the deep judge — the local
-      tool/quick slots otherwise sample at Ollama's ~0.7-0.8 default and
-      their narrative drift flips the judge even at judge-temp=0.
+      (None = each provider's own default).
+    - deep_temperature: Overrides temperature for the DEEP slot only.
+    - local_seed: Fixed sampling seed applied to ollama-provider slots.
+      TRI-69 checkpoint 1 finding: pinning temp=0 (greedy) wedges the local
+      thinking model on content-dependent inputs (runaway thinking, 47-min
+      requests); model-default sampling + a pinned seed gives byte-identical
+      repeats WITHOUT the greedy pathology. Determinism is verified
+      empirically by the battery, never assumed.
+    - local_max_tokens: Generation cap for ollama-provider slots — a
+      runaway fails in minutes (-> NO-DECISION) instead of wedging for hours.
     """
 
     def __init__(
@@ -56,6 +62,9 @@ class HybridLLMConfig:
         enhance_deep: bool = False,
         enhance_deep_style: str = "execution_params_only",
         temperature: Optional[float] = None,
+        deep_temperature: Optional[float] = None,
+        local_seed: Optional[int] = None,
+        local_max_tokens: Optional[int] = None,
     ):
         self.tool_provider = tool_provider
         self.tool_model = tool_model
@@ -68,6 +77,9 @@ class HybridLLMConfig:
         self.enhance_deep = enhance_deep
         self.enhance_deep_style = enhance_deep_style
         self.temperature = temperature
+        self.deep_temperature = deep_temperature
+        self.local_seed = local_seed
+        self.local_max_tokens = local_max_tokens
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a summary dict for logging/reporting."""
@@ -80,16 +92,25 @@ class HybridLLMConfig:
             d["enhance_style"] = self.enhance_style
         if self.enhance_deep:
             d["enhance_deep_style"] = self.enhance_deep_style
+        d.update(self._optional_sampling_fields())
+        return d
+
+    def _optional_sampling_fields(self) -> Dict[str, Any]:
+        """Sampling knobs, emitted only when set — pre-existing configs
+        round-trip byte-identically and older readers never see the keys."""
+        d: Dict[str, Any] = {}
         if self.temperature is not None:
             d["temperature"] = self.temperature
+        if self.deep_temperature is not None:
+            d["deep_temperature"] = self.deep_temperature
+        if self.local_seed is not None:
+            d["local_seed"] = self.local_seed
+        if self.local_max_tokens is not None:
+            d["local_max_tokens"] = self.local_max_tokens
         return d
 
     def to_flat_dict(self) -> Dict[str, Any]:
-        """Return all fields as a flat dict (for YAML / API serialization).
-
-        ``temperature`` is only emitted when set, so pre-existing configs
-        round-trip byte-identically and older readers never see the key.
-        """
+        """Return all fields as a flat dict (for YAML / API serialization)."""
         d = {
             "tool_provider":             self.tool_provider,
             "tool_model":                self.tool_model,
@@ -102,8 +123,7 @@ class HybridLLMConfig:
             "enhance_deep":              self.enhance_deep,
             "enhance_deep_style":        self.enhance_deep_style,
         }
-        if self.temperature is not None:
-            d["temperature"] = self.temperature
+        d.update(self._optional_sampling_fields())
         return d
 
 
@@ -301,6 +321,12 @@ def _yaml_entry_to_config(entry: dict) -> HybridLLMConfig:
         enhance_deep_style       = entry.get("enhance_deep_style",       "execution_params_only"),
         temperature              = (float(entry["temperature"])
                                     if entry.get("temperature") is not None else None),
+        deep_temperature         = (float(entry["deep_temperature"])
+                                    if entry.get("deep_temperature") is not None else None),
+        local_seed               = (int(entry["local_seed"])
+                                    if entry.get("local_seed") is not None else None),
+        local_max_tokens         = (int(entry["local_max_tokens"])
+                                    if entry.get("local_max_tokens") is not None else None),
     )
 
 
@@ -399,37 +425,56 @@ def create_hybrid_llms(hybrid_config: HybridLLMConfig) -> Dict[str, Any]:
 
     # Slot-shared kwargs. temperature (when set) is threaded into ALL THREE
     # create_llm_client calls; both the Anthropic and OpenAI-compatible/Ollama
-    # clients forward it to the underlying Chat model via _PASSTHROUGH_KWARGS
-    # (TRI-69: temp=0 on the judge alone does not make the arm deterministic).
+    # clients forward it to the underlying Chat model via _PASSTHROUGH_KWARGS.
     slot_kwargs = {}
     if hybrid_config.temperature is not None:
         slot_kwargs["temperature"] = hybrid_config.temperature
+
+    def _apply_local_pins(llm, provider: str):
+        """Reproducibility pins for ollama slots (TRI-69 checkpoint 1):
+        a fixed seed makes model-default sampling repeat-identical without
+        the greedy (temp=0) runaway-thinking pathology; max_tokens turns a
+        runaway into a fast, loud failure. Set post-construction because the
+        vendor client's passthrough list doesn't carry these keys (zero-mod)."""
+        if provider != "ollama":
+            return llm
+        if hybrid_config.local_seed is not None:
+            llm.seed = hybrid_config.local_seed
+        if hybrid_config.local_max_tokens is not None:
+            llm.max_tokens = hybrid_config.local_max_tokens
+        return llm
 
     tool_client = create_llm_client(
         provider=hybrid_config.tool_provider,
         model=hybrid_config.tool_model,
         **slot_kwargs,
     )
-    llms["tool_calling_llm"] = tool_client.get_llm()
+    llms["tool_calling_llm"] = _apply_local_pins(
+        tool_client.get_llm(), hybrid_config.tool_provider)
 
     reasoning_quick_client = create_llm_client(
         provider=hybrid_config.reasoning_quick_provider,
         model=hybrid_config.reasoning_quick_model,
         **slot_kwargs,
     )
-    reasoning_quick_llm = reasoning_quick_client.get_llm()
+    reasoning_quick_llm = _apply_local_pins(
+        reasoning_quick_client.get_llm(), hybrid_config.reasoning_quick_provider)
     if hybrid_config.enhance_local and hybrid_config.reasoning_quick_provider == "ollama":
         from src.enhanced_llm import create_enhanced_llm
         reasoning_quick_llm = create_enhanced_llm(reasoning_quick_llm, style=hybrid_config.enhance_style)
         logger.info("Enhanced reasoning_quick_llm with style '%s'", hybrid_config.enhance_style)
     llms["reasoning_quick_llm"] = reasoning_quick_llm
 
+    deep_kwargs = dict(slot_kwargs)
+    if hybrid_config.deep_temperature is not None:
+        deep_kwargs["temperature"] = hybrid_config.deep_temperature
     reasoning_deep_client = create_llm_client(
         provider=hybrid_config.reasoning_deep_provider,
         model=hybrid_config.reasoning_deep_model,
-        **slot_kwargs,
+        **deep_kwargs,
     )
-    reasoning_deep_llm = reasoning_deep_client.get_llm()
+    reasoning_deep_llm = _apply_local_pins(
+        reasoning_deep_client.get_llm(), hybrid_config.reasoning_deep_provider)
     if hybrid_config.enhance_local and hybrid_config.reasoning_deep_provider == "ollama":
         from src.enhanced_llm import create_enhanced_llm
         reasoning_deep_llm = create_enhanced_llm(reasoning_deep_llm, style=hybrid_config.enhance_style)

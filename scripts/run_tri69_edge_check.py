@@ -300,8 +300,14 @@ def main():
     if CONFIG_NAME not in CONFIGS:
         raise SystemExit(f"{CONFIG_NAME} missing — run scripts/build_tri69_config.py first")
     cfg = CONFIGS[CONFIG_NAME]
-    if cfg.temperature != 0.0:
-        raise SystemExit(f"{CONFIG_NAME}.temperature={cfg.temperature!r} — must be 0.0")
+    # Amended Config A pins (checkpoint 1): deep judge at temp=0; local slots
+    # at model-default sampling with a fixed seed + runaway guard.
+    if cfg.deep_temperature != 0.0:
+        raise SystemExit(f"{CONFIG_NAME}.deep_temperature={cfg.deep_temperature!r} — must be 0.0")
+    if cfg.local_seed is None:
+        raise SystemExit(f"{CONFIG_NAME}.local_seed is unset — determinism pin missing")
+    if not cfg.local_max_tokens:
+        raise SystemExit(f"{CONFIG_NAME}.local_max_tokens is unset — runaway guard missing")
 
     if args.battery:
         sys.exit(run_battery(args.tickers, args.date, args.n, f"{args.tag}-battery"))
