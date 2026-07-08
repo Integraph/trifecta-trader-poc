@@ -1,0 +1,17 @@
+RC= 0 WALL= 903.3
+STDOUT-TAIL:  /Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc/results/AAPL/analysis_2026-06-27_tri69_diag_default_tri69-diag-default-temp.json
+
+============================================================
+DECISION: HOLD
+
+Quality Score: 7.4/10
+  Reasoning depth:     4/10
+  Data grounding:      10/10
+  Risk awareness:      6/10
+  Decision consistent: Yes
+  Elapsed time:        901.3s
+
+Results saved to: /Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc/results/AAPL/analysis_2026-06-27_tri69_diag_default.json
+============================================================
+
+

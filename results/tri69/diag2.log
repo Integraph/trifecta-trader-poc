@@ -1,0 +1,116 @@
+/Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc/vendor/TradingAgents/tradingagents/llm_clients/anthropic_client.py:58: RuntimeWarning: Model 'claude-sonnet-4-5-20250929' is not in the known model list for provider 'anthropic'. Continuing anyway.
+  self.warn_if_unknown_model()
+/Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc/vendor/TradingAgents/tradingagents/llm_clients/anthropic_client.py:58: RuntimeWarning: Model 'claude-sonnet-4-5-20250929' is not in the known model list for provider 'anthropic'. Continuing anyway.
+  self.warn_if_unknown_model()
+Vendor 'fred' not configured for get_macro_indicators; trying next vendor.
+Optional macro_data unavailable for get_macro_indicators: FRED_API_KEY environment variable is not set. Get a free key at https://fred.stlouisfed.org/docs/api/api_key.html.
+Vendor 'fred' not configured for get_macro_indicators; trying next vendor.
+Optional macro_data unavailable for get_macro_indicators: FRED_API_KEY environment variable is not set. Get a free key at https://fred.stlouisfed.org/docs/api/api_key.html.
+Vendor 'fred' not configured for get_macro_indicators; trying next vendor.
+Optional macro_data unavailable for get_macro_indicators: FRED_API_KEY environment variable is not set. Get a free key at https://fred.stlouisfed.org/docs/api/api_key.html.
+Vendor 'fred' not configured for get_macro_indicators; trying next vendor.
+Optional macro_data unavailable for get_macro_indicators: FRED_API_KEY environment variable is not set. Get a free key at https://fred.stlouisfed.org/docs/api/api_key.html.
+Could not log to portfolio DB: FOREIGN KEY constraint failed
+[TRI-69] point-in-time mode ENABLED (as-of 2026-06-27)
+
+════════════════════════════════════════════════════════════
+PORTFOLIO CONTEXT
+════════════════════════════════════════════════════════════
+  Account equity:   $100,000.00
+  Buying power:     $400,000.00
+  Cash:             $100,000.00
+  Positions:        0 (none)
+
+  AAPL:            NOT HELD
+  Recommendation context: BUY analysis only (no position to sell)
+════════════════════════════════════════════════════════════
+
+  ⚠ Portfolio warnings for AAPL:
+    • No position in AAPL. SELL recommendations won't be actionable.
+
+
+============================================================
+Trifecta Trader POC - Analysis Run
+============================================================
+Ticker:    AAPL
+Date:      2026-06-27
+Mode:      HYBRID (tri69_config_a)
+Deep LLM:  claude-sonnet-4-5-20250929
+Quick LLM: claude-sonnet-4-5-20250929
+============================================================
+
+Hybrid routing: {'tool_calling': 'ollama/qwen3-coder:30b', 'reasoning_quick': 'ollama/qwen3.5:9b', 'reasoning_deep': 'anthropic/claude-sonnet-4-5-20250929', 'deep_temperature': 0.0, 'local_seed': 69, 'local_max_tokens': 16384}
+[signal_processing] Corrected decision: upstream='Underweight' -> ours='SELL'
+[TRI-79] run-id result copy: /Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc/results/AAPL/analysis_2026-06-27_tri69_config_a_tri69-diag2-r1.json
+
+============================================================
+DECISION: SELL
+
+Quality Score: 8.5/10
+  Reasoning depth:     5/10
+  Data grounding:      10/10
+  Risk awareness:      10/10
+  Decision consistent: Yes
+  Elapsed time:        943.8s
+
+Results saved to: /Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc/results/AAPL/analysis_2026-06-27_tri69_config_a.json
+============================================================
+
+/Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc/vendor/TradingAgents/tradingagents/llm_clients/anthropic_client.py:58: RuntimeWarning: Model 'claude-sonnet-4-5-20250929' is not in the known model list for provider 'anthropic'. Continuing anyway.
+  self.warn_if_unknown_model()
+/Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc/vendor/TradingAgents/tradingagents/llm_clients/anthropic_client.py:58: RuntimeWarning: Model 'claude-sonnet-4-5-20250929' is not in the known model list for provider 'anthropic'. Continuing anyway.
+  self.warn_if_unknown_model()
+Vendor 'fred' not configured for get_macro_indicators; trying next vendor.
+Optional macro_data unavailable for get_macro_indicators: FRED_API_KEY environment variable is not set. Get a free key at https://fred.stlouisfed.org/docs/api/api_key.html.
+Vendor 'fred' not configured for get_macro_indicators; trying next vendor.
+Optional macro_data unavailable for get_macro_indicators: FRED_API_KEY environment variable is not set. Get a free key at https://fred.stlouisfed.org/docs/api/api_key.html.
+Vendor 'fred' not configured for get_macro_indicators; trying next vendor.
+Optional macro_data unavailable for get_macro_indicators: FRED_API_KEY environment variable is not set. Get a free key at https://fred.stlouisfed.org/docs/api/api_key.html.
+Vendor 'fred' not configured for get_macro_indicators; trying next vendor.
+Optional macro_data unavailable for get_macro_indicators: FRED_API_KEY environment variable is not set. Get a free key at https://fred.stlouisfed.org/docs/api/api_key.html.
+Could not log to portfolio DB: FOREIGN KEY constraint failed
+[TRI-69] point-in-time mode ENABLED (as-of 2026-06-27)
+
+════════════════════════════════════════════════════════════
+PORTFOLIO CONTEXT
+════════════════════════════════════════════════════════════
+  Account equity:   $100,000.00
+  Buying power:     $400,000.00
+  Cash:             $100,000.00
+  Positions:        0 (none)
+
+  AAPL:            NOT HELD
+  Recommendation context: BUY analysis only (no position to sell)
+════════════════════════════════════════════════════════════
+
+  ⚠ Portfolio warnings for AAPL:
+    • No position in AAPL. SELL recommendations won't be actionable.
+
+
+============================================================
+Trifecta Trader POC - Analysis Run
+============================================================
+Ticker:    AAPL
+Date:      2026-06-27
+Mode:      HYBRID (tri69_config_a)
+Deep LLM:  claude-sonnet-4-5-20250929
+Quick LLM: claude-sonnet-4-5-20250929
+============================================================
+
+Hybrid routing: {'tool_calling': 'ollama/qwen3-coder:30b', 'reasoning_quick': 'ollama/qwen3.5:9b', 'reasoning_deep': 'anthropic/claude-sonnet-4-5-20250929', 'deep_temperature': 0.0, 'local_seed': 69, 'local_max_tokens': 16384}
+[signal_processing] Corrected decision: upstream='Underweight' -> ours='SELL'
+[TRI-79] run-id result copy: /Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc/results/AAPL/analysis_2026-06-27_tri69_config_a_tri69-diag2-r2.json
+
+============================================================
+DECISION: SELL
+
+Quality Score: 8.3/10
+  Reasoning depth:     5/10
+  Data grounding:      9/10
+  Risk awareness:      10/10
+  Decision consistent: Yes
+  Elapsed time:        1065.8s
+
+Results saved to: /Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc/results/AAPL/analysis_2026-06-27_tri69_config_a.json
+============================================================
+

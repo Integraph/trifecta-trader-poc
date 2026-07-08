@@ -1,0 +1,27 @@
+{
+  "mode": "battery",
+  "config": "tri69_config_a",
+  "date": "2026-06-27",
+  "n": 3,
+  "tickers": {
+    "AAPL": {
+      "decisions": [
+        "SELL",
+        "HOLD"
+      ],
+      "identical": false,
+      "leak_hits": 0,
+      "run_ids": [
+        "tri69c-battery-AAPL-r1",
+        "tri69c-battery-AAPL-r2"
+      ],
+      "walls_s": [
+        812.6,
+        878.9
+      ],
+      "infra_retries": 0
+    }
+  },
+  "pass": null,
+  "total_usd": 0.1071
+}

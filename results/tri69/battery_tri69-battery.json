@@ -1,0 +1,47 @@
+{
+  "mode": "battery",
+  "config": "tri69_config_a",
+  "date": "2026-06-27",
+  "n": 3,
+  "tickers": {
+    "AAPL": {
+      "decisions": [
+        "SELL",
+        "ERROR",
+        "ERROR"
+      ],
+      "identical": false,
+      "leak_hits": 0,
+      "run_ids": [
+        "tri69-battery-AAPL-r1",
+        "tri69-battery-AAPL-r2",
+        "tri69-battery-AAPL-r3"
+      ],
+      "walls_s": [
+        695.2,
+        null,
+        null
+      ],
+      "infra_retries": 0
+    },
+    "NVDA": {
+      "decisions": [
+        "ERROR",
+        "ERROR"
+      ],
+      "identical": false,
+      "leak_hits": 0,
+      "run_ids": [
+        "tri69-battery-NVDA-r1",
+        "tri69-battery-NVDA-r2"
+      ],
+      "walls_s": [
+        null,
+        null
+      ],
+      "infra_retries": 0
+    }
+  },
+  "pass": null,
+  "total_usd": 0.0
+}

@@ -1,0 +1,483 @@
+
+[1/160] >>> ALB@2026-02-17 run_id=tri69-eval-ALB-2026-02-17
+    decision=SELL wall=738.5s leaks=none
+
+[2/160] >>> APA@2026-02-17 run_id=tri69-eval-APA-2026-02-17
+    decision=HOLD wall=720.5s leaks=none
+
+[3/160] >>> AZO@2026-02-17 run_id=tri69-eval-AZO-2026-02-17
+    decision=SELL wall=1185.9s leaks=none
+
+[4/160] >>> CF@2026-02-17 run_id=tri69-eval-CF-2026-02-17
+    decision=SELL wall=736.7s leaks=none
+
+[5/160] >>> ERIE@2026-02-17 run_id=tri69-eval-ERIE-2026-02-17
+    decision=SELL wall=787.1s leaks=none
+
+[6/160] >>> EXPD@2026-02-17 run_id=tri69-eval-EXPD-2026-02-17
+    decision=HOLD wall=1006.8s leaks=none
+
+[7/160] >>> GPC@2026-02-17 run_id=tri69-eval-GPC-2026-02-17
+    decision=SELL wall=1058.4s leaks=none
+
+[8/160] >>> HBAN@2026-02-17 run_id=tri69-eval-HBAN-2026-02-17
+    decision=HOLD wall=869.2s leaks=none
+
+[9/160] >>> IBKR@2026-02-17 run_id=tri69-eval-IBKR-2026-02-17
+    decision=SELL wall=1124.2s leaks=none
+
+[10/160] >>> LLY@2026-02-17 run_id=tri69-eval-LLY-2026-02-17
+    decision=BUY wall=1034.3s leaks=none
+
+[11/160] >>> MO@2026-02-17 run_id=tri69-eval-MO-2026-02-17
+    decision=SELL wall=975.6s leaks=none
+
+[12/160] >>> ORLY@2026-02-17 run_id=tri69-eval-ORLY-2026-02-17
+    decision=SELL wall=1159.2s leaks=none
+
+[13/160] >>> SHW@2026-02-17 run_id=tri69-eval-SHW-2026-02-17
+    decision=HOLD wall=847.6s leaks=none
+
+[14/160] >>> SMCI@2026-02-17 run_id=tri69-eval-SMCI-2026-02-17
+    decision=SELL wall=1002.0s leaks=none
+
+[15/160] >>> SO@2026-02-17 run_id=tri69-eval-SO-2026-02-17
+    decision=SELL wall=941.8s leaks=none
+
+[16/160] >>> SYK@2026-02-17 run_id=tri69-eval-SYK-2026-02-17
+    decision=BUY wall=853.6s leaks=none
+
+[17/160] >>> TRMB@2026-02-17 run_id=tri69-eval-TRMB-2026-02-17
+    decision=SELL wall=1037.1s leaks=none
+
+[18/160] >>> TT@2026-02-17 run_id=tri69-eval-TT-2026-02-17
+    decision=SELL wall=859.0s leaks=none
+
+[19/160] >>> VRSK@2026-02-17 run_id=tri69-eval-VRSK-2026-02-17
+    decision=SELL wall=1065.7s leaks=none
+
+[20/160] >>> VRTX@2026-02-17 run_id=tri69-eval-VRTX-2026-02-17
+    decision=HOLD wall=760.4s leaks=none
+
+[21/160] >>> ALB@2026-03-03 run_id=tri69-eval-ALB-2026-03-03
+    decision=SELL wall=1257.6s leaks=none
+
+[22/160] >>> APA@2026-03-03 run_id=tri69-eval-APA-2026-03-03
+    decision=SELL wall=1037.4s leaks=none
+
+[23/160] >>> AZO@2026-03-03 run_id=tri69-eval-AZO-2026-03-03
+    decision=SELL wall=1052.5s leaks=none
+
+[24/160] >>> CF@2026-03-03 run_id=tri69-eval-CF-2026-03-03
+    decision=SELL wall=1012.1s leaks=none
+
+[25/160] >>> ERIE@2026-03-03 run_id=tri69-eval-ERIE-2026-03-03
+    decision=SELL wall=1126.1s leaks=none
+
+[26/160] >>> EXPD@2026-03-03 run_id=tri69-eval-EXPD-2026-03-03
+    decision=SELL wall=1067.6s leaks=none
+
+[27/160] >>> GPC@2026-03-03 run_id=tri69-eval-GPC-2026-03-03
+    decision=SELL wall=1129.2s leaks=none
+
+[28/160] >>> HBAN@2026-03-03 run_id=tri69-eval-HBAN-2026-03-03
+    decision=SELL wall=898.8s leaks=none
+
+[29/160] >>> IBKR@2026-03-03 run_id=tri69-eval-IBKR-2026-03-03
+    decision=SELL wall=952.4s leaks=none
+
+[30/160] >>> LLY@2026-03-03 run_id=tri69-eval-LLY-2026-03-03
+    decision=SELL wall=1124.4s leaks=none
+
+[31/160] >>> MO@2026-03-03 run_id=tri69-eval-MO-2026-03-03
+    decision=SELL wall=985.2s leaks=none
+
+[32/160] >>> ORLY@2026-03-03 run_id=tri69-eval-ORLY-2026-03-03
+    decision=SELL wall=1105.4s leaks=none
+
+[33/160] >>> SHW@2026-03-03 run_id=tri69-eval-SHW-2026-03-03
+    decision=SELL wall=1014.2s leaks=none
+
+[34/160] >>> SMCI@2026-03-03 run_id=tri69-eval-SMCI-2026-03-03
+    decision=SELL wall=967.2s leaks=none
+
+[35/160] >>> SO@2026-03-03 run_id=tri69-eval-SO-2026-03-03
+    decision=SELL wall=750.8s leaks=none
+
+[36/160] >>> SYK@2026-03-03 run_id=tri69-eval-SYK-2026-03-03
+    decision=BUY wall=999.9s leaks=none
+
+[37/160] >>> TRMB@2026-03-03 run_id=tri69-eval-TRMB-2026-03-03
+    decision=SELL wall=970.6s leaks=none
+
+[38/160] >>> TT@2026-03-03 run_id=tri69-eval-TT-2026-03-03
+    decision=BUY wall=725.8s leaks=none
+
+[39/160] >>> VRSK@2026-03-03 run_id=tri69-eval-VRSK-2026-03-03
+    decision=SELL wall=1153.2s leaks=none
+
+[40/160] >>> VRTX@2026-03-03 run_id=tri69-eval-VRTX-2026-03-03
+    decision=BUY wall=667.8s leaks=none
+
+[41/160] >>> ALB@2026-03-17 run_id=tri69-eval-ALB-2026-03-17
+    decision=SELL wall=1275.3s leaks=none
+
+[42/160] >>> APA@2026-03-17 run_id=tri69-eval-APA-2026-03-17
+    decision=SELL wall=1452.6s leaks=none
+
+[43/160] >>> AZO@2026-03-17 run_id=tri69-eval-AZO-2026-03-17
+    decision=SELL wall=1281.3s leaks=none
+
+[44/160] >>> CF@2026-03-17 run_id=tri69-eval-CF-2026-03-17
+    decision=BUY wall=747.9s leaks=none
+
+[45/160] >>> ERIE@2026-03-17 run_id=tri69-eval-ERIE-2026-03-17
+    decision=SELL wall=1070.3s leaks=none
+
+[46/160] >>> EXPD@2026-03-17 run_id=tri69-eval-EXPD-2026-03-17
+    decision=SELL wall=1352.6s leaks=none
+
+[47/160] >>> GPC@2026-03-17 run_id=tri69-eval-GPC-2026-03-17
+    decision=SELL wall=1325.4s leaks=none
+
+[48/160] >>> HBAN@2026-03-17 run_id=tri69-eval-HBAN-2026-03-17
+    decision=SELL wall=1046.3s leaks=none
+
+[49/160] >>> IBKR@2026-03-17 run_id=tri69-eval-IBKR-2026-03-17
+    decision=BUY wall=821.8s leaks=none
+
+[50/160] >>> LLY@2026-03-17 run_id=tri69-eval-LLY-2026-03-17
+    decision=SELL wall=1041.0s leaks=none
+
+[51/160] >>> MO@2026-03-17 run_id=tri69-eval-MO-2026-03-17
+    decision=BUY wall=1015.2s leaks=none
+
+[52/160] >>> ORLY@2026-03-17 run_id=tri69-eval-ORLY-2026-03-17
+    decision=SELL wall=1011.6s leaks=none
+
+[53/160] >>> SHW@2026-03-17 run_id=tri69-eval-SHW-2026-03-17
+    decision=SELL wall=1364.1s leaks=none
+
+[54/160] >>> SMCI@2026-03-17 run_id=tri69-eval-SMCI-2026-03-17
+    decision=SELL wall=988.8s leaks=none
+
+[55/160] >>> SO@2026-03-17 run_id=tri69-eval-SO-2026-03-17
+    decision=BUY wall=791.6s leaks=none
+
+[56/160] >>> SYK@2026-03-17 run_id=tri69-eval-SYK-2026-03-17
+    decision=BUY wall=890.5s leaks=none
+
+[57/160] >>> TRMB@2026-03-17 run_id=tri69-eval-TRMB-2026-03-17
+    decision=BUY wall=780.2s leaks=none
+
+[58/160] >>> TT@2026-03-17 run_id=tri69-eval-TT-2026-03-17
+    decision=HOLD wall=949.5s leaks=none
+
+[59/160] >>> VRSK@2026-03-17 run_id=tri69-eval-VRSK-2026-03-17
+    decision=SELL wall=1219.6s leaks=none
+
+[60/160] >>> VRTX@2026-03-17 run_id=tri69-eval-VRTX-2026-03-17
+    decision=SELL wall=1036.7s leaks=none
+
+[61/160] >>> ALB@2026-03-31 run_id=tri69-eval-ALB-2026-03-31
+    decision=HOLD wall=998.8s leaks=none
+
+[62/160] >>> APA@2026-03-31 run_id=tri69-eval-APA-2026-03-31
+    decision=BUY wall=877.6s leaks=none
+
+[63/160] >>> AZO@2026-03-31 run_id=tri69-eval-AZO-2026-03-31
+    decision=SELL wall=1094.3s leaks=none
+
+[64/160] >>> CF@2026-03-31 run_id=tri69-eval-CF-2026-03-31
+    decision=SELL wall=918.9s leaks=none
+
+[65/160] >>> ERIE@2026-03-31 run_id=tri69-eval-ERIE-2026-03-31
+    decision=SELL wall=1064.2s leaks=none
+
+[66/160] >>> EXPD@2026-03-31 run_id=tri69-eval-EXPD-2026-03-31
+    decision=HOLD wall=973.4s leaks=none
+
+[67/160] >>> GPC@2026-03-31 run_id=tri69-eval-GPC-2026-03-31
+    decision=SELL wall=1006.0s leaks=none
+
+[68/160] >>> HBAN@2026-03-31 run_id=tri69-eval-HBAN-2026-03-31
+    decision=SELL wall=865.9s leaks=none
+
+[69/160] >>> IBKR@2026-03-31 run_id=tri69-eval-IBKR-2026-03-31
+    decision=HOLD wall=1064.0s leaks=none
+
+[70/160] >>> LLY@2026-03-31 run_id=tri69-eval-LLY-2026-03-31
+    decision=SELL wall=966.0s leaks=none
+
+[71/160] >>> MO@2026-03-31 run_id=tri69-eval-MO-2026-03-31
+    decision=SELL wall=1159.3s leaks=none
+
+[72/160] >>> ORLY@2026-03-31 run_id=tri69-eval-ORLY-2026-03-31
+    decision=SELL wall=1126.0s leaks=none
+
+[73/160] >>> SHW@2026-03-31 run_id=tri69-eval-SHW-2026-03-31
+    decision=SELL wall=1015.1s leaks=none
+
+[74/160] >>> SMCI@2026-03-31 run_id=tri69-eval-SMCI-2026-03-31
+    decision=SELL wall=630.9s leaks=none
+
+[75/160] >>> SO@2026-03-31 run_id=tri69-eval-SO-2026-03-31
+    decision=SELL wall=804.8s leaks=none
+
+[76/160] >>> SYK@2026-03-31 run_id=tri69-eval-SYK-2026-03-31
+    decision=SELL wall=1358.4s leaks=none
+
+[77/160] >>> TRMB@2026-03-31 run_id=tri69-eval-TRMB-2026-03-31
+    decision=SELL wall=980.7s leaks=none
+
+[78/160] >>> TT@2026-03-31 run_id=tri69-eval-TT-2026-03-31
+    decision=SELL wall=887.0s leaks=none
+
+[79/160] >>> VRSK@2026-03-31 run_id=tri69-eval-VRSK-2026-03-31
+    decision=BUY wall=809.1s leaks=none
+
+[80/160] >>> VRTX@2026-03-31 run_id=tri69-eval-VRTX-2026-03-31
+    decision=SELL wall=723.5s leaks=none
+
+[81/160] >>> ALB@2026-04-15 run_id=tri69-eval-ALB-2026-04-15
+    decision=SELL wall=1054.6s leaks=none
+
+[82/160] >>> APA@2026-04-15 run_id=tri69-eval-APA-2026-04-15
+    decision=SELL wall=1261.3s leaks=none
+
+[83/160] >>> AZO@2026-04-15 run_id=tri69-eval-AZO-2026-04-15
+    decision=SELL wall=1300.3s leaks=none
+
+[84/160] >>> CF@2026-04-15 run_id=tri69-eval-CF-2026-04-15
+    decision=SELL wall=1167.0s leaks=none
+
+[85/160] >>> ERIE@2026-04-15 run_id=tri69-eval-ERIE-2026-04-15
+    decision=SELL wall=1006.0s leaks=none
+
+[86/160] >>> EXPD@2026-04-15 run_id=tri69-eval-EXPD-2026-04-15
+    decision=SELL wall=1005.1s leaks=none
+
+[87/160] >>> GPC@2026-04-15 run_id=tri69-eval-GPC-2026-04-15
+    decision=SELL wall=1582.8s leaks=none
+
+[88/160] >>> HBAN@2026-04-15 run_id=tri69-eval-HBAN-2026-04-15
+    decision=SELL wall=937.4s leaks=none
+
+[89/160] >>> IBKR@2026-04-15 run_id=tri69-eval-IBKR-2026-04-15
+    decision=BUY wall=821.0s leaks=none
+
+[90/160] >>> LLY@2026-04-15 run_id=tri69-eval-LLY-2026-04-15
+    decision=SELL wall=1246.2s leaks=none
+
+[91/160] >>> MO@2026-04-15 run_id=tri69-eval-MO-2026-04-15
+    decision=SELL wall=873.8s leaks=none
+
+[92/160] >>> ORLY@2026-04-15 run_id=tri69-eval-ORLY-2026-04-15
+    decision=SELL wall=987.2s leaks=none
+
+[93/160] >>> SHW@2026-04-15 run_id=tri69-eval-SHW-2026-04-15
+    decision=HOLD wall=872.3s leaks=none
+
+[94/160] >>> SMCI@2026-04-15 run_id=tri69-eval-SMCI-2026-04-15
+    decision=SELL wall=988.0s leaks=none
+
+[95/160] >>> SO@2026-04-15 run_id=tri69-eval-SO-2026-04-15
+    decision=HOLD wall=638.4s leaks=none
+
+[96/160] >>> SYK@2026-04-15 run_id=tri69-eval-SYK-2026-04-15
+    decision=BUY wall=689.5s leaks=none
+
+[97/160] >>> TRMB@2026-04-15 run_id=tri69-eval-TRMB-2026-04-15
+    decision=HOLD wall=998.2s leaks=none
+
+[98/160] >>> TT@2026-04-15 run_id=tri69-eval-TT-2026-04-15
+    decision=SELL wall=1040.3s leaks=none
+
+[99/160] >>> VRSK@2026-04-15 run_id=tri69-eval-VRSK-2026-04-15
+    decision=SELL wall=1226.9s leaks=none
+
+[100/160] >>> VRTX@2026-04-15 run_id=tri69-eval-VRTX-2026-04-15
+    decision=BUY wall=1222.9s leaks=none
+
+[101/160] >>> ALB@2026-04-29 run_id=tri69-eval-ALB-2026-04-29
+    decision=SELL wall=1101.7s leaks=none
+
+[102/160] >>> APA@2026-04-29 run_id=tri69-eval-APA-2026-04-29
+    decision=SELL wall=966.6s leaks=none
+
+[103/160] >>> AZO@2026-04-29 run_id=tri69-eval-AZO-2026-04-29
+    decision=SELL wall=1499.2s leaks=none
+
+[104/160] >>> CF@2026-04-29 run_id=tri69-eval-CF-2026-04-29
+    decision=SELL wall=1076.0s leaks=none
+
+[105/160] >>> ERIE@2026-04-29 run_id=tri69-eval-ERIE-2026-04-29
+    decision=SELL wall=988.9s leaks=none
+
+[106/160] >>> EXPD@2026-04-29 run_id=tri69-eval-EXPD-2026-04-29
+    decision=SELL wall=1111.9s leaks=none
+
+[107/160] >>> GPC@2026-04-29 run_id=tri69-eval-GPC-2026-04-29
+    decision=SELL wall=1096.9s leaks=none
+
+[108/160] >>> HBAN@2026-04-29 run_id=tri69-eval-HBAN-2026-04-29
+    decision=SELL wall=1163.1s leaks=none
+
+[109/160] >>> IBKR@2026-04-29 run_id=tri69-eval-IBKR-2026-04-29
+    decision=HOLD wall=921.5s leaks=none
+
+[110/160] >>> LLY@2026-04-29 run_id=tri69-eval-LLY-2026-04-29
+    decision=SELL wall=1121.6s leaks=none
+
+[111/160] >>> MO@2026-04-29 run_id=tri69-eval-MO-2026-04-29
+    decision=SELL wall=910.9s leaks=none
+
+[112/160] >>> ORLY@2026-04-29 run_id=tri69-eval-ORLY-2026-04-29
+    decision=SELL wall=831.5s leaks=none
+
+[113/160] >>> SHW@2026-04-29 run_id=tri69-eval-SHW-2026-04-29
+    decision=SELL wall=796.5s leaks=none
+
+[114/160] >>> SMCI@2026-04-29 run_id=tri69-eval-SMCI-2026-04-29
+    decision=SELL wall=870.3s leaks=none
+
+[115/160] >>> SO@2026-04-29 run_id=tri69-eval-SO-2026-04-29
+    decision=HOLD wall=918.8s leaks=none
+
+[116/160] >>> SYK@2026-04-29 run_id=tri69-eval-SYK-2026-04-29
+    decision=SELL wall=948.0s leaks=none
+
+[117/160] >>> TRMB@2026-04-29 run_id=tri69-eval-TRMB-2026-04-29
+    decision=SELL wall=1150.3s leaks=none
+
+[118/160] >>> TT@2026-04-29 run_id=tri69-eval-TT-2026-04-29
+    decision=SELL wall=1395.7s leaks=none
+
+[119/160] >>> VRSK@2026-04-29 run_id=tri69-eval-VRSK-2026-04-29
+    decision=SELL wall=1020.0s leaks=none
+
+[120/160] >>> VRTX@2026-04-29 run_id=tri69-eval-VRTX-2026-04-29
+    decision=BUY wall=720.6s leaks=none
+
+[121/160] >>> ALB@2026-05-13 run_id=tri69-eval-ALB-2026-05-13
+    decision=SELL wall=996.9s leaks=none
+
+[122/160] >>> APA@2026-05-13 run_id=tri69-eval-APA-2026-05-13
+    decision=HOLD wall=900.0s leaks=none
+
+[123/160] >>> AZO@2026-05-13 run_id=tri69-eval-AZO-2026-05-13
+    decision=SELL wall=1344.4s leaks=none
+
+[124/160] >>> CF@2026-05-13 run_id=tri69-eval-CF-2026-05-13
+    decision=SELL wall=1228.0s leaks=none
+
+[125/160] >>> ERIE@2026-05-13 run_id=tri69-eval-ERIE-2026-05-13
+    decision=SELL wall=874.9s leaks=none
+
+[126/160] >>> EXPD@2026-05-13 run_id=tri69-eval-EXPD-2026-05-13
+    decision=BUY wall=917.4s leaks=none
+
+[127/160] >>> GPC@2026-05-13 run_id=tri69-eval-GPC-2026-05-13
+    decision=SELL wall=1098.2s leaks=none
+
+[128/160] >>> HBAN@2026-05-13 run_id=tri69-eval-HBAN-2026-05-13
+    decision=SELL wall=1224.6s leaks=none
+
+[129/160] >>> IBKR@2026-05-13 run_id=tri69-eval-IBKR-2026-05-13
+    decision=SELL wall=874.3s leaks=none
+
+[130/160] >>> LLY@2026-05-13 run_id=tri69-eval-LLY-2026-05-13
+    decision=BUY wall=1141.5s leaks=none
+
+[131/160] >>> MO@2026-05-13 run_id=tri69-eval-MO-2026-05-13
+    decision=HOLD wall=886.5s leaks=none
+
+[132/160] >>> ORLY@2026-05-13 run_id=tri69-eval-ORLY-2026-05-13
+    decision=SELL wall=1546.7s leaks=none
+
+[133/160] >>> SHW@2026-05-13 run_id=tri69-eval-SHW-2026-05-13
+    decision=SELL wall=839.6s leaks=none
+
+[134/160] >>> SMCI@2026-05-13 run_id=tri69-eval-SMCI-2026-05-13
+    decision=SELL wall=1223.9s leaks=none
+
+[135/160] >>> SO@2026-05-13 run_id=tri69-eval-SO-2026-05-13
+    decision=SELL wall=1126.5s leaks=none
+
+[136/160] >>> SYK@2026-05-13 run_id=tri69-eval-SYK-2026-05-13
+    decision=SELL wall=1215.0s leaks=none
+
+[137/160] >>> TRMB@2026-05-13 run_id=tri69-eval-TRMB-2026-05-13
+    decision=SELL wall=1273.8s leaks=none
+
+[138/160] >>> TT@2026-05-13 run_id=tri69-eval-TT-2026-05-13
+    decision=SELL wall=1069.1s leaks=none
+
+[139/160] >>> VRSK@2026-05-13 run_id=tri69-eval-VRSK-2026-05-13
+    decision=SELL wall=959.8s leaks=none
+
+[140/160] >>> VRTX@2026-05-13 run_id=tri69-eval-VRTX-2026-05-13
+    decision=BUY wall=785.8s leaks=none
+
+[141/160] >>> ALB@2026-05-28 run_id=tri69-eval-ALB-2026-05-28
+    decision=SELL wall=1171.1s leaks=none
+
+[142/160] >>> APA@2026-05-28 run_id=tri69-eval-APA-2026-05-28
+    decision=SELL wall=985.2s leaks=none
+
+[143/160] >>> AZO@2026-05-28 run_id=tri69-eval-AZO-2026-05-28
+    decision=SELL wall=1057.7s leaks=none
+
+[144/160] >>> CF@2026-05-28 run_id=tri69-eval-CF-2026-05-28
+    decision=SELL wall=1030.3s leaks=none
+
+[145/160] >>> ERIE@2026-05-28 run_id=tri69-eval-ERIE-2026-05-28
+    decision=SELL wall=1181.8s leaks=none
+
+[146/160] >>> EXPD@2026-05-28 run_id=tri69-eval-EXPD-2026-05-28
+    decision=SELL wall=858.5s leaks=none
+
+[147/160] >>> GPC@2026-05-28 run_id=tri69-eval-GPC-2026-05-28
+    decision=SELL wall=1073.7s leaks=none
+
+[148/160] >>> HBAN@2026-05-28 run_id=tri69-eval-HBAN-2026-05-28
+    decision=SELL wall=907.0s leaks=none
+
+[149/160] >>> IBKR@2026-05-28 run_id=tri69-eval-IBKR-2026-05-28
+    decision=HOLD wall=939.0s leaks=none
+
+[150/160] >>> LLY@2026-05-28 run_id=tri69-eval-LLY-2026-05-28
+    decision=HOLD wall=1073.4s leaks=none
+
+[151/160] >>> MO@2026-05-28 run_id=tri69-eval-MO-2026-05-28
+    decision=SELL wall=936.4s leaks=none
+
+[152/160] >>> ORLY@2026-05-28 run_id=tri69-eval-ORLY-2026-05-28
+    decision=SELL wall=1130.5s leaks=none
+
+[153/160] >>> SHW@2026-05-28 run_id=tri69-eval-SHW-2026-05-28
+    decision=SELL wall=952.8s leaks=none
+
+[154/160] >>> SMCI@2026-05-28 run_id=tri69-eval-SMCI-2026-05-28
+    decision=SELL wall=1513.2s leaks=none
+
+[155/160] >>> SO@2026-05-28 run_id=tri69-eval-SO-2026-05-28
+    decision=SELL wall=1020.4s leaks=none
+
+[156/160] >>> SYK@2026-05-28 run_id=tri69-eval-SYK-2026-05-28
+    decision=SELL wall=939.6s leaks=none
+
+[157/160] >>> TRMB@2026-05-28 run_id=tri69-eval-TRMB-2026-05-28
+    decision=SELL wall=1119.6s leaks=none
+
+[158/160] >>> TT@2026-05-28 run_id=tri69-eval-TT-2026-05-28
+    decision=SELL wall=1180.1s leaks=none
+
+[159/160] >>> VRSK@2026-05-28 run_id=tri69-eval-VRSK-2026-05-28
+    decision=SELL wall=1099.5s leaks=none
+
+[160/160] >>> VRTX@2026-05-28 run_id=tri69-eval-VRTX-2026-05-28
+    decision=BUY wall=808.6s leaks=none
+
+EVAL COMPLETE — /Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc/results/tri69/eval_tri69-eval.json
+decisions: {'SELL': 121, 'HOLD': 18, 'BUY': 21} errors=0 cost=$8.79
