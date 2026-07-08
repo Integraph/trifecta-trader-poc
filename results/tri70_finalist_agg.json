@@ -1,0 +1,134 @@
+[
+  {
+    "config": "benchmark_local_b@AAPL",
+    "runs": 5,
+    "runs_ok": 5,
+    "errors": 0,
+    "decisions": [
+      "BUY",
+      "BUY",
+      "HOLD",
+      "HOLD",
+      "HOLD"
+    ],
+    "modal_decision": "HOLD",
+    "decision_agreement": 0.6,
+    "extractability": 1.0,
+    "unknowns": 0,
+    "method_breakdown": {
+      "regex": 5
+    },
+    "ratings_5": [
+      "Overweight",
+      "Overweight",
+      "Hold",
+      "Hold",
+      "Hold"
+    ],
+    "quality_mean": 8.44,
+    "quality_stdev": 1.26,
+    "quality_values": [
+      8.8,
+      8.6,
+      10.0,
+      6.5,
+      8.3
+    ],
+    "walltime_mean_s": 1100.1,
+    "walltime_values": [
+      1048.7,
+      914.3,
+      1193.4,
+      1231.1,
+      1112.9
+    ]
+  },
+  {
+    "config": "benchmark_local_b@NVDA",
+    "runs": 5,
+    "runs_ok": 5,
+    "errors": 0,
+    "decisions": [
+      "SELL",
+      "HOLD",
+      "HOLD",
+      "HOLD",
+      "SELL"
+    ],
+    "modal_decision": "HOLD",
+    "decision_agreement": 0.6,
+    "extractability": 1.0,
+    "unknowns": 0,
+    "method_breakdown": {
+      "regex": 5
+    },
+    "ratings_5": [
+      "Sell",
+      "Hold",
+      "Hold",
+      "Hold",
+      "Sell"
+    ],
+    "quality_mean": 7.66,
+    "quality_stdev": 1.47,
+    "quality_values": [
+      6.299999999999999,
+      7.200000000000001,
+      6.5,
+      9.8,
+      8.5
+    ],
+    "walltime_mean_s": 1349.4,
+    "walltime_values": [
+      1885.9,
+      1263.7,
+      1316.1,
+      1102.7,
+      1178.8
+    ]
+  },
+  {
+    "config": "benchmark_local_b@TSLA",
+    "runs": 5,
+    "runs_ok": 5,
+    "errors": 0,
+    "decisions": [
+      "HOLD",
+      "BUY",
+      "SELL",
+      "HOLD",
+      "HOLD"
+    ],
+    "modal_decision": "HOLD",
+    "decision_agreement": 0.6,
+    "extractability": 1.0,
+    "unknowns": 0,
+    "method_breakdown": {
+      "regex": 5
+    },
+    "ratings_5": [
+      "Hold",
+      "Buy",
+      "Sell",
+      "Hold",
+      "Hold"
+    ],
+    "quality_mean": 8.28,
+    "quality_stdev": 1.22,
+    "quality_values": [
+      9.4,
+      8.5,
+      8.1,
+      9.1,
+      6.3
+    ],
+    "walltime_mean_s": 1208.1,
+    "walltime_values": [
+      1277.7,
+      943.1,
+      1631.2,
+      1134.1,
+      1054.2
+    ]
+  }
+]

@@ -1,0 +1,30 @@
+[
+  {
+    "config": "bench_deep_r1_8b_seeded@AAPL",
+    "runs": 1,
+    "runs_ok": 1,
+    "errors": 0,
+    "decisions": [
+      "HOLD"
+    ],
+    "modal_decision": "HOLD",
+    "decision_agreement": 1.0,
+    "extractability": 1.0,
+    "unknowns": 0,
+    "method_breakdown": {
+      "regex": 1
+    },
+    "ratings_5": [
+      "Hold"
+    ],
+    "quality_mean": 9.1,
+    "quality_stdev": 0.0,
+    "quality_values": [
+      9.1
+    ],
+    "walltime_mean_s": 1052.2,
+    "walltime_values": [
+      1052.2
+    ]
+  }
+]

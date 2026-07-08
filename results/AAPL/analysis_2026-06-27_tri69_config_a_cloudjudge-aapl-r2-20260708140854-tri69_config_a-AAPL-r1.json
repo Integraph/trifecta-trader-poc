@@ -1,0 +1,64 @@
+{
+  "ticker": "AAPL",
+  "trade_date": "2026-06-27",
+  "provider": "anthropic",
+  "hybrid_config": "tri69_config_a",
+  "deep_model": "anthropic/claude-sonnet-4-5-20250929",
+  "quick_model": "ollama/qwen3.5:9b",
+  "hybrid_routing": {
+    "tool_calling": "ollama/qwen3-coder:30b",
+    "reasoning_quick": "ollama/qwen3.5:9b",
+    "reasoning_deep": "anthropic/claude-sonnet-4-5-20250929",
+    "deep_temperature": 0.0,
+    "local_seed": 69,
+    "local_max_tokens": 16384
+  },
+  "decision": "SELL",
+  "pm_rating_5": "Underweight",
+  "decision_extraction_method": "rendered_structured_parse",
+  "run_id": "cloudjudge-aapl-r2-20260708140854-tri69_config_a-AAPL-r1",
+  "upstream_decision": "Underweight",
+  "decision_corrected": true,
+  "final_trade_decision_text": "**Rating**: Underweight\n\n**Executive Summary**: Reduce AAPL exposure by 30-40% at current levels around $284, respecting the technical breakdown (price below all key moving averages, negative MACD at -2.24) and stretched valuation (P/E 38.07, 50-60% above historical average). Set stop-loss at $269 (200 SMA support). This is a risk management action, not a full exit\u2014maintain 4-5% portfolio weight maximum while monitoring for re-entry signals above $291 (50 SMA) with volume confirmation or concrete product catalysts over a 3-6 month horizon.\n\n**Investment Thesis**: The synthesis of analyst debate reveals consensus on reducing exposure, though with nuanced reasoning. All three analysts acknowledge the technical breakdown is real and actionable: AAPL trades below the 10 EMA ($287.82), 50 SMA ($291.41), and 200 SMA ($269.08), with negative MACD (-2.24) and weakening RSI (41.26). The Aggressive Analyst correctly identifies that valuation stretched 50-60% above historical norms (P/E 38.07 vs. historical 25-28, PEG 2.53) creates asymmetric downside risk when technical momentum deteriorates. The market is pricing in perfection, and any execution misstep on the innovation pipeline\u2014despite 96% probability on iPhone 18 and 90% on foldable iPhone\u2014triggers sharp multiple compression in high-beta stocks (beta 1.097).\n\nHowever, the Conservative Analyst provides critical balance: dismissing the $26.73B free cash flow and $45.57B cash position entirely is dangerous oversimplification. This financial fortress doesn't prevent near-term price decline, but it establishes a fundamental floor that differentiates AAPL from speculative high-multiple names. The 32% operating margin and Broadcom chip deal represent real business strength that will matter over 3-6 month horizons when catalysts materialize.\n\nThe Neutral Analyst's framework is most actionable: sell to respect current technicals and sentiment (StockTwits shows fear, retail nervousness), but maintain optionality for re-entry. The position sizing recommendation of 4-5% portfolio maximum is prudent risk management, not capitulation. The stop-loss at $269 is tight given ATR of 8.16, but justified as it sits at the 200 SMA\u2014a critical long-term support level that, if broken on volume, signals deeper correction toward $240-250.\n\nThe macro context supports caution but not panic: stable Fed policy with 24% rate cut probability is neutral-to-positive long-term, but doesn't override near-term technical weakness. Social sentiment shows mixed signals with bearish bias, confirming institutional capital should reduce exposure before retail fully capitulates.\n\nThe Underweight rating (rather than outright Sell) reflects three key considerations: (1) fundamental quality remains intact despite valuation concerns, (2) innovation pipeline has high-probability catalysts that could drive reversal, and (3) the 4-5% position size allows participation in upside while managing downside. This is tactical risk reduction, not strategic abandonment. Re-entry conditions are clear: price reclaiming $291 with volume, positive MACD crossover, or concrete product announcements validating the 96% iPhone 18 and 90% foldable iPhone probabilities. The Conservative Analyst is right that we sell from a position of strength (protecting capital) while acknowledging the fundamental buffer positions us to re-engage when risk/reward improves.\n\n**Price Target**: 269.0\n\n**Time Horizon**: 3-6 months",
+  "trader_investment_plan": "**Action**: Sell\n\n**Reasoning**: The bear analyst's assessment of AAPL is supported by three critical risks: valuation stretched 50-60% above historical averages with P/E 38.07 and PEG 2.53, unambiguously bearish technicals with price below all key moving averages and negative MACD, and innovation pipeline not being guaranteed catalysts. Technical weakness and high multiples create downside sensitivity that financial strength alone cannot offset in a stable/declining rate environment. We need technical confirmation (price above 50 SMA) or valuation reset before committing capital aggressively.\n\n**Entry Price**: 284.0\n\n**Stop Loss**: 269.0\n\n**Position Sizing**: Trim to 4-5% of portfolio maximum\n\nFINAL TRANSACTION PROPOSAL: **SELL**",
+  "elapsed_seconds": 1324.2,
+  "run_timestamp": "2026-07-08T14:31:00.282475",
+  "quality_score": {
+    "composite": 8.5,
+    "reasoning_depth": 5,
+    "data_grounding": 10,
+    "risk_awareness": 10,
+    "decision_consistent": true,
+    "has_stop_loss": true,
+    "has_price_target": true,
+    "has_position_sizing": true
+  },
+  "cost_breakdown": {
+    "by_model": {
+      "unknown": {
+        "input_tokens": 261082,
+        "output_tokens": 31522,
+        "calls": 37,
+        "cost_usd": 0.0
+      },
+      "claude-sonnet-4-5-20250929": {
+        "input_tokens": 10690,
+        "output_tokens": 1983,
+        "calls": 2,
+        "cost_usd": 0.061815
+      }
+    },
+    "total_usd": 0.061815
+  },
+  "portfolio_context": {
+    "account_equity": 100000.0,
+    "buying_power": 400000.0,
+    "held": false,
+    "shares": 0,
+    "avg_cost": null,
+    "unrealized_pnl": null,
+    "portfolio_pct": null
+  },
+  "point_in_time": false,
+  "result_file": "/Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc/results/AAPL/analysis_2026-06-27_tri69_config_a.json"
+}

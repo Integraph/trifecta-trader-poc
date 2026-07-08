@@ -1,0 +1,30 @@
+[
+  {
+    "config": "hybrid_haiku_r1_8b_raw@AAPL",
+    "runs": 1,
+    "runs_ok": 1,
+    "errors": 0,
+    "decisions": [
+      "BUY"
+    ],
+    "modal_decision": "BUY",
+    "decision_agreement": 1.0,
+    "extractability": 1.0,
+    "unknowns": 0,
+    "method_breakdown": {
+      "regex": 1
+    },
+    "ratings_5": [
+      "Overweight"
+    ],
+    "quality_mean": 9.1,
+    "quality_stdev": 0.0,
+    "quality_values": [
+      9.1
+    ],
+    "walltime_mean_s": 1412.3,
+    "walltime_values": [
+      1412.3
+    ]
+  }
+]

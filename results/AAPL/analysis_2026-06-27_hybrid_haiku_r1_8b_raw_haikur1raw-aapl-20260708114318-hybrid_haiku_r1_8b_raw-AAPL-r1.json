@@ -1,0 +1,61 @@
+{
+  "ticker": "AAPL",
+  "trade_date": "2026-06-27",
+  "provider": "anthropic",
+  "hybrid_config": "hybrid_haiku_r1_8b_raw",
+  "deep_model": "ollama/deepseek-r1:8b",
+  "quick_model": "ollama/qwen3.5:9b",
+  "hybrid_routing": {
+    "tool_calling": "anthropic/claude-haiku-4-5-20251001",
+    "reasoning_quick": "ollama/qwen3.5:9b",
+    "reasoning_deep": "ollama/deepseek-r1:8b"
+  },
+  "decision": "BUY",
+  "pm_rating_5": "Overweight",
+  "decision_extraction_method": "regex",
+  "run_id": "haikur1raw-aapl-20260708114318-hybrid_haiku_r1_8b_raw-AAPL-r1",
+  "upstream_decision": "Overweight",
+  "decision_corrected": true,
+  "final_trade_decision_text": "### Synthesis of Risk Analyst Debate and Final Trading Decision\n\n#### **Debate Overview**\nThe debate among risk analysts centered on the medium-term prospects for AAPL (Apple Inc.), with varying emphasis on fundamental strengths versus technical weaknesses. All parties concurred on AAPL's fundamental resilience\u2014massive cash reserves ($101B), strong recurring revenue from Services (e.g., 55.3% of revenue allocation), and strategic advantages like the Broadcom deal\u2014but diverged on risk management and entry triggers. The debate can be summarized as follows:\n\n- **Aggressive Analyst:** Championed an immediate Buy with full position sizing (20\u201330% of risk capital), citing institutional accumulation at $283.78 (5.5% above 200 SMA), technical capitulation (e.g., RSI 41.26, volume spike of 261.8M shares on June 26), and a predicted recovery to $305\u2013$315 based on prediction markets. This view ignored risks like Q1 revenue decline and short-term trend deterioration, favoring risk-taking.\n\n- **Conservative Analyst:** Recommended a Hold posture, emphasizing the death cross (10 EMA below 50 SMA) and ATR spike (46%) as signs of deteriorating momentum. Cautious about overvalued PE (37.5x) and open risk if price breaks below $269, but acknowledged fundamental strength, suggesting to wait for confirmation above $291.41 before adding exposure.\n\n- **Neutral Analyst:** Advocated for a scaled, risk-focused entry (e.g., 10% position size) with a 2-ATR stop loss ($267\u2013$269), balancing technical and fundamental inputs. Believed in the fundamentals (e.g., 65.1% cash/EBITDA coverage) but recognized the need for trend confirmation, with targets set at $305\u2013$315 rather than the Aggressive's $340.\n\n**Key Unifying Insight:** All analysts agree that AAPL's fundamental quality (e.g., 101B in cash reserves, Services defensiveness) provides a \"fortress\" against long-term risks, but short-term technicals (death cross, high ATR) require disciplined risk management to prevent mean reversion misses or further declines. No single view captured the full spectrum, leading to a synthesis favoring a strong Buy/Overweight stance due to conviction in mean reversion and catalysts, but with modified risk protocols to mitigate technical volatility.\n\n---\n\n#### **Final Trading Decision**\nBased on a comprehensive synthesis, we commit to an **Overweight** recommendation for AAPL. This stance reflects a favorable outlook driven by strong institutional accumulation, cash reserves, and recurring revenue, which outweigh immediate technical risks. However, unlike a full Buy recommendation, this calls for a gradual increase in exposure to avoid overcommitment during high volatility.\n\nThe decision is grounded in evidence from:\n- **Fundamental Strength:** AAPL's 101B in cash reserves and 55.3% Services/MktCap indicate low debt risk and recurring income, providing insulation against short-term volatility (Aggressive and Neutral views). The recent Broadcom deal (>30B partnership) enhances supply chain security and margins, supporting long-term growth (Neutral confirmation). Cash/EBITDA coverage at 65.1% exceeds our target of >20% (exceeding 65%), affirming low financial risk.\n- **Technical Confirmation:** Despite the death cross, the Aggressive Analyst's observation of capitulation at $283.78 (5.5% above 200 SMA) and prediction markets (54% probability of rebound) suggests mean reversion potential. The Neutral Analyst's adjustment of targets to $305\u2013$315, based on volume and momentum data, provides a realistic near-term upside without ignoring risks.\n- **Risk Mitigation:** Conservative concerns about high ATR (46% increase) and trend exhaustion are valid, but the fundamental moat and low recession risk mean these do not negate a gradual build. The Overweight rating avoids a full commitment (e.g., 50%+ capital) until confirmation, aligning with the Neutral's scaled-entry approach to maintain capital discipline.\n\nThis is a **4:1 conviction for the Bull thesis on gradual increase**, with a **Buy recommendation for immediate partial exposure** to capture the potential 10% recovery, but held back by the need for careful scaling due to elevated technical risks. Market conditions will be monitored for catalysts like Q3 earnings.\n\n---\n\n#### **Actionable Investment Plan for Trading AAPL**\n\n**Rating: Overweight** (Favorable outlook, gradually increase exposure)\n\n1. **Tactical Entry Strategy:**\n   - **Entry Point:** $283.78. This aligns with institutional accumulation evidenced by the spike on June 26, providing 6% downside protection against the 200 SMA ($269.08). \n     - **Entry Logic:** Buy the technical bounce after capitulation, using the 50 SMA ($291.41) as resistance to confirm institutional support. Stop loss at $269.00 (200 SMA) with a risk premium of ~6%.\n     - **Target:** Primary break-even at $283.78 +20% to $340.00, but due to trend concerns, target initial recovery at $291.41 for confirmation. Gradual increase to $310\u2013$315 (Neutral target) if MACD histogram contracts and volume normalizes.\n\n2. **Position Sizing Framework:**\n   - **Partial Gradual Build:**\n     - **First Position:** Allocate 10\u201315% of risk capital at entry ($283.78) to test initial support.\n     - **Subsequent Adds:** Increase exposure by another 10\u201315% on a successful hold above $275 or confirmation above $291.41, but do not commit >30% total until trend stabilizes.\n     - **Risk Policy:** Do not allocate more than 5% of capital in the short term to avoid overexposure; let market action dictate sizing.\n\n3. **Risk Mitigation Tools:**\n   - **Dynamic Stops:** Set initial stop at $269.00 for strict adherence to the 200 SMA; if triggered, trim position or hold for trend retest at $267 (2-ATR buffer). If price drops below $275, increase stop to 8% risk to prevent slippage.\n   - **Hedging Strategies:**\n     - Buy a call spread (e.g., 38/39 put/call spread) at $284 for $280, offering institutional alignment with slightly lower leverage.\n     - Sell a strangle (e.g., put/call spread near $283) for $15 to capture premium, offsetting volatility risk.\n\n   - **Monitoring Alerts:** \n     - **Price:** Cross above $291.41 to confirm 50 SMA support (catalyst for 15% allocation increase).\n     - **Volume Metrics:** Average daily volume target of 300M shares; if below, risk capitulation risk.\n     - **Volatility:** ATR > $50 triggers a 5% risk review.\n     - **Valuation Watch:** PEG 19.2 vs industry indicates undervaluation potential but capex needs monitoring.\n\n   - **Additional Metrics:** Key KPIs to track:\n     - **Cash/EBITDA:** Target >65% (current coverage reduced from 65.1% to risk threshold).\n     - **Services/MktCap:** Target >55% allocation for growth resilience.\n     - **Technical Indicators:** Monitor MACD, RSI, and volume-weighted moving averages for trend exhaustion signals.\n\n4. **Catalysts and Monitoring Framework**\n   - **Bullish Catalysts:** Q3 earnings beat (e.g., revenue above 50 SMA), technical breakout above $291.41, or economic stabilization leading to 10%+ price rise. \n   - **Bearish Hedges:** Break below $269.00 or >60% IV increase can be covered by selling a protective put or rolling the stop.\n   - **Review Cadence:** Weekly review of metrics; quarterly reevaluation of fundamentals (e.g., PEG, leverage).\n\n---\n\n#### **Trading Performance and Context**\nAAPL remains strategically undervalued given its PEG (19.2) vs. industry average of 371 (as per TradingEdge), but valuation risks from macro factors like oil price surges cannot be ignored. Overall, the Overweight stance captures 4:1 conviction while incorporating risk controls\u2014avoiding a full Buy due to technical noise ensures capital is preserved during high-volatility environments.\n\n**Generated by TradingEdge AI | AAPL Overweight Synthesis**",
+  "trader_investment_plan": "**Action**: Buy\n\n**Reasoning**: The 4:1 conviction favoring the Bull thesis is supported by strong institutional accumulation evidence at $283.78, with cash reserves ($101B) and Services revenue resilience offsetting concerns about Q1 revenue declines. Technical confirmation above the 50/200 SMA levels provides risk discipline with a $269 stop-loss, while the $340 target aligns with the Bull's valuation recovery thesis. Risk allocation at 20-30% of position capital balances conviction with downside protection.\n\n**Entry Price**: 283.78\n\n**Stop Loss**: 269.0\n\n**Position Sizing**: 20-30% of risk capital\n\nFINAL TRANSACTION PROPOSAL: **BUY**",
+  "elapsed_seconds": 1412.3,
+  "run_timestamp": "2026-07-08T12:06:52.849158",
+  "quality_score": {
+    "composite": 9.1,
+    "reasoning_depth": 7,
+    "data_grounding": 10,
+    "risk_awareness": 10,
+    "decision_consistent": true,
+    "has_stop_loss": true,
+    "has_price_target": true,
+    "has_position_sizing": true
+  },
+  "cost_breakdown": {
+    "by_model": {
+      "claude-haiku-4-5-20251001": {
+        "input_tokens": 43740,
+        "output_tokens": 15789,
+        "calls": 9,
+        "cost_usd": 0.122685
+      },
+      "unknown": {
+        "input_tokens": 87112,
+        "output_tokens": 22941,
+        "calls": 8,
+        "cost_usd": 0.0
+      }
+    },
+    "total_usd": 0.122685
+  },
+  "portfolio_context": {
+    "account_equity": 100000.0,
+    "buying_power": 400000.0,
+    "held": false,
+    "shares": 0,
+    "avg_cost": null,
+    "unrealized_pnl": null,
+    "portfolio_pct": null
+  },
+  "point_in_time": false,
+  "result_file": "/Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc/results/AAPL/analysis_2026-06-27_hybrid_haiku_r1_8b_raw.json"
+}

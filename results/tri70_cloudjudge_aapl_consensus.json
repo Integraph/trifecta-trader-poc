@@ -1,0 +1,21 @@
+{
+  "decision": "SELL",
+  "abstained": false,
+  "reason": "consensus_pass",
+  "runs": 3,
+  "decisions": [
+    "SELL",
+    "SELL",
+    "SELL"
+  ],
+  "decision_counts": {
+    "SELL": 3
+  },
+  "modal_decision": "SELL",
+  "agreement": 1.0,
+  "quality_mean": 8.3,
+  "quality_stdev": 0.346,
+  "min_agreement": 0.8,
+  "min_quality": 8.0,
+  "min_runs": 3
+}

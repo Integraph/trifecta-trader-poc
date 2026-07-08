@@ -1,0 +1,64 @@
+{
+  "ticker": "AAPL",
+  "trade_date": "2026-06-27",
+  "provider": "anthropic",
+  "hybrid_config": "tri69_config_a",
+  "deep_model": "anthropic/claude-sonnet-4-5-20250929",
+  "quick_model": "ollama/qwen3.5:9b",
+  "hybrid_routing": {
+    "tool_calling": "ollama/qwen3-coder:30b",
+    "reasoning_quick": "ollama/qwen3.5:9b",
+    "reasoning_deep": "anthropic/claude-sonnet-4-5-20250929",
+    "deep_temperature": 0.0,
+    "local_seed": 69,
+    "local_max_tokens": 16384
+  },
+  "decision": "SELL",
+  "pm_rating_5": "Underweight",
+  "decision_extraction_method": "rendered_structured_parse",
+  "run_id": "cloudjudge-aapl-20260708133738-tri69_config_a-AAPL-r1",
+  "upstream_decision": "Underweight",
+  "decision_corrected": true,
+  "final_trade_decision_text": "**Rating**: Underweight\n\n**Executive Summary**: Reduce AAPL position to 2-3% of portfolio weight (from 5% benchmark) to manage near-term technical and valuation risks. Set stop-loss at $275 to protect against further breakdown. Monitor for trend confirmation above $291.41 with positive MACD crossover before considering re-entry. Time horizon: 3-6 months for reassessment.\n\n**Investment Thesis**: The decision to underweight AAPL balances the company's undeniable fundamental strength against immediate technical deterioration and valuation compression risk. \n\n**Why Not Sell Entirely**: The Aggressive Analyst makes a compelling case for exiting based on the technical breakdown\u2014price trading below both the 10 EMA ($291.02) and 50 SMA ($291.41), negative MACD (-2.24), and a 7.36% three-day decline. However, the Conservative Analyst correctly identifies that Apple's fortress balance sheet ($45.57B cash, $26.73B free cash flow, 27% profit margin) and 96% probability of iPhone 18 launch provide a fundamental floor that warrants maintaining some exposure. Selling entirely would abandon a quality asset at potentially oversold levels (RSI 41.26, price near lower Bollinger Band at $278.25).\n\n**Why Not Hold Full Position**: The Neutral Analyst synthesizes the key risk: P/E of 38.04 is 50% above historical mean, creating a PEG ratio of 2.53 that assumes flawless execution. This valuation premium leaves no margin for error when the technical trend has clearly broken down. The Aggressive Analyst is right that institutional sentiment remains muted (60% neutral on StockTwits, news silence June 20-27), and retail optimism driven by FOMO creates fragile support. When price breaks moving averages, algorithmic selling accelerates\u2014this is not mere chart-watching but recognition of systematic liquidity pressure.\n\n**The Balanced Path**: Reducing exposure to 2-3% (Underweight) accomplishes three objectives: (1) De-risks against the immediate technical breakdown and valuation compression without abandoning the quality thesis; (2) Preserves capital for redeployment if price confirms trend reversal above $291.41; (3) Avoids the Conservative Analyst's trap of excessive defensiveness while rejecting the Aggressive Analyst's suggestion to chase higher-beta opportunities that introduce correlated macro risks.\n\n**Key Risk Factors Driving This Decision**:\n- **Valuation**: At 38.04 P/E, any stumble in iPhone 18 cycle or foldable adoption triggers multiple compression\n- **Technical**: MACD negative and trending down, price below key moving averages signals momentum loss\n- **Economic Sensitivity**: Apple's revenue tied to discretionary premium device spending; even 10% recession probability impacts upgrade cycles\n- **Sentiment**: Lack of institutional accumulation despite retail noise indicates no conviction floor\n\n**Catalysts for Reassessment**: Concrete iPhone 18 production news, foldable device timeline clarity, services revenue acceleration above expectations, or price reclaiming $291.41 with volume confirmation would warrant upgrading to Hold or Overweight. Until then, the risk-reward skews bearish as the Neutral Analyst concludes: we must respect the technical breakdown without abandoning the fundamental thesis entirely.\n\nThe $275 stop-loss protects against a retest of the 200 SMA at $269.08, which would signal a deeper structural breakdown requiring full exit. This disciplined approach manages downside while preserving optionality for re-entry when the setup improves.\n\n**Price Target**: 291.41\n\n**Time Horizon**: 3-6 months",
+  "trader_investment_plan": "**Action**: Sell\n\n**Reasoning**: The investment analysis indicates AAPL presents elevated near-term risk due to valuation compression with P/E at 38.04, 50% above historical mean. Technical breakdown through 10 EMA and 50 SMA with negative MACD suggests continued downside pressure rather than immediate bounce. Institutional sentiment remains muted and economic sensitivity to discretionary spending creates margin of safety concerns. The research plan recommends de-risking positions by 25-40% and waiting for trend confirmation above $291.41 before any re-entry.\n\n**Entry Price**: 278.25\n\n**Stop Loss**: 275.0\n\n**Position Sizing**: 2-3% of portfolio (reduce from 5%)\n\nFINAL TRANSACTION PROPOSAL: **SELL**",
+  "elapsed_seconds": 1210.6,
+  "run_timestamp": "2026-07-08T13:57:51.335390",
+  "quality_score": {
+    "composite": 8.5,
+    "reasoning_depth": 5,
+    "data_grounding": 10,
+    "risk_awareness": 10,
+    "decision_consistent": true,
+    "has_stop_loss": true,
+    "has_price_target": true,
+    "has_position_sizing": true
+  },
+  "cost_breakdown": {
+    "by_model": {
+      "unknown": {
+        "input_tokens": 262666,
+        "output_tokens": 29920,
+        "calls": 37,
+        "cost_usd": 0.0
+      },
+      "claude-sonnet-4-5-20250929": {
+        "input_tokens": 10248,
+        "output_tokens": 1873,
+        "calls": 2,
+        "cost_usd": 0.058839
+      }
+    },
+    "total_usd": 0.058839
+  },
+  "portfolio_context": {
+    "account_equity": 100000.0,
+    "buying_power": 400000.0,
+    "held": false,
+    "shares": 0,
+    "avg_cost": null,
+    "unrealized_pnl": null,
+    "portfolio_pct": null
+  },
+  "point_in_time": false,
+  "result_file": "/Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc/results/AAPL/analysis_2026-06-27_tri69_config_a.json"
+}

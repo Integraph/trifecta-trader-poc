@@ -1,0 +1,99 @@
+[
+  {
+    "decision": "NO_TRADE",
+    "abstained": true,
+    "trade_intent": "ABSTAIN",
+    "no_trade_semantics": {
+      "new_entries_allowed": false,
+      "position_changes_allowed": false,
+      "equivalent_to_hold": false,
+      "existing_position_policy_required": true
+    },
+    "reason": "low_agreement",
+    "runs": 5,
+    "decisions": [
+      "BUY",
+      "BUY",
+      "HOLD",
+      "HOLD",
+      "HOLD"
+    ],
+    "decision_counts": {
+      "BUY": 2,
+      "HOLD": 3
+    },
+    "modal_decision": "HOLD",
+    "agreement": 0.6,
+    "quality_mean": 8.44,
+    "quality_stdev": 1.262,
+    "min_agreement": 0.8,
+    "min_quality": 8.0,
+    "min_runs": 3,
+    "group": "benchmark_local_b@AAPL"
+  },
+  {
+    "decision": "NO_TRADE",
+    "abstained": true,
+    "trade_intent": "ABSTAIN",
+    "no_trade_semantics": {
+      "new_entries_allowed": false,
+      "position_changes_allowed": false,
+      "equivalent_to_hold": false,
+      "existing_position_policy_required": true
+    },
+    "reason": "low_agreement",
+    "runs": 5,
+    "decisions": [
+      "SELL",
+      "HOLD",
+      "HOLD",
+      "HOLD",
+      "SELL"
+    ],
+    "decision_counts": {
+      "SELL": 2,
+      "HOLD": 3
+    },
+    "modal_decision": "HOLD",
+    "agreement": 0.6,
+    "quality_mean": 7.66,
+    "quality_stdev": 1.474,
+    "min_agreement": 0.8,
+    "min_quality": 8.0,
+    "min_runs": 3,
+    "group": "benchmark_local_b@NVDA"
+  },
+  {
+    "decision": "NO_TRADE",
+    "abstained": true,
+    "trade_intent": "ABSTAIN",
+    "no_trade_semantics": {
+      "new_entries_allowed": false,
+      "position_changes_allowed": false,
+      "equivalent_to_hold": false,
+      "existing_position_policy_required": true
+    },
+    "reason": "low_agreement",
+    "runs": 5,
+    "decisions": [
+      "HOLD",
+      "BUY",
+      "SELL",
+      "HOLD",
+      "HOLD"
+    ],
+    "decision_counts": {
+      "HOLD": 3,
+      "BUY": 1,
+      "SELL": 1
+    },
+    "modal_decision": "HOLD",
+    "agreement": 0.6,
+    "quality_mean": 8.28,
+    "quality_stdev": 1.217,
+    "min_agreement": 0.8,
+    "min_quality": 8.0,
+    "min_runs": 3,
+    "group": "benchmark_local_b@TSLA"
+  }
+]

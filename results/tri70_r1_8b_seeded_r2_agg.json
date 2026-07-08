@@ -1,0 +1,30 @@
+[
+  {
+    "config": "bench_deep_r1_8b_seeded@AAPL",
+    "runs": 1,
+    "runs_ok": 1,
+    "errors": 0,
+    "decisions": [
+      "SELL"
+    ],
+    "modal_decision": "SELL",
+    "decision_agreement": 1.0,
+    "extractability": 1.0,
+    "unknowns": 0,
+    "method_breakdown": {
+      "regex": 1
+    },
+    "ratings_5": [
+      "Sell"
+    ],
+    "quality_mean": 7.5,
+    "quality_stdev": 0.0,
+    "quality_values": [
+      7.5
+    ],
+    "walltime_mean_s": 1044.3,
+    "walltime_values": [
+      1044.3
+    ]
+  }
+]

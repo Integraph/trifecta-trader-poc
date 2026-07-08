@@ -1,0 +1,30 @@
+[
+  {
+    "config": "bench_deep_llama33_70b@AAPL",
+    "runs": 1,
+    "runs_ok": 1,
+    "errors": 0,
+    "decisions": [
+      "HOLD"
+    ],
+    "modal_decision": "HOLD",
+    "decision_agreement": 1.0,
+    "extractability": 1.0,
+    "unknowns": 0,
+    "method_breakdown": {
+      "rendered_structured_parse": 1
+    },
+    "ratings_5": [
+      "Hold"
+    ],
+    "quality_mean": 4.2,
+    "quality_stdev": 0.0,
+    "quality_values": [
+      4.2
+    ],
+    "walltime_mean_s": 1029.2,
+    "walltime_values": [
+      1029.2
+    ]
+  }
+]

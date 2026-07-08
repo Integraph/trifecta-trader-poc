@@ -1,0 +1,55 @@
+[
+  {
+    "decision": "SELL",
+    "abstained": false,
+    "trade_intent": "TRADE_DECISION",
+    "reason": "consensus_pass",
+    "runs": 3,
+    "decisions": [
+      "SELL",
+      "SELL",
+      "SELL"
+    ],
+    "decision_counts": {
+      "SELL": 3
+    },
+    "modal_decision": "SELL",
+    "agreement": 1.0,
+    "quality_mean": 8.3,
+    "quality_stdev": 0.346,
+    "min_agreement": 0.8,
+    "min_quality": 8.0,
+    "min_runs": 3,
+    "group": "tri69_config_a@AAPL@2026-06-27"
+  },
+  {
+    "decision": "NO_TRADE",
+    "abstained": true,
+    "trade_intent": "ABSTAIN",
+    "no_trade_semantics": {
+      "new_entries_allowed": false,
+      "position_changes_allowed": false,
+      "equivalent_to_hold": false,
+      "existing_position_policy_required": true
+    },
+    "reason": "low_agreement",
+    "runs": 3,
+    "decisions": [
+      "BUY",
+      "BUY",
+      "SELL"
+    ],
+    "decision_counts": {
+      "BUY": 2,
+      "SELL": 1
+    },
+    "modal_decision": "BUY",
+    "agreement": 0.667,
+    "quality_mean": 8.233,
+    "quality_stdev": 0.231,
+    "min_agreement": 0.8,
+    "min_quality": 8.0,
+    "min_runs": 3,
+    "group": "tri69_config_a@NVDA@2026-06-27"
+  }
+]

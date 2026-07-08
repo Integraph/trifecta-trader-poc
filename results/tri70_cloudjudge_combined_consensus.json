@@ -1,0 +1,25 @@
+{
+  "decision": "NO_TRADE",
+  "abstained": true,
+  "reason": "low_agreement",
+  "runs": 6,
+  "decisions": [
+    "SELL",
+    "SELL",
+    "SELL",
+    "BUY",
+    "BUY",
+    "SELL"
+  ],
+  "decision_counts": {
+    "SELL": 4,
+    "BUY": 2
+  },
+  "modal_decision": "SELL",
+  "agreement": 0.667,
+  "quality_mean": 8.267,
+  "quality_stdev": 0.266,
+  "min_agreement": 0.8,
+  "min_quality": 8.0,
+  "min_runs": 3
+}

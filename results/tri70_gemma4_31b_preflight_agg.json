@@ -1,0 +1,20 @@
+[
+  {
+    "config": "bench_deep_gemma4_31b@AAPL",
+    "runs": 1,
+    "runs_ok": 0,
+    "errors": 1,
+    "decisions": [],
+    "modal_decision": "N/A",
+    "decision_agreement": 0.0,
+    "extractability": 0.0,
+    "unknowns": 0,
+    "method_breakdown": {},
+    "ratings_5": [],
+    "quality_mean": null,
+    "quality_stdev": 0.0,
+    "quality_values": [],
+    "walltime_mean_s": null,
+    "walltime_values": []
+  }
+]

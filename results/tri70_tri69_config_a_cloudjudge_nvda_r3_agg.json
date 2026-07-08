@@ -1,0 +1,30 @@
+[
+  {
+    "config": "tri69_config_a@NVDA",
+    "runs": 1,
+    "runs_ok": 1,
+    "errors": 0,
+    "decisions": [
+      "SELL"
+    ],
+    "modal_decision": "SELL",
+    "decision_agreement": 1.0,
+    "extractability": 1.0,
+    "unknowns": 0,
+    "method_breakdown": {
+      "rendered_structured_parse": 1
+    },
+    "ratings_5": [
+      "Underweight"
+    ],
+    "quality_mean": 8.1,
+    "quality_stdev": 0.0,
+    "quality_values": [
+      8.1
+    ],
+    "walltime_mean_s": 1433.7,
+    "walltime_values": [
+      1433.7
+    ]
+  }
+]

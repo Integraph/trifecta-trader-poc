@@ -1,0 +1,57 @@
+{
+  "ticker": "AAPL",
+  "trade_date": "2026-06-27",
+  "provider": "anthropic",
+  "hybrid_config": "bench_deep_r1_8b_seeded",
+  "deep_model": "ollama/deepseek-r1:8b",
+  "quick_model": "ollama/qwen3.5:9b",
+  "hybrid_routing": {
+    "tool_calling": "ollama/qwen3-coder:30b",
+    "reasoning_quick": "ollama/qwen3.5:9b",
+    "reasoning_deep": "ollama/deepseek-r1:8b",
+    "local_seed": 73,
+    "local_max_tokens": 16384
+  },
+  "decision": "SELL",
+  "pm_rating_5": "Sell",
+  "decision_extraction_method": "regex",
+  "run_id": "r1seed73-r2-20260708104011-bench_deep_r1_8b_seeded-AAPL-r1",
+  "upstream_decision": "Underweight",
+  "decision_corrected": true,
+  "final_trade_decision_text": "### Synthesis of Analyst Debate and Final Trading Decision for AAPL\n\n#### **Debate Synthesis**\n\nThe debate on AAPL, centered on its performance ahead of potential institutional catalysts like a rumored Broadcom deal, revolved around conflicting perspectives on technicals and fundamentals. The resolved identity (AAPL as Apple Inc. on NMS listing) was upheld, with no tool results to contradict it. Key elements from the debate are synthesized as follows:\n\n- **Technical Indicators:** The debate highlighted bearish momentum, with metrics like MACD (-2.24), RSI (41.26), and volume (261 million shares) showing divergence and lack of support. This suggests an active downtrend, exacerbated by a break below key support zones near $200 and the 200-day moving average ($269.08).\n\n- **Fundamental Catalysts:** The rumored $30 billion deal with Broadcom was the primary positive driver, with the neutral analyst emphasizing its potential for long-term value. However, the institutional blackout (no institutional news or confirmed fundamentals) adds uncertainty, as the aggressive analyst viewed it as retail-fueled noise, while the conservative analyst saw it as consolidation before a major announcement.\n\n- **Market Sentiment and Risk:** Retail rumors from social media were dismissed by the aggressive analyst as evidence of weakness, but the conservative and neutral analysts prioritized fundamentals and risk management to avoid overexposure to volatility.\n\nOverall, the debate underscores a short-term cautious approach. Technicals dominate the bearish view, but fundamentals provide a buffer, leading to a recommendation for risk reduction rather than full capitulation.\n\n#### **Final Trading Decision**\n\nBased on the synthesized analysis, I recommend an **Underweight** stance for AAPL. This rating reflects a favorable outlook for reduction but avoids a full sell, acknowledging the underlying long-term value while mitigating short-term risks from bearish technicals and unverified catalysts.\n\n- **Entry Point:** We consider the current price and key support zones. For position adjustments, reference the $200 dynamic support level as a trigger.\n- **Position Sizing:** Reduce exposure by 25% if holding AAPL, consistent with the conservative and neutral analysts' suggestions to avoid over-leverage.\n\n**Final Transaction Proposal:** **Underweight**\n\n**Rationale:**  \nThe evidence points to divergence between price and fundamentals. While the Broadcom deal (rumored $30 billion deal) offers potential upside, its lack of institutional confirmation increases volatility risk. Technical indicators (e.g., MACD at -2.24, RSI 41.26) signal vulnerable momentum with high volume, suggesting potential continuation downward. Aggressive reduction or shorting (as per the aggressive analyst) capitalizes on risks but ignores fundamental stability, while holding (conservative view) could amplify losses in a confirmed breakdown. A partial reduction (25% cut) balances these factors, reducing exposure while preserving opportunity. This aligns with the neutral analyst's stop-loss approach using the Bollinger Lower Band at $278.25 for tactical exits, but we emphasize monitoring for institutional catalysts before committing to a larger position cut.\n\n**Recommendations for Action:**  \n- Reduce AAPL position by 25% using the \"get_fundamentals\" tool with ticker AAPL to confirm current valuations and risk thresholds.\n- Monitor technicals daily (e.g., MACD, RSI, volume) and institutional catalysts (e.g., earnings or news releases) via tools like \"get_real_time_data\".\n- If price closes below $278.25, consider a 50% reduction to mitigate breakouts, but avoid shorting unless fundamentals align with technicals.\n\nThis decision is grounded in the evidence: technical overbought/oversold readings without fundamental confirmation warrant caution.",
+  "trader_investment_plan": "**Action**: Sell\n\n**Reasoning**: The debate report indicates a sell recommendation based on unverified bullish rumors from social media without institutional publication or fundamental backing. Technical indicators reveal bearish momentum with MACD at 2.24 and RSI at 41.26, showing momentum divergence while positioned below key support zones near $200. Institutional analyst blackout further weakens the investment thesis, suggesting reduced exposure is prudent until stronger catalysts align fundamentals with price action.\n\n**Entry Price**: 200.0\n\n**Position Sizing**: Reduce by 25% if holding, or short 5% of portfolio\n\nFINAL TRANSACTION PROPOSAL: **SELL**",
+  "elapsed_seconds": 1044.3,
+  "run_timestamp": "2026-07-08T10:57:37.977699",
+  "quality_score": {
+    "composite": 7.5,
+    "reasoning_depth": 5,
+    "data_grounding": 5,
+    "risk_awareness": 10,
+    "decision_consistent": true,
+    "has_stop_loss": true,
+    "has_price_target": true,
+    "has_position_sizing": true
+  },
+  "cost_breakdown": {
+    "by_model": {
+      "unknown": {
+        "input_tokens": 48160,
+        "output_tokens": 23981,
+        "calls": 13,
+        "cost_usd": 0.0
+      }
+    },
+    "total_usd": 0.0
+  },
+  "portfolio_context": {
+    "account_equity": 100000.0,
+    "buying_power": 400000.0,
+    "held": false,
+    "shares": 0,
+    "avg_cost": null,
+    "unrealized_pnl": null,
+    "portfolio_pct": null
+  },
+  "point_in_time": false,
+  "result_file": "/Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc/results/AAPL/analysis_2026-06-27_bench_deep_r1_8b_seeded.json"
+}

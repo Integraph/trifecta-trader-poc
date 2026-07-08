@@ -1,0 +1,55 @@
+{
+  "ticker": "AAPL",
+  "trade_date": "2026-06-27",
+  "provider": "anthropic",
+  "hybrid_config": "bench_deep_gptoss_20b",
+  "deep_model": "ollama/gpt-oss:20b",
+  "quick_model": "ollama/qwen3.5:9b",
+  "hybrid_routing": {
+    "tool_calling": "ollama/qwen3-coder:30b",
+    "reasoning_quick": "ollama/qwen3.5:9b",
+    "reasoning_deep": "ollama/gpt-oss:20b"
+  },
+  "decision": "HOLD",
+  "pm_rating_5": "Hold",
+  "decision_extraction_method": "rendered_structured_parse",
+  "run_id": "gptoss20-preflight-20260708093928-bench_deep_gptoss_20b-AAPL-r1",
+  "upstream_decision": "Hold",
+  "decision_corrected": true,
+  "final_trade_decision_text": "**Rating**: Hold\n\n**Executive Summary**: Maintain current AAPL exposure while adding 2\u20113\u202f% of portfolio capital if price stays near the $175 entry.  Protect upside with a trailing stop of 12\u202f% below entry and monitor key macro\u2011 and earnings triggers.  Scale into a 5\u202f% allocation over 12\u202fmonths if the chip\u2011deal narrative and services growth remain intact.\n\n**Investment Thesis**: The aggressive view cites Apple\u2019s $30\u202fB Broadcom partnership as a supply\u2011chain moat that will underpin future iPhone\u202f18 and AI\u2011centric products, plus the defensive strength of its high\u2011margin services and cash hoard.  The conservative side warns that domestic chip spend could erode margins, that discretionary hardware sales are still recession\u2011sensitive, and that higher rates compress the premium multiple.  The neutral stance balances these by recommending a hold with cautious position\u2011building, using the aggressive upside but limiting exposure to macroheadwinds.  Concrete evidence includes the 96\u202f% probability of iPhone\u202f18, the 7.5/10 retail sentiment score, and the risk\u2011adjusted stop of 12\u202f% that guards against a rate\u2011tied downturn.\n\n**Time Horizon**: 12 months",
+  "trader_investment_plan": "**Action**: Hold\n\n**Reasoning**: The analysis acknowledges both strategic advantages and macroheadwinds: the $30B Broadcom chip deal strengthens the supply chain, while recession risk and elevated interest rates constrain valuation. Services moat and cash hoards provide defense against downturns, but the premium multiple is sensitive to macro tightening. Given this balanced risk-reward profile, preserving current exposure while positioning for upside if conditions stabilize is the appropriate stance.\n\n**Entry Price**: 175.0\n\n**Stop Loss**: 12.0\n\n**Position Sizing**: Current exposure for existing positions; 2-3% new entry if not owning, scaling to 5% over 12 months if above entry\n\nFINAL TRANSACTION PROPOSAL: **HOLD**",
+  "elapsed_seconds": 807.6,
+  "run_timestamp": "2026-07-08T09:52:57.702896",
+  "quality_score": {
+    "composite": 5.6000000000000005,
+    "reasoning_depth": 4,
+    "data_grounding": 1,
+    "risk_awareness": 6,
+    "decision_consistent": true,
+    "has_stop_loss": false,
+    "has_price_target": true,
+    "has_position_sizing": true
+  },
+  "cost_breakdown": {
+    "by_model": {
+      "unknown": {
+        "input_tokens": 41482,
+        "output_tokens": 19571,
+        "calls": 14,
+        "cost_usd": 0.0
+      }
+    },
+    "total_usd": 0.0
+  },
+  "portfolio_context": {
+    "account_equity": 100000.0,
+    "buying_power": 400000.0,
+    "held": false,
+    "shares": 0,
+    "avg_cost": null,
+    "unrealized_pnl": null,
+    "portfolio_pct": null
+  },
+  "point_in_time": false,
+  "result_file": "/Users/jeffbezenyan/Projects/Trifecta_Trader/App/trifecta-trader-poc/results/AAPL/analysis_2026-06-27_bench_deep_gptoss_20b.json"
+}
