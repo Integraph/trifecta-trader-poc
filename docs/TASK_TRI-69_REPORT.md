@@ -7,10 +7,10 @@
 > | 1. Build Config A | ✅ DONE (as amended: seed-pinned local sampling + temp=0 deep — checkpoints 1+2) |
 > | 2. Point-in-time / no-leak mode | ✅ DONE — module + tests + live leak proof + stamp normalization |
 > | 3. Determinism battery (burned points) | ✅ CLOSED — bar failed for stack-inherent reasons (checkpoint 2); protocol amended to single-draw stochastic policy per App Manager decision 2026-07-06 |
-> | 4. Pre-registration commit | 🔄 THIS COMMIT |
-> | 5. Eval runs (160 = 20 names × 8 dates, single draw each) | ⬜ launches immediately after this commit |
-> | 6. Scoring (frozen scorer only) | ⬜ pending |
-> | 7. Verdict | ⬜ pending |
+> | 4. Pre-registration commit | ✅ `ebca159` (2026-07-06, before any eval data) |
+> | 5. Eval runs (160 = 20 names × 8 dates, single draw each) | ✅ COMPLETE 2026-07-08 — 160/160, 0 errors, 0 NO-DECISION, 0 leaks, 0 interventions, $8.79 |
+> | 6. Scoring (frozen scorer only) | ✅ DONE — `results/tri69/scoring.json` (copies committed in docs/) |
+> | 7. Verdict | ✅ **INCONCLUSIVE — no detectable edge at this power** (see Verdict) · ready for Codex QA |
 >
 > Checkpoint triggers fired: **TWO.**
 > **Checkpoint 1 (RESOLVED in design window):** temp=0-all-slots wedges the local thinking model; amended to seed-pinned model-default sampling. Bar unchanged.
@@ -201,14 +201,54 @@ Same live vendor call (`route_to_vendor("get_fundamentals", "MSFT", "2026-03-13"
 
 ---
 
-## Results
+## Eval ops log (mechanical interventions + milestone tallies only — NO scoring before completion)
 
-*(pending — nothing here until after the pre-registration commit)*
+- **2026-07-06 (launch):** eval started immediately after pre-reg commit `ebca159`; 160 runs, caffeinate, AC power, resumable.
+- **25% (39/160):** SELL 30 / HOLD 5 / BUY 4 · 0 errors · 0 NO-DECISION · 0 leak hits · 0 infra retries · $2.06 · mean wall 977 s · ETA ~33 h. Directional N already 34 (min-N 20 exceeded); HOLD ~13%, well below the 70% planning value.
+- **50% (79/160):** SELL 57 / BUY 13 / HOLD 9 · 0 errors · 0 NO-DECISION · 0 leaks · 0 infra retries · $4.33 · mean wall 998 s · ETA ~22.5 h. Directional N = 70; all 4 completed dates have ≥15 directional (min-N + date-coverage gates already satisfied). Policy remains SELL-heavy (descriptive tally only).
+- **75% (119/160):** SELL 89 / BUY 16 / HOLD 14 · 0 errors · 0 NO-DECISION · 0 leaks · 0 infra retries · $6.50 · ETA ~11.5 h. Directional N = 105.
+- **100% (160/160, 2026-07-08):** COMPLETE. SELL 121 / BUY 21 / HOLD 18 · **0 errors · 0 NO-DECISION · 0 leak hits · 0 infra retries · 0 mechanical interventions across the entire run** · $8.79 · all runs run-id'd with saved analyst reports. Scorer (frozen at pre-reg commit `ebca159`) executed once, unmodified.
+
+## Results (frozen scorer, `results/tri69/scoring.json` — all numbers per the pre-registered spec)
+
+**Sample:** 160/160 single-draw decisions (20 seed-69 names × 8 dates). HOLD 18 (11.25%), NO-DECISION 0 → **directional N = 142 across all 8 dates** (min-N gate ≥20 AND ≥6/8 dates: **met**, so the expansion lever does not fire). All 142 directional windows fully realized (0 unrealized).
+
+**Primary test — T+10 signed net excess vs SPY, date-clustered exact sign-flip, α=0.05 one-sided:**
+| Metric | Value |
+|---|---|
+| Mean of date-mean net excess (1× cost, 20 bps RT) | **+0.49%** |
+| Exact sign-flip p (one-sided) | **0.348** — not significant (α=0.05) |
+| Dates positive | **3 of 8** (+1.98%, +5.82%, +1.10% vs −1.37%, −0.25%, −1.67%, −0.30%, −1.42%) |
+| Directional hit rate | 0.5775 |
+| Realized base rate p₀ (best constant strategy) | **0.5845** — the hit rate is BELOW it |
+| Between-date t (descriptive) | 0.55 |
+
+**Slippage sweep (portfolio-level, monotone non-increasing ✓):** mean date-mean excess +0.49% (1×) → +0.29% (2×) → +0.09% (3×); p rises 0.348 → 0.410 → 0.477. The point estimate barely survives 3× cost and is never near significance.
+
+**Secondary (T+5, descriptive):** mean date-mean −0.21%, p = 0.707, hit 0.514 — no signal at the shorter horizon.
+
+**Descriptive long-only implementable view (no verdict weight):** strategy −0.25% vs equal-weight buy-and-hold −0.40% per date-mean — the mostly-in-cash portfolio lost slightly less than holding in a down-tilted sample window.
+
+**Reading the pattern honestly:** the positive point estimate rests on a single strong date (2026-04-29, +5.82%); 5 of 8 dates are negative; the hit rate does not beat the best constant-sign strategy on the same trials (0.578 < 0.585). The policy was heavily SELL-tilted (121/142 directional), so it largely expresses one repeated view rather than name-by-name discrimination.
 
 ## Compute / $ spent
 
-*(running total; see result JSONs)*
+- Eval: 160 runs, ~1.9 days wall (mean ~990 s/run), **$8.79** cloud (Sonnet deep).
+- Build/battery/diagnostics (checkpoints 1–2): ~20 runs + probes, ~$1.5.
+- **Total ≈ $10.3** — bottom of the $10–30 budget.
 
-## Verdict
+## Verdict (pre-registered kill-switch mapping, applied mechanically)
 
-*(pending)*
+**INCONCLUSIVE.**
+- Not PROMISING: p = 0.348 ≫ α = 0.05 (rule required p ≤ 0.05 AND positive mean at 1× and 2×).
+- Not STOP-PIVOT: the rule requires mean(X_t) ≤ 0 **AND** hit ≤ p₀ with min-N met; hit ≤ p₀ holds (0.578 ≤ 0.585) but the mean is (weakly) positive (+0.49%), so the conjunction fails.
+- Therefore **INCONCLUSIVE**, with the pre-registered interpretation: **"no *detectable* edge at this power" — never "no edge exists."**
+
+**Directional N needed (pre-registered requirement for an INCONCLUSIVE verdict):** power here is limited by the number of independent DATES, not by within-date names (all 8 dates already carry directional decisions). At the observed effect size (mean +0.49%, between-date σ 2.51%, standardized effect 0.19), detecting significance at α=0.05 one-sided with 80% power requires **~164 independent non-overlapping T+10 dates ≈ 6–7 years of history** — i.e., the observed effect is statistically indistinguishable from zero, and no feasible near-term expansion of this design would resolve it. The expansion lever (more names) does not apply: it adds within-date trials, and the date-clustered test's effective N is dates.
+
+**Honest caveats carried with the verdict (pre-registered):**
+1. Single-draw stochastic-policy protocol: each decision includes ~25% draw noise (attenuates a true modal edge by roughly that fraction — a true modal edge of ~+0.65%/date would measure as the observed +0.49%; still far from detectable at D=8).
+2. The test detects only large, cross-date-consistent edges; a real but weak or regime-dependent edge reads INCONCLUSIVE by construction.
+3. The result neither validates nor falsifies the engine thesis: it says this configuration, on this sample, shows no edge distinguishable from noise, and the hit rate did not beat the base rate.
+
+**What the kill-switch DOES license:** nothing here justifies scaling up compute on Config A as-is (the go/no-go's practical intent). The signal, if any, is too weak/inconsistent to detect at any feasible horizon with this design.
